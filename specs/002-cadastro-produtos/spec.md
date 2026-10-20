@@ -232,8 +232,9 @@ digitação acontece; desativar os scripts do navegador e verificar que a lista 
   recusado; renomear o próprio produto alterando só maiúsculas/minúsculas é aceito.
 - Edição concorrente do mesmo produto: prevalece a última gravação de nome/estoque mínimo, e a
   edição nunca sobrescreve a quantidade atual (que pode ter mudado por movimentação no meio-tempo).
-- Endereço de detalhe ou edição com ID inexistente ou não numérico mostra "Produto não
-  encontrado".
+- Endereço de detalhe ou edição com ID numérico inexistente (inclusive grande demais) mostra
+  "Produto não encontrado"; endereço com ID não numérico mostra a página padrão de "não
+  encontrado" do sistema.
 
 ## Requirements *(mandatory)*
 
