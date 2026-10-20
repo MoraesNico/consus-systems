@@ -59,3 +59,18 @@ def test_fr025_historico_vazio_nunca_ocorre_mas_tem_texto(client, produto_com_sa
     produto = produto_com_saldo(saldo=5)
     conteudo = html(client.get(f"/produtos/{produto.pk}/"))
     assert "Saldo inicial" in conteudo.split(f'id="produto-{produto.pk}-historico"', 1)[1]
+
+
+def test_fr032_acessibilidade_do_dialogo(client, produto_com_saldo):
+    """FR-032: nome acessível com o produto, foco na quantidade e toasts anunciados no diálogo."""
+    produto = produto_com_saldo(nome="Parafuso")
+    dialogo = client.get(
+        f"/movimentacoes/nova/?produto={produto.pk}&tipo=SAIDA&origem=lista",
+        HTTP_HX_REQUEST="true",
+        HTTP_HX_TARGET="dialogo",
+    ).content.decode()
+    assert re.search(r'<input[^>]+name="quantidade"[^>]+autofocus', dialogo)
+    assert re.search(r'data-toasts aria-live="polite"', dialogo)
+    assert 'aria-label="Fechar"' in dialogo
+    lista = client.get("/produtos/").content.decode()
+    assert f'aria-label="Registrar saída de {produto.codigo} Parafuso"' in lista

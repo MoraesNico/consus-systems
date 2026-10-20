@@ -69,7 +69,7 @@ def test_fr010_estados_vazios(criar_produto):
 
 
 def test_fr031_varredura_nao_grava(cenario, django_assert_max_num_queries):
-    """FR-031: a varredura só lê (2 consultas)."""
+    """FR-031/FR-037: a varredura só lê (2 consultas) e não altera saldos."""
     antes = (Produto.objects.count(), Movimentacao.objects.count())
     with django_assert_max_num_queries(2):
         varrer()

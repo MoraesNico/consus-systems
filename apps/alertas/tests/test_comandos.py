@@ -61,14 +61,14 @@ def test_fr029_sem_alerta_sai_com_zero(criar_produto):
 
 
 def test_fr031_varredura_somente_leitura(cenario):
-    """FR-031: o comando não grava nada."""
+    """FR-031/FR-037: o comando não grava nada."""
     antes = (Produto.objects.count(), Movimentacao.objects.count())
     rodar("varrer_estoque", "--todos")
     assert (Produto.objects.count(), Movimentacao.objects.count()) == antes
 
 
 def test_fr034_popular_demo(db):
-    """FR-034: 12 produtos, 4 em alerta (1 sem estoque), 16 movimentações, livro-razão íntegro."""
+    """FR-034/FR-037: 12 produtos, 4 em alerta, 16 movimentações; saldos só pelo livro-razão."""
     saida = rodar("popular_demo")
     assert "Dados de demonstração: 12 produto(s) criado(s), 0 já existia(m)." in saida
     assert "Movimentações registradas: 16." in saida

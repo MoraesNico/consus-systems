@@ -139,3 +139,10 @@ def test_constituicao_ii_js_proprio_pequeno():
     """Constituição II: JavaScript próprio com menos de 100 linhas."""
     linhas = CONSUS_JS.read_text().splitlines()
     assert len(linhas) < 100, len(linhas)
+
+
+def test_fr045_atalhos_declarativos():
+    """FR-045: data-atalho genérico que ignora campos editáveis, modificadores e diálogo aberto."""
+    js = CONSUS_JS.read_text()
+    for trecho in ("data-atalho", "ctrlKey", "metaKey", "altKey", "contenteditable", ".open"):
+        assert trecho in js, trecho

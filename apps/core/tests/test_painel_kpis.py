@@ -78,7 +78,7 @@ def test_fr023_fr025_estados_vazios(client, db):
 
 
 def test_fr022_fragmento_htmx_e_auto_atualizacao(client, estoque):
-    """FR-022: com HTMX devolve só #painel-kpis, que se recarrega em estoque-alterado."""
+    """FR-022/FR-026 (004): só #painel-kpis via HTMX, recarregado sozinho em estoque-alterado."""
     conteudo = html(client.get("/", HTTP_HX_REQUEST="true"))
     assert "<html" not in conteudo
     raiz = re.search(r'<section id="painel-kpis"[^>]*>', conteudo).group(0)
