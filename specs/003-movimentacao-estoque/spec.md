@@ -209,9 +209,13 @@ código de saída de erro.
 
 - Saída exatamente igual ao saldo: aceita; o saldo vai a 0 e o produto passa a satisfazer a
   condição de alerta de reposição (feature 004), que reage ao aviso de estoque alterado.
-- Saída com saldo 0: recusada com "Saldo insuficiente: disponível 0, solicitado Y".
+- Saída com saldo 0: a ação "− Saída" continua disponível; o diálogo mostra saldo 0, a prévia
+  avisa a insuficiência e a confirmação é recusada com "Saldo insuficiente: disponível 0,
+  solicitado Y".
 - Quantidade 0, negativa, fracionária (2,5 ou 2.5), com letras, vazia ou só espaços: recusada
   com mensagem no campo; nada gravado.
+- Quantidade digitada com separador de milhar ("1.000"): recusada com a orientação de digitar
+  só algarismos (evita que "1.000" seja lido como 1); nada gravado.
 - Quantidade acima de 1.000.000 em uma Entrada ou Saída: recusada com mensagem no campo
   ("Informe no máximo 1.000.000"); nada gravado.
 - Entrada que levaria o saldo acima de 2.147.483.647: recusada com "Saldo máximo excedido: atual
@@ -224,16 +228,18 @@ código de saída de erro.
 - O saldo mudou entre abrir o diálogo e confirmar (outro operador movimentou): a decisão usa o
   saldo no momento da confirmação; se insuficiente, a mensagem mostra o disponível atualizado e o
   formulário reapresentado exibe o saldo atual.
-- Duplo clique em "Confirmar": durante o processamento o botão fica indisponível, evitando
-  registros duplicados acidentais.
+- Duplo clique em "Confirmar": com o aprimoramento interativo, o botão fica indisponível durante
+  o processamento; sem ele, recarregar a página após o sucesso não reenvia o formulário
+  (FR-020).
 - Duas ou mais saídas simultâneas do mesmo produto: são processadas uma de cada vez sobre o
   saldo mais recente; nunca levam o saldo abaixo de zero e as excedentes recebem a mensagem de
   saldo insuficiente (nunca um erro genérico).
 - Falha inesperada durante o registro: nada é gravado (nem movimentação nem alteração de saldo).
 - Histórico vazio (nenhuma movimentação, ou filtros sem resultado): estado vazio projetado com
   orientação e ação.
-- Período invertido (data inicial depois da final) ou data em formato inválido: o operador é
-  avisado no formulário de filtros e o filtro de período não é aplicado.
+- Período invertido (data inicial depois da final), data em formato inválido, produto ou tipo
+  inexistente no endereço: o operador é avisado e o filtro inválido não é aplicado (os demais
+  continuam valendo).
 - Página do histórico fora do intervalo (ex.: página 999): exibe a última página existente.
 - Produtos cadastrados antes desta feature: recebem a movimentação de saldo inicial retroativa.
 
@@ -260,8 +266,9 @@ código de saída de erro.
   saldo. *(Atividade, item 2 — regra de validação: "não pode permitir que o estoque de um produto
   fique negativo".)*
 - **FR-005**: A quantidade de uma Entrada ou Saída MUST ser um número inteiro entre 1 e
-  1.000.000; valores zero, negativos, fracionários, não numéricos, vazios ou acima de 1.000.000
-  são recusados com mensagem específica no campo e nada é gravado. Nenhum saldo pode ultrapassar
+  1.000.000, digitado apenas com algarismos (sem separador de milhar nem casas decimais); valores
+  zero, negativos, fracionários, com separadores (ex.: "1.000"), não numéricos, vazios ou acima de
+  1.000.000 são recusados com mensagem específica no campo e nada é gravado. Nenhum saldo pode ultrapassar
   2.147.483.647 unidades: uma Entrada que levaria o saldo acima desse teto é recusada com
   "Saldo máximo excedido: atual X, entrada Y, máximo 2.147.483.647" e nada é gravado.
 - **FR-006**: A observação MUST ser opcional, com no máximo 200 caracteres (ex.: nº da nota
@@ -286,7 +293,7 @@ código de saída de erro.
 **Ações rápidas, diálogo e retorno ao operador**
 
 - **FR-012**: O sistema MUST oferecer a página **Nova movimentação**, com seleção do produto
-  (exibido como #ID e nome), do tipo, da quantidade e da observação, que pode ser aberta já com
+  (lista ordenada por nome, cada opção exibida como "#0001 — Nome"), do tipo, da quantidade e da observação, que pode ser aberta já com
   produto e/ou tipo pré-selecionados. Após um registro bem-sucedido nessa página, ela é
   reapresentada pronta para o próximo registro — mesmo produto e tipo pré-selecionados,
   quantidade e observação vazias e saldo atual atualizado —, com e sem o aprimoramento
@@ -297,25 +304,31 @@ código de saída de erro.
   com produto e tipo pré-selecionados.
 - **FR-014**: O formulário (página e diálogo) MUST exibir o saldo atual do produto selecionado e
   uma prévia do saldo resultante conforme a quantidade digitada, avisando antes da confirmação
-  quando a saída excederia o saldo; a prévia é informativa e a decisão final é sempre feita no
-  momento da confirmação.
+  quando a saída excederia o saldo ou a entrada ultrapassaria o saldo máximo (com o mesmo texto da
+  recusa); sem produto selecionado, a prévia orienta a escolher um, e com quantidade vazia ou
+  inválida mostra só o saldo atual. A prévia é anunciada de forma discreta a leitores de tela, é
+  informativa e a decisão final é sempre feita no momento da confirmação.
 - **FR-015**: Após uma movimentação bem-sucedida pelo diálogo, o sistema MUST fechar o diálogo e
   atualizar imediatamente, sem recarregar a página, o saldo exibido na linha da lista ou no
   detalhe do produto (e o histórico exibido no detalhe).
-- **FR-016**: Após toda movimentação bem-sucedida, o sistema MUST exibir um aviso de sucesso com o
-  tipo, o produto (#ID e nome) e o saldo anterior → novo (ex.: "Saída registrada: #0001 Parafuso —
+- **FR-016**: Após toda Entrada ou Saída bem-sucedida, o sistema MUST exibir um aviso de sucesso
+  com o tipo, o produto (#ID e nome) e o saldo anterior → novo (ex.: "Saída registrada: #0001 Parafuso —
   saldo 10 → 7").
-- **FR-017**: Após toda movimentação bem-sucedida, o sistema MUST avisar a interface de que o
+- **FR-017**: Após toda Entrada ou Saída bem-sucedida, o sistema MUST avisar a interface de que o
   estoque foi alterado, para que o contador de alertas de reposição e o painel (feature 004) se
-  atualizem sem recarregar a página.
+  atualizem sem recarregar a página. O mesmo aviso após o cadastro de produto (que gera o Saldo
+  inicial) é responsabilidade da tela de cadastro da feature 002.
 - **FR-018**: Em caso de recusa (saldo insuficiente ou dado inválido), o sistema MUST reapresentar
   o formulário no mesmo lugar (diálogo ou página), com os valores digitados preservados, a
   mensagem de erro associada ao campo e o saldo atual exibido; nada é gravado e o saldo exibido
   em outras partes da tela não muda.
 - **FR-019**: Todo o fluxo de registro MUST funcionar sem o aprimoramento interativo (envio
   tradicional de formulário), com as mesmas regras, mensagens e resultado gravado.
-- **FR-020**: Durante o processamento de uma confirmação, o botão de confirmar MUST ficar
-  indisponível, evitando o envio duplicado acidental.
+- **FR-020**: Com o aprimoramento interativo ativo, o botão de confirmar MUST ficar indisponível
+  durante o processamento, evitando o envio duplicado acidental. Sem o aprimoramento, o
+  redirecionamento após o envio bem-sucedido impede o reenvio ao recarregar a página; o duplo
+  clique nesse modo é um risco residual aceito (cada envio é uma movimentação válida e visível no
+  histórico, corrigível com uma movimentação oposta).
 
 **Histórico imutável (livro-razão)**
 
@@ -336,8 +349,9 @@ código de saída de erro.
   exceto a coluna produto, e o link "Ver histórico completo", que abre a página Movimentações
   filtrada por esse produto.
 - **FR-026**: Listas de movimentação sem resultado MUST exibir um estado vazio explicativo com uma
-  ação (limpar filtros ou registrar movimentação); filtros de período inválidos (data malformada
-  ou data inicial posterior à final) são sinalizados ao operador e não são aplicados.
+  ação (limpar filtros ou registrar movimentação); filtros inválidos — produto inexistente, tipo
+  desconhecido, data malformada ou data inicial posterior à final — são sinalizados ao operador e
+  não são aplicados, mantendo-se os demais filtros válidos.
 
 **Saldo inicial e consistência do saldo**
 
@@ -350,7 +364,8 @@ código de saída de erro.
   produto.
 - **FR-029**: Para todo produto, o saldo atual MUST ser igual à soma das suas movimentações
   (Saldo inicial + Entradas − Saídas), e o saldo posterior de cada movimentação MUST ser igual ao
-  saldo anterior da movimentação seguinte do mesmo produto.
+  saldo anterior da movimentação seguinte do mesmo produto, na ordem de registro (data/hora do
+  registro e, em empate, ordem de gravação).
 - **FR-030**: Produtos que já existirem sem histórico quando esta feature for instalada MUST
   receber uma movimentação Saldo inicial equivalente ao seu saldo atual (inclusive 0).
 

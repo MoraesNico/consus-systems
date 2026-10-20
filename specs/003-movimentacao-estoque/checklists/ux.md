@@ -13,17 +13,17 @@ Profundidade: padrão · Público: revisor da spec (PR) · Foco: princípios II 
 ## Requirement Completeness
 
 - [x] CHK001 O conteúdo do diálogo de ação rápida (produto, tipo, saldo atual, prévia, foco inicial) está completamente especificado? [Completeness, Spec §FR-013, §FR-014, §FR-032, §US2]
-- [ ] CHK002 O comportamento da prévia está definido para todos os estados (sem produto, sem quantidade, válida, acima do saldo, acima do teto de saldo)? [Completeness, Gap, Spec §FR-014]
+- [x] CHK002 O comportamento da prévia está definido para todos os estados (sem produto, sem quantidade, válida, acima do saldo, acima do teto de saldo)? [Completeness, Gap, Spec §FR-014]
 - [x] CHK003 As colunas e formatos do histórico (data/hora, #ID + nome, selo do tipo, sinal, anterior → posterior, observação) estão especificados? [Completeness, Spec §FR-022]
 - [x] CHK004 A persistência dos filtros (refletidos no endereço e mantidos na paginação) está especificada? [Completeness, Spec §FR-023]
-- [ ] CHK005 Os requisitos de anúncio a leitores de tela cobrem sucesso, erro **e** a prévia de saldo? [Completeness, Gap, Spec §FR-032, §FR-014]
+- [x] CHK005 Os requisitos de anúncio a leitores de tela cobrem sucesso, erro **e** a prévia de saldo? [Completeness, Gap, Spec §FR-032, §FR-014]
 
 ## Requirement Clarity
 
 - [x] CHK006 O texto do aviso de sucesso tem formato definido, com exemplo (tipo, #ID e nome, anterior → novo)? [Clarity, Spec §FR-016]
 - [x] CHK007 Os nomes acessíveis das ações "+ Entrada" / "− Saída" estão definidos incluindo o produto? [Clarity, Spec §FR-032]
 - [x] CHK008 A quantidade de itens do histórico no detalhe do produto e o caminho para o histórico completo estão definidos? [Clarity, Spec §FR-025]
-- [ ] CHK009 O formato e a ordenação da lista de seleção de produto na página Nova movimentação estão especificados? [Clarity, Spec §FR-012, §Assumptions]
+- [x] CHK009 O formato e a ordenação da lista de seleção de produto na página Nova movimentação estão especificados? [Clarity, Spec §FR-012, §Assumptions]
 - [x] CHK010 "Nunca apenas por cor" está concretizado para tipo e sinal no histórico? [Clarity, Spec §FR-033]
 
 ## Requirement Consistency
@@ -38,7 +38,7 @@ Profundidade: padrão · Público: revisor da spec (PR) · Foco: princípios II 
 - [x] CHK015 O retorno após erro está definido para cada ponto de entrada, com preservação dos valores digitados? [Coverage, Spec §FR-018]
 - [x] CHK016 O caminho alternativo das ações rápidas sem aprimoramento interativo está especificado? [Coverage, Spec §FR-013, §US2]
 - [x] CHK017 Estados vazios estão definidos para o histórico geral e para o histórico do produto? [Coverage, Spec §FR-026]
-- [ ] CHK018 Está especificado se a ação "− Saída" continua disponível quando o saldo é 0 (e o que o operador vê)? [Edge Case, Gap]
+- [x] CHK018 Está especificado se a ação "− Saída" continua disponível quando o saldo é 0 (e o que o operador vê)? [Edge Case, Gap]
 
 ## Acceptance Criteria Quality
 
@@ -51,6 +51,10 @@ Profundidade: padrão · Público: revisor da spec (PR) · Foco: princípios II 
 - Avaliação feita pelo agente a pedido do revisor (brief do coordenador), em 2026-10-20: 17/21
   itens satisfeitos. Pendências: CHK002, CHK005, CHK009, CHK018 — encaminhadas para correção na
   autoanálise (`/speckit-analyze`).
+- Reavaliação após a autoanálise (2026-10-20): 21/21. CHK002 e CHK005 → FR-014 lista os estados da
+  prévia e o anúncio discreto a leitores de tela; CHK009 → FR-012 define lista ordenada por nome
+  com opções "#0001 — Nome"; CHK018 → caso de borda "Saída com saldo 0" mantém a ação disponível
+  e descreve o que o operador vê.
 - Mark items `[x]` only after review confirms the requirement-quality criterion is satisfied
 - Leave items unchecked when they still require clarification, correction, or reviewer evaluation
 - `/speckit-implement` reads checklist checkbox state as a gate and must not modify markers

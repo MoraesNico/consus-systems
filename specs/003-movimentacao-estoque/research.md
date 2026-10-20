@@ -281,3 +281,6 @@ Registradas aqui (sem editar `docs/arquitetura.md`), para o coordenador consolid
    `cadastrar_produto`/`registrar_movimentacao`, nunca gravar `quantidade_atual` diretamente.
 9. **Marcador de teste** — registrar o marcador `postgres` em `pyproject.toml` para testes que
    exigem PostgreSQL (pulados automaticamente no SQLite).
+10. **Evento no cadastro** — como o cadastro passa a gerar uma movimentação (`INICIAL`), a view de
+    cadastro da 002 também deve emitir `estoque-alterado` na resposta HTMX de sucesso, para que o
+    badge e o painel da 004 contem o novo produto (um produto pode nascer em alerta).

@@ -174,7 +174,7 @@ Consolidado em [research.md](research.md): 16 decisões (bloqueio pessimista, co
 concorrência, três camadas, imutabilidade, saldo inicial e migração retroativa, validação da
 quantidade, despacho de variantes na mesma rota, prévia no servidor, OOB + eventos, PRG sem HTMX,
 histórico/filtros/paginação, integração por inclusion tags, teste de concorrência, comando de
-terminal, formatação pt-BR, zero dependências novas) e 9 propostas de ajuste ao contrato. Nenhum
+terminal, formatação pt-BR, zero dependências novas) e 10 propostas de ajuste ao contrato. Nenhum
 `NEEDS CLARIFICATION` restante.
 
 ## Phase 1 — Design & Contracts

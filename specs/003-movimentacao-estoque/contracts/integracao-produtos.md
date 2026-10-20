@@ -62,6 +62,7 @@ evento `fechar-dialogo`.
 | `estoque-alterado` | toda movimentação bem-sucedida via HTMX (003) | `{produto_id, saldo_anterior, saldo_posterior}` | badge de alertas e painel (004), `hx-trigger="estoque-alterado from:body"` | recarregam `/alertas/contador/` e KPIs em ≤ 1 s (SC-005) |
 | `toast` | idem | `{nivel: "sucesso", texto: "<mensagem de confirmação>"}` | contêiner de toasts (001, `aria-live`) | exibe "Entrada registrada: #0001 … — saldo 10 → 15" |
 | `fechar-dialogo` | sucesso no diálogo (003) | `{}` | `static/js/consus.js` (001) — **proposta ao contrato** | fecha o `<dialog>` e devolve o foco à ação que o abriu |
+| `estoque-alterado` | cadastro de produto bem-sucedido via HTMX (view da 002) — **proposta ao contrato** | `{produto_id, saldo_anterior: 0, saldo_posterior}` | idem 004 | o novo produto entra na contagem de alertas, se nascer em alerta |
 
 Sem HTMX (PRG), o recarregamento completo da página já exibe saldo, badge e mensagem
 (`django.contrib.messages`, renderizado pela 001) atualizados.

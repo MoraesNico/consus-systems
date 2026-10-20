@@ -25,10 +25,10 @@ constituição (integridade do estoque).
 ## Requirement Clarity
 
 - [x] CHK009 A mensagem de recusa por saldo insuficiente está especificada literalmente, com a origem de X (saldo no momento da confirmação) e de Y (quantidade pedida)? [Clarity, Spec §FR-004, §Edge Cases]
-- [ ] CHK010 O formato aceito para a quantidade está inequívoco quanto a separadores (ex.: "1.000" em pt-BR significa mil — aceitar como 1000, recusar ou ler como 1)? [Ambiguity, Spec §FR-005, §Edge Cases]
+- [x] CHK010 O formato aceito para a quantidade está inequívoco quanto a separadores (ex.: "1.000" em pt-BR significa mil — aceitar como 1000, recusar ou ler como 1)? [Ambiguity, Spec §FR-005, §Edge Cases]
 - [x] CHK011 O teto de saldo está especificado com o limite numérico e a mensagem exata? [Clarity, Spec §FR-005]
 - [x] CHK012 O comportamento sob confirmações simultâneas (aguardar a anterior × falhar imediatamente) está inequívoco? [Clarity, Spec §FR-008, §Clarifications]
-- [ ] CHK013 A ordem que define "a movimentação seguinte" na regra de continuidade (data/hora de registro; desempate quando o horário coincide) está especificada? [Ambiguity, Spec §FR-029]
+- [x] CHK013 A ordem que define "a movimentação seguinte" na regra de continuidade (data/hora de registro; desempate quando o horário coincide) está especificada? [Ambiguity, Spec §FR-029]
 - [x] CHK014 Está claro qual saldo decide a aceitação — o exibido no formulário/prévia ou o vigente na confirmação? [Clarity, Spec §FR-014, §Edge Cases]
 
 ## Requirement Consistency
@@ -49,8 +49,8 @@ constituição (integridade do estoque).
 - [x] CHK022 Os valores-limite da Saída (igual ao saldo, saldo zero, um acima do saldo) estão todos cobertos por cenários ou casos de borda? [Coverage, Spec §US1, §Edge Cases]
 - [x] CHK023 O cenário de saldo desatualizado (saldo mudou entre abrir o diálogo e confirmar) está tratado? [Coverage, Spec §Edge Cases]
 - [x] CHK024 A concorrência entre tipos diferentes (Entrada e Saída simultâneas do mesmo produto) está coberta, e não só duas Saídas? [Coverage, Spec §FR-008]
-- [ ] CHK025 O envio duplicado acidental está coberto também quando o aprimoramento interativo não está disponível, ou o risco aceito está documentado? [Coverage, Gap, Spec §FR-020]
-- [ ] CHK026 Os requisitos tratam filtros de histórico com produto ou tipo inválidos/manipulados no endereço, e não só período inválido? [Coverage, Gap, Spec §FR-026]
+- [x] CHK025 O envio duplicado acidental está coberto também quando o aprimoramento interativo não está disponível, ou o risco aceito está documentado? [Coverage, Gap, Spec §FR-020]
+- [x] CHK026 Os requisitos tratam filtros de histórico com produto ou tipo inválidos/manipulados no endereço, e não só período inválido? [Coverage, Gap, Spec §FR-026]
 - [x] CHK027 O envio manual do tipo "Saldo inicial" pelo formulário tem comportamento especificado? [Edge Case, Spec §FR-007, §Edge Cases]
 
 ## Non-Functional, Dependencies & Assumptions
@@ -65,6 +65,10 @@ constituição (integridade do estoque).
 - Avaliação feita pelo agente a pedido do revisor (brief do coordenador), em 2026-10-20: 27/31
   itens satisfeitos. Pendências: CHK010, CHK013, CHK025, CHK026 — encaminhadas para correção na
   autoanálise (`/speckit-analyze`).
+- Reavaliação após a autoanálise (2026-10-20): 31/31. CHK010 → FR-005 e caso de borda de
+  separador ("1.000" recusado); CHK013 → FR-029 define a ordem de registro (data/hora, desempate
+  pela ordem de gravação); CHK025 → FR-020 restrito ao modo interativo, com risco residual
+  documentado; CHK026 → FR-026 cobre produto/tipo inválidos nos filtros.
 - Mark items `[x]` only after review confirms the requirement-quality criterion is satisfied
 - Leave items unchecked when they still require clarification, correction, or reviewer evaluation
 - `/speckit-implement` reads checklist checkbox state as a gate and must not modify markers
