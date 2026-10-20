@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+coverage.xml
+
+# Django
+*.sqlite3
+/staticfiles/
+/media/
+
+# Ambiente
+.env
+!.env.example
+
+# Agentes
+.claude/settings.local.json
+
+# SO / IDE
+.DS_Store
+.idea/
+.vscode/
