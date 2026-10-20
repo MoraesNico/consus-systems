@@ -144,6 +144,8 @@ apps/movimentacoes/                         # NOVO (feature 003)
     ├── test_views_lista.py
     ├── test_integracao_produtos.py
     ├── test_saldo_inicial.py
+    ├── test_migracao_saldo_inicial.py
+    ├── test_desempenho.py                  # @pytest.mark.postgres (SC-007)
     └── test_comando_movimentar.py
 
 # Arquivos de outras features tocados na implementação (003 é implementada depois de 001 e 002)
