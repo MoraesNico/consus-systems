@@ -1,16 +1,22 @@
 """Comandos de terminal: varrer_estoque e popular_demo (FR-027–FR-031, FR-034, FR-035)."""
 
+import io
 import json
 from io import StringIO
 
 import pytest
 from django.core.management import CommandError, call_command
+from django.db import DatabaseError
 
+from apps.alertas import demo
 from apps.alertas.exportacao import para_csv
+from apps.alertas.management.commands.varrer_estoque import Command as VarrerEstoque
 from apps.alertas.selectors import varrer
 from apps.movimentacoes.models import Movimentacao
 from apps.movimentacoes.selectors import auditar_saldos
+from apps.movimentacoes.services import MovimentacaoInvalidaError
 from apps.produtos.models import Produto
+from apps.produtos.services import cadastrar_produto
 
 pytestmark = pytest.mark.django_db
 
@@ -28,6 +34,7 @@ def test_fr027_texto(cenario, agora):
     linhas = [linha for linha in saida.splitlines() if "REPOSIÇÃO NECESSÁRIA" in linha]
     ordem = [next(c for c in "EDAB" if cenario[c].codigo in linha) for linha in linhas]
     assert ordem == ["E", "D", "A", "B"]
+    assert "\x1b[" not in saida  # --no-color: sem sequências ANSI
 
 
 def test_fr028_csv_e_json(cenario, agora):
@@ -94,3 +101,74 @@ def test_fr035_popular_demo_idempotente(db):
     assert "0 produto(s) criado(s), 12 já existia(m)." in saida
     assert "Movimentações registradas: 0." in saida
     assert (Produto.objects.count(), Movimentacao.objects.count()) == antes
+
+
+def test_fr029_formato_invalido_sai_com_2(capsys):
+    """FR-029: argumento inválido → erro de uso do argparse (código 2)."""
+    with pytest.raises(SystemExit) as saida:
+        VarrerEstoque().run_from_argv(["manage.py", "varrer_estoque", "--formato", "pdf"])
+    assert saida.value.code == 2
+    assert "invalid choice" in capsys.readouterr().err
+
+
+def test_fr029_banco_indisponivel_sai_com_2(monkeypatch):
+    """FR-029: falha ao consultar o banco → código 2 e nenhum relatório parcial."""
+
+    def falhar(**_):
+        raise DatabaseError("conexão recusada")
+
+    monkeypatch.setattr("apps.alertas.management.commands.varrer_estoque.varrer", falhar)
+    saida = StringIO()
+    with pytest.raises(CommandError) as erro:
+        call_command("varrer_estoque", stdout=saida)
+    assert erro.value.returncode == 2 and "conexão recusada" in str(erro.value)
+    assert saida.getvalue() == ""
+
+
+def test_terminal_cp1252_troca_o_simbolo(cenario):
+    """Edge Case: terminal sem "⚠" (cp1252) → marcador "(!)" mantendo o texto do alerta."""
+    bruto = io.BytesIO()
+    saida = io.TextIOWrapper(bruto, encoding="cp1252", newline="")
+    call_command("varrer_estoque", stdout=saida, no_color=True)
+    saida.flush()
+    texto = bruto.getvalue().decode("cp1252")
+    assert "(!) REPOSIÇÃO NECESSÁRIA" in texto and "⚠" not in texto
+
+
+@pytest.mark.parametrize(
+    "nome",
+    ["PAPEL SULFITE A4 (RESMA 500 FLS)",
+     # lower() com acentos só é Unicode no PostgreSQL (002 research R3)
+     pytest.param("CANETA ESFEROGRÁFICA AZUL", marks=pytest.mark.postgres)],
+)  # fmt: skip
+def test_fr035_produto_do_usuario_nao_e_alterado(db, nome):
+    """FR-035: nome já cadastrado (em outra caixa) conta como existente e fica intacto."""
+    meu = cadastrar_produto(nome=nome, quantidade_inicial=7, estoque_minimo=1)
+    saida = rodar("popular_demo")
+    assert "11 produto(s) criado(s), 1 já existia(m)." in saida
+    meu.refresh_from_db()
+    assert (meu.nome, meu.quantidade_atual, meu.estoque_minimo) == (nome, 7, 1)
+    assert meu.movimentacoes.count() == 1 and Produto.objects.count() == 12
+
+
+def test_r14_falha_reverte_so_o_produto_e_nova_execucao_completa(db, monkeypatch):
+    """research R14: falha no 3º produto desfaz só ele (código 2); rodar de novo completa."""
+    original = demo.registrar_movimentacao
+    terceiro = demo.PRODUTOS_DEMO[2].nome
+
+    def falhar_no_terceiro(*, produto_id, **dados):
+        if Produto.objects.get(pk=produto_id).nome == terceiro:
+            raise MovimentacaoInvalidaError("falha simulada")
+        return original(produto_id=produto_id, **dados)
+
+    monkeypatch.setattr(demo, "registrar_movimentacao", falhar_no_terceiro)
+    with pytest.raises(CommandError) as erro:
+        call_command("popular_demo", stdout=StringIO())
+    assert erro.value.returncode == 2
+    assert list(Produto.objects.order_by("id").values_list("nome", flat=True)) == [
+        p.nome for p in demo.PRODUTOS_DEMO[:2]
+    ]
+    assert auditar_saldos() == []
+    monkeypatch.setattr(demo, "registrar_movimentacao", original)
+    assert "10 produto(s) criado(s), 2 já existia(m)." in rodar("popular_demo")
+    assert Produto.objects.count() == 12 and auditar_saldos() == []

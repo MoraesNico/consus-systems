@@ -3,6 +3,7 @@
 import re
 
 import pytest
+from django.template.loader import render_to_string
 
 from apps.alertas.exportacao import para_csv
 from apps.alertas.selectors import varrer
@@ -144,3 +145,22 @@ def test_navegacao_alertas_ativa_e_regiao_de_anuncio(client):
     conteudo = html(client.get("/alertas/"))
     assert re.search(r'<a class="navegacao__item" href="/alertas/" aria-current="page">', conteudo)
     assert re.search(r'id="anuncio-alertas"[^>]*role="status"[^>]*aria-live="polite"', conteudo)
+
+
+def test_fr004_fr024_coluna_cobertura(criar_produto):
+    """FR-004/FR-009/FR-024: mínimo 0 → "—" sem barra; senão a barra (meter) da 001."""
+    sem_minimo = criar_produto("Sem mínimo", 3, 0)
+    quarenta = criar_produto("Quarenta", 4, 10)
+    acima = criar_produto("Acima", 15, 10)
+    itens = {p.pk: p for p in varrer(incluir_ok=True).itens}
+
+    def coluna(produto) -> str:
+        linha = render_to_string("alertas/partials/linha_reposicao.html", {"produto": produto})
+        return linha.split('class="coluna-cobertura">', 1)[1].split("</td>", 1)[0]
+
+    assert "—" in coluna(itens[sem_minimo.pk]) and "meter" not in coluna(itens[sem_minimo.pk])
+    barra = coluna(itens[quarenta.pk])
+    assert 'role="meter"' in barra and 'aria-valuenow="40"' in barra
+    assert 'aria-valuemax="100"' in barra and "40%" in barra and "tom--reposicao" in barra
+    barra = coluna(itens[acima.pk])
+    assert "150%" in barra and "--valor: 100" in barra and "tom--ok" in barra

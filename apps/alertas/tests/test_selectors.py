@@ -74,10 +74,12 @@ def test_fr031_varredura_nao_grava(cenario, django_assert_max_num_queries):
     with django_assert_max_num_queries(2):
         varrer()
     assert (Produto.objects.count(), Movimentacao.objects.count()) == antes
-    assert total_em_alerta() == 4
+    with django_assert_max_num_queries(1):
+        assert total_em_alerta() == 4
 
 
-def test_fr022_fr025_resumo_do_painel(criar_produto, movimentar, agora, monkeypatch):
+def test_fr022_fr025_resumo_do_painel(criar_produto, movimentar, agora,
+                                      django_assert_max_num_queries):  # fmt: skip
     """FR-022–FR-025: KPIs, críticos, cobertura e últimas movimentações."""
     produtos = [criar_produto(f"Item {i:02d}", 100, 10) for i in range(8)]
     criar_produto("Zerado", 0, 5)
@@ -88,7 +90,8 @@ def test_fr022_fr025_resumo_do_painel(criar_produto, movimentar, agora, monkeypa
         movimentar(produtos[0], "SAIDA", 1)
     for _ in range(3):
         movimentar(produtos[1], "ENTRADA", 2)
-    resumo = resumo_painel()
+    with django_assert_max_num_queries(5):
+        resumo = resumo_painel()
     assert resumo.total_produtos == 12
     assert resumo.total_unidades == 100 * 8 - 4 + 6 + 0 + 4 + 10 + 50
     assert (resumo.total_em_alerta, resumo.total_sem_estoque) == (3, 1)

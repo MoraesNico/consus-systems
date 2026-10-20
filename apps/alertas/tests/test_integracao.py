@@ -7,6 +7,7 @@ import json
 import re
 
 import pytest
+from django.template.loader import render_to_string
 
 from apps.alertas.regras import Situacao, aviso_movimentacao, classificar, confirmacao_com_alerta
 from apps.produtos.models import Produto
@@ -33,6 +34,19 @@ def test_fr018_fr020_selo_igual_em_todas_as_telas(client, criar_produto, quantid
             continue
         assert "REPOSIÇÃO NECESSÁRIA" in conteudo and 'aria-hidden="true"' in conteudo
         assert ("SEM ESTOQUE" in conteudo) is (situacao is Situacao.SEM_ESTOQUE)
+
+
+@pytest.mark.parametrize(("quantidade", "minimo"), [(0, 0), (0, 5), (5, 5), (6, 5)])
+def test_fr021_selo_sem_consultas_extras(criar_produto, django_assert_num_queries, quantidade,
+                                         minimo):  # fmt: skip
+    """FR-021: o selo da 002 usa a variante da regra, com ou sem anotação, sem consultar o banco."""
+    criado = criar_produto(f"Variante {quantidade}/{minimo}", quantidade, minimo)
+    variante = classificar(quantidade, minimo).variante
+    for produto in (Produto.objects.get(pk=criado.pk),
+                    Produto.objects.com_situacao().get(pk=criado.pk)):  # fmt: skip
+        with django_assert_num_queries(0):
+            selo = render_to_string("produtos/partials/situacao.html", {"produto": produto})
+        assert produto.variante_situacao == variante and selo.count('aria-hidden="true"') >= 1
 
 
 def test_fr018_linha_rerenderizada_mostra_sem_estoque(client, criar_produto):
