@@ -248,6 +248,10 @@ nas telas; executar de novo e conferir que nada mudou.
   não o interprete como fórmula.
 - **Quantidades grandes** (ex.: 1.000.000): exibidas com separador de milhar na interface; a
   barra de cobertura nunca ultrapassa o limite visual.
+- **Sugestão acima do limite por movimentação** (1.000.000 unidades na feature 003): a sugestão é
+  exibida integralmente; a reposição exigirá mais de uma entrada.
+- **Saldo próximo do teto** (2.147.483.647): a sugestão é reduzida para não ultrapassar o teto e
+  todos os cálculos continuam corretos, sem erro na tela.
 
 ## Requirements *(mandatory)*
 
@@ -273,8 +277,9 @@ nas telas; executar de novo e conferir que nada mudou.
 - **FR-005**: Para cada produto em alerta, o sistema MUST calcular a **sugestão de reposição** =
   máx(2 × estoque mínimo − quantidade atual, 1), isto é, a quantidade que leva o produto a um
   estoque-alvo de 2× o mínimo (ao menos 1 unidade). Exemplos: atual 4 e mínimo 10 → 16; atual 10
-  e mínimo 10 → 10; atual 0 e mínimo 0 → 1. Registrar a sugestão como entrada MUST sempre tirar o
-  produto do alerta.
+  e mínimo 10 → 10; atual 0 e mínimo 0 → 1. A sugestão nunca leva o saldo acima do teto de
+  2.147.483.647 unidades (feature 003); respeitado esse teto, registrar a sugestão como entrada
+  MUST sempre tirar o produto do alerta.
 - **FR-006**: O sistema MUST ordenar os produtos em alerta por **criticidade**: (1) sem estoque
   primeiro; (2) maior déficit; (3) menor cobertura; (4) menor ID. A mesma ordem MUST ser usada no
   relatório, no painel, no terminal e na exportação.
@@ -430,7 +435,7 @@ nas telas; executar de novo e conferir que nada mudou.
   100%).
 - **SC-007**: 100% dos alertas exibidos combinam ícone + texto + cor; nenhum depende só de cor.
 - **SC-008**: Registrar a sugestão de reposição como entrada tira o produto do alerta em 100% dos
-  casos.
+  casos em que o dobro do mínimo cabe no teto de saldo.
 - **SC-009**: Após `popular_demo` em base vazia, a apresentação mostra ao menos 3 alertas e 1
   produto sem estoque; uma segunda execução não altera nenhuma contagem.
 
