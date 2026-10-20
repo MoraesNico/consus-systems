@@ -21,7 +21,7 @@
               <tbody>
                 {% for produto in resumo.criticos %}
                   <tr class="linha-critica {% if produto.situacao_estoque.variante == 'sem_estoque' %}tabela__linha--sem-estoque{% else %}tabela__linha--alerta{% endif %}">
-                    <td><a class="tabela__link" href="{{ produto.get_absolute_url }}"><span class="tabela__id">{{ produto.codigo }}</span> {{ produto.nome }}</a></td>
+                    <td class="celula-produto" title="{{ produto.codigo }} {{ produto.nome }}"><a class="tabela__link" href="{{ produto.get_absolute_url }}"><span class="tabela__id">{{ produto.codigo }}</span> {{ produto.nome }}</a></td>
                     <td>{% include "produtos/partials/situacao.html" %}</td>
                     <td class="num">{{ produto.quantidade_atual }} / {{ produto.estoque_minimo }}</td>
                     <td class="num">{% if produto.sugestao_reposicao %}+{{ produto.sugestao_reposicao }}{% else %}—{% endif %}</td>

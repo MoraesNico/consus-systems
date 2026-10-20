@@ -1109,6 +1109,7 @@
 
   .opcoes-segmentadas {
     display: inline-flex;
+    align-self: flex-start;
     border: var(--border-width) solid var(--color-border);
     border-radius: var(--radius-sm);
     background-color: var(--color-surface);
@@ -1251,9 +1252,21 @@
     min-inline-size: calc(var(--size-lg) * 3);
   }
 
+  .barra-progresso--compacta {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+  }
+
   .barra-progresso--compacta .barra-progresso__textos {
+    order: 2;
+    min-inline-size: var(--size-lg);
     justify-content: flex-end;
-    margin-block-end: var(--space-1);
+    margin: 0;
+  }
+
+  .barra-progresso--compacta .barra-progresso__trilha {
+    flex: 1;
   }
 
   .lista-cobertura {
@@ -1265,7 +1278,14 @@
 
   .lista-cobertura li {
     display: grid;
-    gap: var(--space-1);
+    gap: var(--space-2);
+  }
+
+  .celula-produto {
+    max-inline-size: calc(var(--size-lg) * 5);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .painel__secao {
