@@ -26,10 +26,20 @@ item 3) e as garantias de qualidade. Sem ela, nenhuma das outras pode ser demons
 
 | Atividade | Como esta feature atende | Requisitos |
 |-----------|--------------------------|------------|
-| Passo 1 — "altamente funcional e eficaz" | Sistema sobe com um comando em qualquer máquina; qualidade verificada por gates automáticos | FR-001…FR-010, FR-040…FR-043 |
+| Passo 1 — "altamente funcional e eficaz" | Sistema sobe com um comando em qualquer máquina; qualidade verificada por gates automáticos | FR-001…FR-010, FR-040…FR-044 |
 | Passo 2, item 1 — cadastro de produtos | Ponto de entrada "Produtos" na navegação; componentes de formulário, tabela e paginação | FR-012, FR-027 |
 | Passo 2, item 2 — entradas e saídas | Ponto de entrada "Movimentações"; diálogo de formulário; toasts de confirmação/erro | FR-012, FR-015…FR-017 |
 | Passo 2, item 3 — alerta visual destacado "⚠ REPOSIÇÃO NECESSÁRIA" | Ponto de entrada "Alertas" com espaço para o contador; componente de alerta visual destacado (ícone + texto + cor) | FR-012, FR-014, FR-028 |
+
+## Clarifications
+
+### Session 2026-10-20
+
+- Q: Como a navegação deve tratar as seções que ainda não existem (Produtos, Movimentações e Alertas antes das features 002–004)? → A: Os itens ficam sempre visíveis na ordem fixa; enquanto a rota da seção não existir, o item é exibido desabilitado (sem link, marcado como indisponível para tecnologias assistivas e com o texto "(em breve)"), e passa a ser link automaticamente quando a rota existir, sem alteração no layout.
+- Q: Que resposta `/saude/` deve dar quando o banco estiver indisponível, e quanto tempo esperar por ele? → A: Status 503 com JSON `{"status": "erro", "banco": "indisponivel", "versao": "<versão>"}`; a verificação desiste do banco após 2 segundos. Com sucesso: 200 e `{"status": "ok", "banco": "ok", "versao": "<versão>"}`.
+- Q: O catálogo `/design/` deve ficar disponível com a depuração desligada (como no ambiente em contêiner)? → A: Sim, sempre disponível: usa só dados fictícios, serve à avaliação do professor e às outras features; fica fora da navegação principal (link no rodapé) e marcado para não ser indexado.
+- Q: O sistema exige autenticação de usuários? → A: Não. Uso local e monousuário, como na atividade; não há login e o painel administrativo do framework não é exposto (evita alteração direta de saldo, Constituição I).
+- Q: A interface deve oferecer tema escuro? → A: Não. Apenas o tema claro "tinta sobre papel", inclusive quando o sistema operacional estiver em modo escuro; os tokens têm nomes semânticos para permitir um tema futuro.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -68,6 +78,9 @@ exibido com cabeçalho, navegação, região de notificações e contêiner de d
 6. **Given** uma resposta do servidor que dispara uma notificação de sucesso, **When** ela
    chega, **Then** um toast aparece na região de notificações, é anunciado por leitores de tela
    e some sozinho após 5 segundos.
+7. **Given** que a seção Produtos ainda não existe, **When** o usuário vê a navegação, **Then**
+   "Produtos" aparece desabilitado com "(em breve)" e sem link; **and when** a rota da seção
+   passa a existir, **then** o item vira link sem nenhuma mudança no layout.
 
 ---
 
@@ -119,10 +132,11 @@ sucesso; parar o banco e requisitar de novo, verificando a resposta de indisponi
 **Acceptance Scenarios**:
 
 1. **Given** aplicação e banco funcionando, **When** `/saude/` é requisitada, **Then** a resposta
-   indica sucesso, informa que o banco está ok e não é armazenada em cache.
-2. **Given** o banco parado, **When** `/saude/` é requisitada, **Then** a resposta indica falha
-   [NEEDS CLARIFICATION: qual código de status e quais campos a resposta de falha deve trazer, e
-   em quanto tempo a verificação deve desistir do banco?].
+   tem status 200 e JSON `{"status": "ok", "banco": "ok", "versao": …}` e não é armazenada em
+   cache.
+2. **Given** o banco parado, **When** `/saude/` é requisitada, **Then** a resposta chega em até 3
+   segundos com status 503 e JSON `{"status": "erro", "banco": "indisponivel", "versao": …}`,
+   sem detalhes internos.
 3. **Given** a orquestração de contêineres, **When** a aplicação inicia, **Then** ela só é
    marcada como saudável depois que `/saude/` responde com sucesso.
 
@@ -184,8 +198,8 @@ terminam com sucesso e que a cobertura é reportada.
 - Banco ainda inicializando quando a aplicação sobe: a aplicação espera o banco ficar pronto em
   vez de falhar (FR-003).
 - Banco cai com a aplicação no ar: páginas que não dependem de dados continuam respondendo;
-  `/saude/` reporta a indisponibilidade (FR-035); páginas que dependem do banco mostram a página
-  500 estilizada.
+  `/saude/` responde 503 em até 3 segundos (FR-035); páginas que dependem do banco mostram a
+  página 500 estilizada.
 - Chave secreta ausente com depuração desligada: a aplicação se recusa a iniciar e diz por quê
   (FR-005).
 - Variável de conexão com o banco ausente (desenvolvimento local): usa banco local de arquivo
@@ -193,8 +207,8 @@ terminam com sucesso e que a cobertura é reportada.
 - Porta da aplicação já ocupada na máquina: a porta publicada é configurável no arquivo de
   ambiente (FR-004).
 - Seções da navegação que ainda não existem (Produtos, Movimentações e Alertas antes das
-  features 002–004): [NEEDS CLARIFICATION: devem aparecer como links que levam à página 404,
-  como itens desabilitados com aviso de "em breve", ou ficar ocultas?].
+  features 002–004): itens visíveis, desabilitados, com "(em breve)"; viram links quando a rota
+  existir (FR-013).
 - Navegador sem JavaScript: navegação e formulários funcionam por página inteira; mensagens
   aparecem como avisos estáticos no topo do conteúdo (FR-015, FR-018).
 - Diálogo aberto e uma requisição falha: o erro aparece dentro do próprio diálogo, porque o
@@ -248,8 +262,11 @@ terminam com sucesso e que a cobertura é reportada.
   conter, nesta ordem, Painel, Produtos, Movimentações e Alertas; o item da seção atual MUST ser
   destacado visualmente e marcado como página atual para tecnologias assistivas, inclusive em
   subpáginas da seção (ex.: o detalhe de um produto ativa "Produtos").
-- **FR-013**: Itens de navegação cujas seções ainda não existem MUST ser tratados conforme
-  [NEEDS CLARIFICATION: link para a página 404, item desabilitado "em breve" ou item oculto?].
+- **FR-013**: Itens de navegação cuja rota de destino ainda não existe MUST continuar visíveis
+  na ordem fixa, exibidos como desabilitados (sem link, marcados como indisponíveis para
+  tecnologias assistivas, com o texto "(em breve)"); assim que a rota existir, o item MUST virar
+  link automaticamente, sem alteração no layout. A mesma regra vale para ações que apontem para
+  essas seções (ex.: a ação do estado vazio do Painel).
 - **FR-014** *(Atividade, Passo 2, item 3 — preparação)*: O item "Alertas" MUST reservar um
   espaço para o indicador numérico de produtos em alerta, que sem dados não exibe nada nem é
   anunciado; quando a fonte do contador existir (feature 004), o espaço MUST atualizá-lo ao abrir
@@ -298,7 +315,9 @@ terminam com sucesso e que a cobertura é reportada.
   tamanhos, bordas, raios, sombras, camadas, movimento) MUST ser definidos uma única vez como
   tokens nomeados em um único arquivo de tokens, e os estilos de componentes MUST referenciar
   apenas tokens semânticos — verificação automática: zero cores ou medidas literais fora do
-  arquivo de tokens (exceto as condições de breakpoint documentadas).
+  arquivo de tokens (exceto as condições de breakpoint documentadas). A interface MUST usar
+  somente o tema claro, inclusive quando o sistema operacional estiver em modo escuro (controles
+  nativos do navegador também claros).
 - **FR-024** *(Constituição IV — Acessibilidade)*: Todo par texto/fundo permitido pelo design
   system MUST atingir contraste WCAG 2.1 AA (4,5:1 para texto normal; 3:1 para texto grande,
   limites de componentes, indicador de foco e marcas gráficas) — verificação automática a partir
@@ -339,10 +358,9 @@ terminam com sucesso e que a cobertura é reportada.
   conteúdo vindo do servidor e disparar um toast de cada nível, usando o mesmo mecanismo que as
   features usarão; sem JavaScript, as demonstrações MUST degradar para navegação de página
   inteira (diálogo como página; toast como mensagem após redirecionamento).
-- **FR-033**: `/design/` MUST usar apenas dados fictícios rotulados como exemplo e MUST estar
-  disponível conforme [NEEDS CLARIFICATION: sempre, inclusive com depuração desligada, ou apenas
-  em ambiente de desenvolvimento?]; MUST NOT aparecer na navegação principal (acesso pelo
-  rodapé) e MUST pedir a mecanismos de busca que não a indexem.
+- **FR-033**: `/design/` MUST usar apenas dados fictícios rotulados como exemplo, MUST estar
+  disponível em qualquer ambiente (inclusive com depuração desligada), MUST NOT aparecer na
+  navegação principal (acesso pelo rodapé) e MUST pedir a mecanismos de busca que não a indexem.
 
 #### Verificação de saúde (`/saude/`)
 
@@ -350,8 +368,10 @@ terminam com sucesso e que a cobertura é reportada.
   formato JSON informando o estado geral e o estado do banco, sem exigir sessão nem proteção
   contra falsificação de requisição, sem permitir cache e sem expor detalhes internos (mensagens
   de exceção, credenciais, endereços); outros métodos MUST ser recusados com 405.
-- **FR-035**: Com o banco respondendo, `/saude/` MUST retornar 200 com estado geral e do banco
-  "ok"; com o banco indisponível, MUST retornar a resposta de falha definida em US3, cenário 2.
+- **FR-035**: Com o banco respondendo, `/saude/` MUST retornar 200 e
+  `{"status": "ok", "banco": "ok", "versao": "<versão>"}`; se o banco não responder em até 2
+  segundos (ou recusar a conexão), MUST retornar 503 e
+  `{"status": "erro", "banco": "indisponivel", "versao": "<versão>"}`.
 - **FR-036**: A orquestração de contêineres MUST usar `/saude/` como verificação de prontidão da
   aplicação, e o banco MUST ter verificação de prontidão própria da qual a aplicação depende.
 
@@ -380,6 +400,9 @@ terminam com sucesso e que a cobertura é reportada.
   quadros de outros sites, bloqueio de detecção de tipo de conteúdo e política de referência
   restrita à mesma origem; cookies de sessão e de proteção contra falsificação MUST poder ser
   marcados como seguros por variável de ambiente.
+- **FR-044** *(Constituição I — saldo só muda por movimentação)*: O sistema MUST NOT exigir
+  autenticação nesta versão e MUST NOT expor o painel administrativo do framework (nenhuma rota
+  de administração responde; acessá-la resulta em 404).
 
 ### Key Entities *(include if feature involves data)*
 
@@ -442,4 +465,5 @@ e contratos de interface), detalhadas em `data-model.md`:
   criarem.
 - Fora de escopo desta feature: entidades e regras de estoque (002–004), gráficos com biblioteca
   de visualização, idiomas além do português do Brasil, terminação HTTPS (o uso previsto é local;
-  cookies seguros ficam disponíveis por variável de ambiente para um eventual proxy).
+  cookies seguros ficam disponíveis por variável de ambiente para um eventual proxy),
+  autenticação/usuários e painel administrativo (FR-044), tema escuro (FR-023).
