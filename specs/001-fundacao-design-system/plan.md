@@ -87,7 +87,8 @@ specs/001-fundacao-design-system/
 │   └── componentes.md   # API dos componentes (classes, templates, template tags)
 ├── checklists/
 │   ├── requirements.md  # qualidade da spec (/speckit-specify)
-│   └── ux.md            # checklist de domínio (/speckit-checklist)
+│   ├── ux.md            # checklist de domínio: UX/acessibilidade/design system (/speckit-checklist)
+│   └── operacao.md      # checklist de domínio: contêineres/configuração/qualidade (/speckit-checklist)
 └── tasks.md             # Fase 2 (/speckit-tasks)
 
 docs/design/
