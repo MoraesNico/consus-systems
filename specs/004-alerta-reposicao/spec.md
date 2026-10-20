@@ -8,6 +8,16 @@
 
 **Input**: User description: "Sistema Automatizado de Alerta de Baixa (item 3 da atividade). O sistema cruza a Quantidade Atual com o Estoque Mínimo de Segurança; se a quantidade for menor ou igual ao mínimo, exibe um alerta visual destacado ⚠ REPOSIÇÃO NECESSÁRIA para aquele produto. A atividade pede 'relatório OU varredura automática' — o Consus entrega os DOIS: Relatório de Reposição com botão 'Executar varredura' (data/hora, total analisado, total em alerta; somente produtos em alerta, ordenados por criticidade; colunas #ID, nome, quantidade atual, mínimo, déficit, sugestão de reposição e barra de cobertura; estado vazio positivo; ação rápida '+ Entrada'; exportação CSV); varredura automática (contador de alertas no menu atualizado sozinho a cada ~30 s e imediatamente após cada movimentação; selo '⚠ REPOSIÇÃO NECESSÁRIA' / 'SEM ESTOQUE' na lista e no detalhe de produtos; aviso de reposição na confirmação da movimentação que faz um produto entrar em alerta); Painel com KPIs (produtos cadastrados, unidades em estoque, produtos em alerta, movimentações nas últimas 24 h), lista dos 5 mais críticos, lista de cobertura e últimas movimentações; paridade de terminal (`varrer_estoque` com formatos texto/csv/json e opção de falhar se houver alerta); dados de demonstração idempotentes (`popular_demo`). Regra central: em alerta ⇔ quantidade atual ≤ estoque mínimo (igual ao mínimo → alerta; mínimo + 1 → sem alerta; mínimo 0 e quantidade 0 → alerta/sem estoque). Acessibilidade: alerta nunca só por cor; mudanças do contador anunciadas a leitores de tela."
 
+## Clarifications
+
+### Session 2026-10-20
+
+- Q: A varredura de reposição deve ficar registrada em um histórico consultável ou é apenas calculada e exibida no momento? → A: Apenas calculada no momento em que é executada; nada é gravado e a data/hora exibida é a do cálculo (histórico de varreduras fica fora de escopo).
+- Q: Qual regra define a sugestão de reposição exibida para cada produto em alerta? → A: Repor até um estoque-alvo de 2× o estoque mínimo: sugestão = 2 × mínimo − quantidade atual, com no mínimo 1 unidade (caso de mínimo 0 e quantidade 0).
+- Q: Quando a confirmação de uma movimentação deve trazer o aviso de reposição? → A: Quando a movimentação piora a situação do produto (OK → REPOSIÇÃO NECESSÁRIA, OK → SEM ESTOQUE ou REPOSIÇÃO NECESSÁRIA → SEM ESTOQUE); quando a movimentação tira o produto do alerta, a confirmação informa que ele saiu do alerta; nos demais casos não há aviso extra.
+- Q: Qual formato o CSV exportado deve seguir para abrir corretamente em planilhas em português? → A: Separador ";", codificação UTF-8 com BOM, cabeçalho em português, números inteiros sem separador de milhar e arquivo `reposicao-AAAAMMDD-HHMM.csv`; a saída csv do terminal usa o mesmo layout, sem BOM.
+- Q: Como calcular a cobertura e o déficit quando o estoque mínimo é 0? → A: Quantidade 0 → cobertura 0% e déficit 0 (produto SEM ESTOQUE); quantidade > 0 com mínimo 0 → cobertura "não se aplica" (exibida como "—" e excluída da lista de cobertura do painel); nos demais casos a cobertura é o percentual arredondado para baixo.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Relatório de reposição sob demanda (Priority: P1)
@@ -77,12 +87,15 @@ produto ao mínimo e verificar contador, selo e aviso; depois alterar o estoque 
    **Then** a confirmação traz o aviso "SEM ESTOQUE" para aquele produto.
 3. **Given** um produto em alerta, **When** registro uma entrada que o leva acima do mínimo,
    **Then** a confirmação informa que o produto saiu do alerta e o contador diminui.
-4. **Given** uma página aberta e nenhuma interação, **When** o estoque é alterado em outra
+4. **Given** um produto em alerta com 2 unidades e mínimo 10, **When** registro uma entrada de 3
+   unidades, **Then** a confirmação não traz aviso extra (a situação continua REPOSIÇÃO
+   NECESSÁRIA) e o produto segue no contador e no relatório com os valores atualizados.
+5. **Given** uma página aberta e nenhuma interação, **When** o estoque é alterado em outra
    janela ou pelo terminal, **Then** o contador reflete a nova contagem em até 30 segundos.
-5. **Given** a lista de produtos, **When** ela é exibida, **Then** cada produto em alerta mostra
+6. **Given** a lista de produtos, **When** ela é exibida, **Then** cada produto em alerta mostra
    o selo "⚠ REPOSIÇÃO NECESSÁRIA", cada produto zerado mostra "SEM ESTOQUE" e os demais mostram
    a situação "OK" de forma discreta; o detalhe do produto mostra o mesmo selo.
-6. **Given** um usuário de leitor de tela, **When** o contador muda de valor, **Then** a nova
+7. **Given** um usuário de leitor de tela, **When** o contador muda de valor, **Then** a nova
    contagem é anunciada uma única vez; **When** uma verificação automática não muda o valor,
    **Then** nada é anunciado.
 
@@ -198,11 +211,18 @@ nas telas; executar de novo e conferir que nada mudou.
 
 ### Edge Cases
 
-- **Exatamente no mínimo** (atual = mínimo): em alerta; déficit 0; cobertura 100%.
+- **Exatamente no mínimo** (atual = mínimo): em alerta; déficit 0; cobertura 100%; sugestão igual
+  ao mínimo (estoque-alvo 2× o mínimo).
+- **Um abaixo do mínimo com mínimo grande** (ex.: atual 999, mínimo 1.000): cobertura exibida 99%
+  (arredondamento para baixo), nunca 100%.
 - **Um acima do mínimo** (atual = mínimo + 1): fora de alerta em todas as telas, no contador, no
   terminal e no CSV.
-- **Mínimo 0 e quantidade 0**: em alerta, variação "SEM ESTOQUE".
-- **Mínimo 0 e quantidade positiva**: nunca em alerta.
+- **Mínimo 0 e quantidade 0**: em alerta, variação "SEM ESTOQUE"; déficit 0; cobertura 0%;
+  sugestão de 1 unidade.
+- **Mínimo 0 e quantidade positiva**: nunca em alerta; cobertura "não se aplica" ("—"); fora da
+  lista de cobertura do painel.
+- **Entrada que tira de "SEM ESTOQUE" mas mantém em alerta** (ex.: 0 → 4 com mínimo 10): situação
+  melhora para REPOSIÇÃO NECESSÁRIA, sem aviso extra na confirmação.
 - **Nenhum produto cadastrado**: relatório e painel mostram estado vazio de orientação; contador
   0; terminal informa "Nenhum produto cadastrado" e termina com código 0 mesmo com a opção de
   falhar se houver alerta.
@@ -218,7 +238,8 @@ nas telas; executar de novo e conferir que nada mudou.
   desde o cadastro.
 - **Movimentação que não muda a situação** (ex.: saída em produto que continua OK): nenhuma
   advertência adicional na confirmação.
-- **Saída que zera um produto que já estava em alerta**: agravamento para "SEM ESTOQUE".
+- **Saída que zera um produto que já estava em alerta**: agravamento para "SEM ESTOQUE", com aviso
+  "SEM ESTOQUE" na confirmação.
 - **Falha temporária na verificação automática** (servidor indisponível): o contador mantém o
   último valor exibido, sem mensagem de erro intrusiva, e a verificação seguinte tenta de novo.
 - **Terminal sem suporte ao símbolo ⚠**: o comando substitui o símbolo por um marcador textual
@@ -245,13 +266,15 @@ nas telas; executar de novo e conferir que nada mudou.
 - **FR-003**: Um produto em alerta com quantidade atual 0 MUST ser classificado na variação mais
   grave "SEM ESTOQUE". As situações possíveis são mutuamente exclusivas: **OK**, **REPOSIÇÃO
   NECESSÁRIA** e **SEM ESTOQUE**.
-- **FR-004**: Para cada produto, o sistema MUST calcular o **déficit** (estoque mínimo −
-  quantidade atual, nunca negativo) e a **cobertura** (quantidade atual ÷ estoque mínimo, em
-  percentual inteiro).
-- **FR-005**: Para cada produto em alerta, o sistema MUST calcular uma **sugestão de reposição**
-  (quantidade a repor) que, se registrada como entrada, tire o produto do alerta com margem de
-  segurança [NEEDS CLARIFICATION: qual a regra da margem — repor até 2× o mínimo, até
-  mínimo + 1 ou até mínimo + 50%?].
+- **FR-004**: Para cada produto, o sistema MUST calcular o **déficit** = máx(estoque mínimo −
+  quantidade atual, 0) e a **cobertura** = ⌊quantidade atual × 100 ÷ estoque mínimo⌋ (percentual
+  inteiro arredondado para baixo). Casos especiais: quantidade 0 → cobertura 0%; estoque mínimo 0
+  com quantidade > 0 → cobertura "não se aplica" (exibida como "—").
+- **FR-005**: Para cada produto em alerta, o sistema MUST calcular a **sugestão de reposição** =
+  máx(2 × estoque mínimo − quantidade atual, 1), isto é, a quantidade que leva o produto a um
+  estoque-alvo de 2× o mínimo (ao menos 1 unidade). Exemplos: atual 4 e mínimo 10 → 16; atual 10
+  e mínimo 10 → 10; atual 0 e mínimo 0 → 1. Registrar a sugestão como entrada MUST sempre tirar o
+  produto do alerta.
 - **FR-006**: O sistema MUST ordenar os produtos em alerta por **criticidade**: (1) sem estoque
   primeiro; (2) maior déficit; (3) menor cobertura; (4) menor ID. A mesma ordem MUST ser usada no
   relatório, no painel, no terminal e na exportação.
@@ -262,9 +285,9 @@ nas telas; executar de novo e conferir que nada mudou.
   a página "Relatório de Reposição", acessível pelo menu principal, que executa a varredura ao ser
   aberta e novamente sempre que o usuário acionar "Executar varredura", sem sair da página.
 - **FR-008**: Cada varredura MUST exibir a data e a hora em que foi executada (dd/mm/aaaa HH:MM),
-  o total de produtos analisados, o total em alerta e quantos destes estão sem estoque
-  [NEEDS CLARIFICATION: a varredura deve ficar registrada em um histórico consultável ou é apenas
-  calculada e exibida no momento?].
+  o total de produtos analisados, o total em alerta e quantos destes estão sem estoque. A
+  varredura é calculada no momento em que é executada e não é registrada em histórico; a data/hora
+  exibida é a do cálculo.
 - **FR-009** *(Atividade, item 3 — "exibir um alerta visual destacado para aquele produto")*: O
   relatório MUST listar somente os produtos em alerta, na ordem de FR-006, com as colunas: ID no
   formato `#0001`, nome, quantidade atual, estoque mínimo, déficit, cobertura (barra horizontal +
@@ -296,11 +319,14 @@ nas telas; executar de novo e conferir que nada mudou.
 - **FR-018** *(Atividade, item 3 — "para aquele produto")*: A lista de produtos e o detalhe do
   produto MUST exibir, para cada produto, o selo de situação: "⚠ REPOSIÇÃO NECESSÁRIA" (em alerta
   com quantidade > 0), "SEM ESTOQUE" (quantidade 0) ou "OK" discreto, sem cor de alerta.
-- **FR-019**: Quando uma movimentação fizer um produto **entrar** em alerta, a mensagem de
-  confirmação da movimentação MUST incluir o aviso de reposição com o nome do produto, o saldo
-  resultante e o mínimo [NEEDS CLARIFICATION: o aviso aparece só na transição para o alerta, em
-  toda movimentação que termine com o produto em alerta, ou também no agravamento para "SEM
-  ESTOQUE" e na saída do alerta?].
+- **FR-019**: Quando uma movimentação (entrada ou saída) **piorar** a situação de um produto —
+  OK → REPOSIÇÃO NECESSÁRIA, OK → SEM ESTOQUE ou REPOSIÇÃO NECESSÁRIA → SEM ESTOQUE — a mensagem
+  de confirmação MUST incluir, em destaque de alerta, o aviso correspondente ("REPOSIÇÃO
+  NECESSÁRIA" ou "SEM ESTOQUE") com o nome do produto, o saldo resultante e o mínimo. Quando a
+  movimentação tirar o produto do alerta (→ OK), a confirmação MUST informar que ele saiu do
+  alerta de reposição. Nos demais casos (situação inalterada, ou SEM ESTOQUE → REPOSIÇÃO
+  NECESSÁRIA), MUST NOT haver aviso extra. O aviso vale tanto para a confirmação com a página
+  atualizada parcialmente quanto para a confirmação após recarregamento.
 - **FR-020**: O selo de situação MUST ser idêntico (texto, ícone, cor) em todas as telas onde
   aparece: relatório, lista e detalhe de produtos, painel.
 - **FR-021**: Nenhum alerta pode depender apenas de cor: todo selo ou contador de alerta MUST
@@ -315,7 +341,9 @@ nas telas; executar de novo e conferir que nada mudou.
   críticos (ordem de FR-006), cada um com selo e ação "+ Entrada", e um atalho para o relatório
   completo com o total em alerta; sem alertas, um estado vazio positivo.
 - **FR-024**: O painel MUST exibir a lista de cobertura com até 8 produtos de menor cobertura, do
-  menor para o maior percentual, cada um com barra horizontal proporcional e o percentual.
+  menor para o maior percentual (empates pelo menor ID), cada um com barra horizontal
+  proporcional (limitada visualmente a 100%) e o percentual; produtos com cobertura "não se
+  aplica" ficam fora da lista.
 - **FR-025**: O painel MUST exibir as 5 movimentações mais recentes (tipo, produto, quantidade,
   saldo resultante, data/hora).
 - **FR-026**: Indicadores e listas do painel MUST se atualizar sozinhos após qualquer
@@ -339,8 +367,12 @@ nas telas; executar de novo e conferir que nada mudou.
 **Exportação (História 5)**
 
 - **FR-032**: O relatório MUST oferecer "Exportar CSV", gerando um arquivo com as mesmas linhas,
-  a mesma ordem e os mesmos valores da tela no momento da exportação, com cabeçalho em português e
-  nome de arquivo contendo data e hora, compatível com planilhas em português do Brasil.
+  a mesma ordem e os mesmos valores da tela no momento da exportação. Formato: separador ";",
+  codificação UTF-8 com BOM, uma linha de cabeçalho em português (ID; Produto; Quantidade atual;
+  Estoque mínimo; Déficit; Cobertura (%); Sugestão de reposição; Situação), ID no formato `#0001`,
+  números inteiros sem separador de milhar, cobertura vazia quando "não se aplica", e nome de
+  arquivo `reposicao-AAAAMMDD-HHMM.csv` (data/hora da varredura). A saída csv do terminal
+  (FR-028) MUST usar o mesmo layout, sem BOM.
 - **FR-033**: Valores textuais exportados MUST ser protegidos contra interpretação como fórmula
   por planilhas (nomes iniciados por `=`, `+`, `-` ou `@`).
 
@@ -373,8 +405,8 @@ nas telas; executar de novo e conferir que nada mudou.
   regra de FR-002/FR-003.
 - **Item de reposição** *(derivado)*: produto em alerta + déficit + cobertura + sugestão de
   reposição + situação.
-- **Resultado de varredura**: data/hora, total analisado, total em alerta, total sem estoque e a
-  lista ordenada de itens de reposição.
+- **Resultado de varredura** *(derivado, não armazenado)*: data/hora do cálculo, total
+  analisado, total em alerta, total sem estoque e a lista ordenada de itens de reposição.
 - **Indicadores do painel** *(derivados)*: totais de produtos, unidades, alertas e movimentações
   das últimas 24 h.
 
@@ -420,5 +452,5 @@ nas telas; executar de novo e conferir que nada mudou.
 - Movimentações de "saldo inicial" (cadastro) não contam como movimentação no indicador de 24 h,
   que considera apenas entradas e saídas; elas aparecem, porém, em "últimas movimentações".
 - Fora de escopo: notificações externas (e-mail, mensagens), pedidos de compra automáticos,
-  previsão de demanda, histórico de alertas por produto e configuração do mínimo nesta feature
-  (feita na 002).
+  previsão de demanda, histórico de varreduras ou de alertas por produto e configuração do mínimo
+  nesta feature (feita na 002).
