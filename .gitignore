@@ -17,6 +17,7 @@ coverage.xml
 
 # Ambiente
 .env
+.env.teste-docker
 !.env.example
 
 # Agentes
