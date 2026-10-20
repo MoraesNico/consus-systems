@@ -1,0 +1,10 @@
+{% if pagina.paginator.num_pages > 1 %}
+<nav class="paginacao" aria-label="Paginação">
+  <span><span class="mono">{{ pagina.start_index }}–{{ pagina.end_index }}</span> de <span class="mono">{{ pagina.paginator.count }}</span> {{ rotulo_itens }}</span>
+  <span class="paginacao__controles">
+    {% if pagina.has_previous %}<a class="botao botao--secundario botao--sm" href="{% querystring pagina=pagina.previous_page_number %}"{% if alvo %} hx-get="{% querystring pagina=pagina.previous_page_number %}" hx-target="{{ alvo }}" hx-push-url="true"{% endif %}>{% icone "chevron-left" %}Anterior</a>{% else %}<a class="botao botao--secundario botao--sm" aria-disabled="true">{% icone "chevron-left" %}Anterior</a>{% endif %}
+    <span>Página <span class="mono">{{ pagina.number }}</span> de <span class="mono">{{ pagina.paginator.num_pages }}</span></span>
+    {% if pagina.has_next %}<a class="botao botao--secundario botao--sm" href="{% querystring pagina=pagina.next_page_number %}"{% if alvo %} hx-get="{% querystring pagina=pagina.next_page_number %}" hx-target="{{ alvo }}" hx-push-url="true"{% endif %}>Próxima{% icone "chevron-right" %}</a>{% else %}<a class="botao botao--secundario botao--sm" aria-disabled="true">Próxima{% icone "chevron-right" %}</a>{% endif %}
+  </span>
+</nav>
+{% endif %}

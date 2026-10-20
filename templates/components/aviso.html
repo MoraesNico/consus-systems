@@ -1,0 +1,7 @@
+<div class="aviso aviso--{{ nivel|default:'info' }}"{% if nivel == "erro" %} role="alert"{% endif %}>
+  <span class="aviso__icone">{% if nivel == "sucesso" %}{% icone "circle-check" %}{% elif nivel == "alerta" %}{% icone "triangle-alert" %}{% elif nivel == "erro" %}{% icone "octagon-x" %}{% else %}{% icone "info" %}{% endif %}</span>
+  <div class="aviso__corpo">
+    {% if titulo %}<p class="aviso__titulo">{{ titulo }}</p>{% endif %}
+    <p>{{ texto }}</p>
+  </div>
+</div>

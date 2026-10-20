@@ -1,0 +1,1 @@
+{% load static %}<svg class="icone icone--{{ tamanho|default:'sm' }}"{% if rotulo %} role="img"{% else %} aria-hidden="true"{% endif %} focusable="false">{% if rotulo %}<title>{{ rotulo }}</title>{% endif %}<use href="{% static 'vendor/lucide/sprite.svg' %}#{{ nome }}"></use></svg>

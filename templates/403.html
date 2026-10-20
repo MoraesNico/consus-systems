@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block titulo %}Acesso negado{% endblock %}
+{% block cabecalho_pagina %}{% endblock %}
+{% block conteudo %}
+<section class="pagina-erro">
+  <p class="pagina-erro__codigo">403</p>
+  <h1>Acesso negado</h1>
+  <p class="texto-atenuado">Esta ação não é permitida.</p>
+  <a class="botao botao--primario" href="{% url 'core:painel' %}">Voltar ao Painel</a>
+</section>
+{% endblock %}

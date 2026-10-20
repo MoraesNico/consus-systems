@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block titulo %}Página não encontrada{% endblock %}
+{% block cabecalho_pagina %}{% endblock %}
+{% block conteudo %}
+<section class="pagina-erro">
+  <p class="pagina-erro__codigo">404</p>
+  <h1>Página não encontrada</h1>
+  <p class="texto-atenuado">O endereço <code class="pagina-erro__caminho">{{ request.path }}</code> não existe no Consus. Confira o link ou volte ao Painel.</p>
+  <a class="botao botao--primario" href="{% url 'core:painel' %}">Voltar ao Painel</a>
+</section>
+{% endblock %}

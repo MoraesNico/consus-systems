@@ -1,0 +1,465 @@
+/*
+ * Consus — base: camadas, fontes, reset, elementos, foco e casca da aplicação.
+ * Só tokens (docs/design/design-system.md). Valores literais são proibidos aqui.
+ */
+
+@layer base, components, utilities;
+
+@font-face {
+  font-family: "IBM Plex Sans";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../fonts/IBMPlexSans-Regular-Latin1.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2190-2193, U+2212, U+2215;
+}
+
+@font-face {
+  font-family: "IBM Plex Sans";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("../fonts/IBMPlexSans-Medium-Latin1.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2190-2193, U+2212, U+2215;
+}
+
+@font-face {
+  font-family: "IBM Plex Sans";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("../fonts/IBMPlexSans-SemiBold-Latin1.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2190-2193, U+2212, U+2215;
+}
+
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../fonts/IBMPlexMono-Regular-Latin1.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2190-2193, U+2212, U+2215;
+}
+
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("../fonts/IBMPlexMono-SemiBold-Latin1.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2190-2193, U+2212, U+2215;
+}
+
+@layer base {
+  /* ---------- Reset mínimo ---------- */
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  * {
+    margin: 0;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  body {
+    min-block-size: 100dvh;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-size: var(--text-sm);
+    line-height: var(--leading-sm);
+    font-weight: var(--font-weight-regular);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  img,
+  svg {
+    display: block;
+    max-inline-size: 100%;
+  }
+
+  input,
+  button,
+  textarea,
+  select {
+    font: inherit;
+    color: inherit;
+  }
+
+  [hidden] {
+    display: none !important;
+  }
+
+  /* ---------- Tipografia composta (§2.2) ---------- */
+  h1 {
+    font-size: var(--text-xl);
+    line-height: var(--leading-xl);
+    font-weight: var(--font-weight-semibold);
+    letter-spacing: var(--tracking-tight);
+  }
+
+  h2 {
+    font-size: var(--text-lg);
+    line-height: var(--leading-lg);
+    font-weight: var(--font-weight-semibold);
+    letter-spacing: var(--tracking-tight);
+  }
+
+  h3 {
+    font-size: var(--text-md);
+    line-height: var(--leading-md);
+    font-weight: var(--font-weight-semibold);
+  }
+
+  p {
+    max-inline-size: var(--measure);
+  }
+
+  .rotulo {
+    font-size: var(--text-xs);
+    line-height: var(--leading-xs);
+    font-weight: var(--font-weight-semibold);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-caps);
+    color: var(--color-ink-muted);
+  }
+
+  .ajuda {
+    font-size: var(--text-xs);
+    line-height: var(--leading-xs);
+    color: var(--color-ink-subtle);
+  }
+
+  .corpo-longo {
+    font-size: var(--text-md);
+    line-height: var(--leading-md);
+    max-inline-size: var(--measure);
+  }
+
+  a {
+    color: var(--color-accent);
+    text-decoration-thickness: var(--border-width);
+    text-underline-offset: var(--space-1);
+  }
+
+  a:hover {
+    color: var(--color-accent-hover);
+  }
+
+  code,
+  pre,
+  kbd {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    line-height: var(--leading-xs);
+  }
+
+  kbd {
+    padding: 0 var(--space-2);
+    border: var(--border-width) solid var(--color-border-subtle);
+    border-radius: var(--radius-sm);
+    background-color: var(--color-surface);
+    color: var(--color-ink-muted);
+  }
+
+  table {
+    border-collapse: collapse;
+    inline-size: 100%;
+  }
+
+  /* ---------- Foco (§2.7) ---------- */
+  :focus-visible {
+    outline: var(--focus-width) solid var(--focus-color);
+    outline-offset: var(--focus-offset);
+  }
+
+  input:focus,
+  select:focus,
+  textarea:focus {
+    outline: var(--focus-width) solid var(--focus-color);
+    outline-offset: var(--focus-offset);
+  }
+
+  /* ---------- Controles de formulário (base; anatomia em components.css §4.2) ---------- */
+  input:not([type="checkbox"], [type="radio"], [type="hidden"]),
+  select,
+  textarea {
+    inline-size: 100%;
+    min-block-size: var(--size-md);
+    padding: 0 var(--space-4);
+    background-color: var(--color-surface);
+    border: var(--border-width) solid var(--color-border);
+    border-radius: var(--radius-sm);
+    color: var(--color-ink);
+  }
+
+  textarea {
+    padding-block: var(--space-3);
+    min-block-size: calc(var(--leading-sm) * 5 + var(--space-3) * 2);
+    resize: vertical;
+  }
+
+  ::placeholder {
+    color: var(--color-ink-subtle);
+    opacity: 1;
+  }
+
+  input:disabled,
+  select:disabled,
+  textarea:disabled {
+    background-color: var(--color-muted-strong);
+    color: var(--color-ink-disabled);
+    border-color: var(--color-border-subtle);
+    cursor: not-allowed;
+  }
+
+  input[readonly],
+  textarea[readonly] {
+    background-color: var(--color-muted);
+    border-color: var(--color-border-subtle);
+  }
+
+  /* ---------- Casca da aplicação (§4.16, §4.17, §5.1) ---------- */
+  .pular-conteudo {
+    position: absolute;
+    inset-inline-start: var(--space-3);
+    inset-block-start: calc(-1 * var(--header-h));
+    z-index: var(--z-toast);
+    padding: var(--space-3) var(--space-4);
+    background-color: var(--color-surface);
+    border: var(--border-width) solid var(--color-border);
+    color: var(--color-ink);
+    font-weight: var(--font-weight-medium);
+  }
+
+  .pular-conteudo:focus {
+    inset-block-start: var(--space-3);
+  }
+
+  .cabecalho-app {
+    position: sticky;
+    inset-block-start: 0;
+    z-index: var(--z-sticky);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
+    background-color: var(--color-surface);
+    border-block-end: var(--border-width-strong) solid var(--color-border);
+  }
+
+  .cabecalho-app__interno {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
+    inline-size: 100%;
+    max-inline-size: var(--container-max);
+    margin-inline: auto;
+    padding-inline: var(--page-margin);
+  }
+
+  .marca {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-3);
+    min-block-size: var(--header-h);
+    padding-inline-end: var(--space-5);
+    color: var(--color-ink);
+    font-family: var(--font-mono);
+    font-size: var(--text-md);
+    line-height: var(--leading-md);
+    font-weight: var(--font-weight-semibold);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-caps);
+    text-decoration: none;
+  }
+
+  .marca:hover {
+    color: var(--color-ink);
+  }
+
+  .marca__simbolo {
+    inline-size: var(--icon-sm);
+    block-size: var(--icon-sm);
+    background-color: var(--color-ink);
+  }
+
+  .navegacao {
+    display: flex;
+    flex: 1;
+    min-inline-size: 0;
+  }
+
+  .navegacao__lista {
+    display: flex;
+    align-items: stretch;
+    gap: var(--space-0);
+    padding: 0;
+    list-style: none;
+    overflow-x: auto;
+  }
+
+  .navegacao__item {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-3);
+    min-block-size: var(--header-h);
+    padding: 0 var(--space-4);
+    color: var(--color-ink-muted);
+    font-weight: var(--font-weight-medium);
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background-color var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
+  }
+
+  a.navegacao__item:hover {
+    color: var(--color-ink);
+    background-color: var(--color-muted);
+  }
+
+  .navegacao__item:focus-visible {
+    outline-offset: calc(-1 * var(--focus-width));
+  }
+
+  .navegacao__item[aria-current="page"] {
+    color: var(--color-ink);
+    font-weight: var(--font-weight-semibold);
+    box-shadow: inset 0 calc(-1 * var(--border-width-accent)) 0 0 var(--color-accent);
+  }
+
+  .navegacao__item[aria-disabled="true"] {
+    color: var(--color-ink-disabled);
+    cursor: not-allowed;
+  }
+
+  .navegacao__breve {
+    font-size: var(--text-xs);
+    line-height: var(--leading-xs);
+    font-weight: var(--font-weight-regular);
+  }
+
+  .navegacao__badge:empty {
+    display: none;
+  }
+
+  .conteudo-app {
+    flex: 1;
+    inline-size: 100%;
+    max-inline-size: var(--container-max);
+    margin-inline: auto;
+    padding: var(--space-7) var(--page-margin);
+  }
+
+  .conteudo-app:focus {
+    outline: var(--border-width) solid transparent;
+  }
+
+  .mensagens {
+    display: grid;
+    gap: var(--space-3);
+    margin-block-end: var(--space-6);
+  }
+
+  .cabecalho-pagina {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--space-5);
+    margin-block-end: var(--space-7);
+  }
+
+  .cabecalho-pagina__textos {
+    display: grid;
+    gap: var(--space-2);
+    min-inline-size: 0;
+  }
+
+  .cabecalho-pagina__sobretitulo {
+    font-size: var(--text-xs);
+    line-height: var(--leading-xs);
+    font-weight: var(--font-weight-semibold);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-caps);
+    color: var(--color-ink-subtle);
+  }
+
+  .cabecalho-pagina__descricao {
+    color: var(--color-ink-muted);
+  }
+
+  .cabecalho-pagina__sobretitulo:empty,
+  .cabecalho-pagina__descricao:empty,
+  .cabecalho-pagina__acoes:empty,
+  .mensagens:empty {
+    display: none;
+  }
+
+  .cabecalho-pagina__acoes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+  }
+
+  .rodape-app {
+    border-block-start: var(--border-width) solid var(--color-border-subtle);
+    color: var(--color-ink-subtle);
+    font-size: var(--text-xs);
+    line-height: var(--leading-xs);
+  }
+
+  .rodape-app__interno {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    max-inline-size: var(--container-max);
+    margin-inline: auto;
+    padding: var(--space-5) var(--page-margin);
+  }
+
+  .rodape-app a {
+    color: var(--color-ink-subtle);
+  }
+
+  .toasts {
+    position: fixed;
+    inset-block-start: calc(var(--header-h) + var(--space-5));
+    inset-inline: var(--page-margin);
+    z-index: var(--z-toast);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    pointer-events: none;
+  }
+
+  .toasts > * {
+    pointer-events: auto;
+  }
+
+  @media (min-width: 42rem) { /* --bp-md */
+    .toasts {
+      inset-inline-start: auto;
+      inline-size: var(--toast-w);
+    }
+  }
+
+  @media (max-width: 41.99rem) { /* --bp-md */
+    .marca {
+      inline-size: 100%;
+    }
+  }
+
+  [aria-busy="true"],
+  .htmx-request.regiao-ocupada {
+    opacity: var(--opacity-busy);
+    transition: opacity var(--duration-fast) var(--ease-standard);
+  }
+}

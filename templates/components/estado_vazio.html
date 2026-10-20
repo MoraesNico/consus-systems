@@ -1,0 +1,17 @@
+<div class="estado-vazio{% if compacto %} estado-vazio--compacto{% endif %}">
+  <span class="estado-vazio__icone">{% icone icone|default:"inbox" tamanho="md" %}</span>
+  <h3 class="estado-vazio__titulo">{{ titulo }}</h3>
+  {% if descricao %}<p class="estado-vazio__descricao">{{ descricao }}</p>{% endif %}
+  {% if acao_rotulo or acao_secundaria %}
+    <div class="cluster">
+      {% if acao_rotulo %}
+        {% if acao_url %}
+          <a class="botao botao--primario" href="{{ acao_url }}"{% if acao_alvo %} hx-get="{{ acao_url }}" hx-target="{{ acao_alvo }}" hx-swap="innerHTML"{% endif %}>{% icone acao_icone|default:"plus" %}{{ acao_rotulo }}</a>
+        {% else %}
+          <button type="button" class="botao botao--secundario" disabled>{{ acao_rotulo }} <span class="navegacao__breve">(em breve)</span></button>
+        {% endif %}
+      {% endif %}
+      {% if acao_secundaria %}<a class="botao botao--fantasma" href="{{ acao_secundaria_url }}">{{ acao_secundaria }}</a>{% endif %}
+    </div>
+  {% endif %}
+</div>

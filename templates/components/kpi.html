@@ -1,0 +1,5 @@
+{% if href %}<a class="cartao cartao--interativo kpi{% if destaque %} kpi--{{ destaque }}{% endif %}" href="{{ href }}"{% if id_kpi %} id="{{ id_kpi }}"{% endif %}>{% else %}<div class="cartao kpi{% if destaque %} kpi--{{ destaque }}{% endif %}"{% if id_kpi %} id="{{ id_kpi }}"{% endif %}>{% endif %}
+  <div class="kpi__topo"><span class="kpi__rotulo">{{ rotulo }}</span>{% if destaque == "alerta" %}{% icone "triangle-alert" %}{% elif destaque == "perigo" %}{% icone "octagon-x" %}{% elif icone %}{% icone icone %}{% endif %}</div>
+  <div class="kpi__linha"><span class="kpi__valor">{% if valor is None %}—{% else %}{{ valor }}{% endif %}</span>{% if delta is not None and delta != "" %}{% include "components/delta.html" with valor=delta sentido=delta_sentido %}{% endif %}</div>
+  {% if meta %}<p class="kpi__meta">{{ meta }}</p>{% endif %}
+{% if href %}</a>{% else %}</div>{% endif %}
