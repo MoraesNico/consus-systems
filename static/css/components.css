@@ -1094,6 +1094,108 @@
     color: var(--color-ink-muted);
   }
 
+  /* ---------- Movimentação (003) ---------- */
+  .campo--opcoes {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    min-inline-size: 0;
+  }
+
+  .campo--opcoes > legend {
+    padding: 0;
+    margin-block-end: var(--space-2);
+  }
+
+  .opcoes-segmentadas {
+    display: inline-flex;
+    border: var(--border-width) solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background-color: var(--color-surface);
+  }
+
+  .opcao-segmentada {
+    position: relative;
+    display: inline-flex;
+    cursor: pointer;
+  }
+
+  .opcao-segmentada + .opcao-segmentada {
+    border-inline-start: var(--border-width) solid var(--color-border);
+  }
+
+  .opcao-segmentada input {
+    position: absolute;
+    inline-size: var(--border-width);
+    block-size: var(--border-width);
+    opacity: 0;
+  }
+
+  .opcao-segmentada span {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-3);
+    min-block-size: var(--size-md);
+    padding: 0 var(--space-5);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-ink-muted);
+    transition: background-color var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
+  }
+
+  .opcao-segmentada:hover span {
+    background-color: var(--color-muted);
+    color: var(--color-ink);
+  }
+
+  .opcao-segmentada input:checked + span {
+    background-color: var(--color-ink);
+    color: var(--color-surface);
+  }
+
+  .opcao-segmentada input:focus-visible + span {
+    outline: var(--focus-width) solid var(--focus-color);
+    outline-offset: var(--focus-offset);
+  }
+
+  .previa-saldo {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    min-block-size: var(--size-md);
+    padding: 0 var(--space-4);
+    background-color: var(--color-muted);
+    border-inline-start: var(--border-width-callout) solid var(--color-border-subtle);
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .previa-saldo--alerta {
+    background-color: var(--color-warning-subtle);
+    border-inline-start-color: var(--color-warning-strong);
+    color: var(--color-warning-ink);
+  }
+
+  .quantidade--saida {
+    color: var(--color-ink);
+  }
+
+  .acoes-rapidas {
+    flex-wrap: nowrap;
+  }
+
+  .filtros__acoes {
+    align-self: flex-end;
+  }
+
+  .historico-produto {
+    display: grid;
+    gap: var(--space-4);
+  }
+
+  .historico-produto .cartao__cabecalho {
+    margin-block-end: 0;
+  }
+
   /* ---------- Catálogo (/design/) ---------- */
   .catalogo__sumario {
     display: grid;

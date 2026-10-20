@@ -14,7 +14,6 @@ def pytest_collection_modifyitems(config, items):
             item.add_marker(pular)
 
 
-
 @pytest.fixture(autouse=True)
 def _armazenamento_estatico_simples(settings):
     """O manifesto do WhiteNoise só existe após `collectstatic`; nos testes, storage simples."""

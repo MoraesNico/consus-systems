@@ -9,6 +9,7 @@
             {% for coluna in colunas %}
               <th scope="col" aria-sort="{{ coluna.aria_sort }}"{% if coluna.num %} class="num"{% endif %}><a href="{% url 'produtos:lista' %}{% querystring ordem=coluna.nova_ordem pagina=None %}" hx-get="{% url 'produtos:lista' %}{% querystring ordem=coluna.nova_ordem pagina=None %}" hx-target="#resultados" hx-swap="outerHTML" hx-push-url="true">{{ coluna.rotulo }}{% if coluna.aria_sort == "ascending" %} <span aria-hidden="true">↑</span>{% elif coluna.aria_sort == "descending" %} <span aria-hidden="true">↓</span>{% endif %}</a></th>
             {% endfor %}
+            <th scope="col" class="tabela__acoes"><span class="visualmente-oculto">Ações</span></th>
           </tr>
         </thead>
         <tbody>

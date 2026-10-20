@@ -1,0 +1,5 @@
+{% extends "components/dialogo.html" %}
+{% block titulo %}{{ titulo_dialogo }}{% endblock %}
+{% block descricao %}{% if produto %}Estoque mínimo: {{ produto.estoque_minimo }} · o saldo nunca fica negativo.{% else %}Escolha o produto, o tipo e a quantidade.{% endif %}{% endblock %}
+{% block corpo %}{% include "movimentacoes/partials/form_movimentacao.html" with em_dialogo=True %}{% endblock %}
+{% block rodape %}<button id="confirmar-movimentacao" class="botao botao--primario" type="submit" form="form-movimentacao"><span class="botao__carregando">{% icone "loader-circle" %}</span>Confirmar</button>{% endblock %}

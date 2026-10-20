@@ -4,4 +4,5 @@
   <td class="num">{{ produto.quantidade_atual }}</td>
   <td class="num">{{ produto.estoque_minimo }}</td>
   <td>{% include "produtos/partials/situacao.html" %}</td>
+  <td class="tabela__acoes">{% load movimentacoes_tags %}{% acoes_rapidas produto "lista" %}</td>
 </tr>

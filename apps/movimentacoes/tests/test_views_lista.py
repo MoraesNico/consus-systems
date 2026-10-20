@@ -30,8 +30,8 @@ def test_fr022_mais_recentes_primeiro(client, produto_com_saldo):
     """FR-022: ordem decrescente de registro."""
     produto = produto_com_saldo(saldo=10)
     registrar_movimentacao(produto_id=produto.pk, tipo="ENTRADA", quantidade=7)
-    conteudo = html(client.get("/movimentacoes/"))
-    assert conteudo.index("+7") < conteudo.index("Saldo inicial")
+    tabela = html(client.get("/movimentacoes/")).split('id="resultados"', 1)[1]
+    assert tabela.index("+7") < tabela.index("Saldo inicial")
 
 
 def test_fr023_fragmento_e_filtros(client, produto_com_saldo):

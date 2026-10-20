@@ -40,7 +40,7 @@ def test_fr012_fr014_get_pagina_com_pre_selecao(client, produto_com_saldo):
 def test_fr014_pre_selecao_invalida_ignorada(client, produto_com_saldo):
     """FR-014: produto inexistente e tipo INICIAL na URL são ignorados."""
     conteudo = html(client.get("/movimentacoes/nova/?produto=99999&tipo=INICIAL"))
-    assert " selected>" not in conteudo.split('name="produto"', 1)[1].split("</select>", 1)[0]
+    assert not re.search(r'<option value="\d+" selected>', conteudo)
     assert not re.search(r'name="tipo"[^>]*checked', conteudo)
 
 
