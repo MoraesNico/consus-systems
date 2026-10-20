@@ -7,6 +7,6 @@
     <div><dt class="rotulo">Quantidade atual</dt><dd class="kpi__valor">{{ produto.quantidade_atual }}</dd></div>
     <div><dt class="rotulo">Estoque mínimo</dt><dd class="resumo-produto__minimo mono">{{ produto.estoque_minimo }}</dd></div>
   </dl>
-  {% if produto.estoque_minimo %}{% include "components/barra_progresso.html" with rotulo="Saldo × mínimo" valor=produto.quantidade_atual maximo=produto.estoque_minimo tom=produto.situacao_estoque|default:"ok" %}{% endif %}
+  {% if produto.estoque_minimo %}{% include "components/barra_progresso.html" with rotulo="Saldo × mínimo" valor=produto.quantidade_atual maximo=produto.estoque_minimo tom=produto.variante_situacao|default:"ok" %}{% endif %}
   <p class="ajuda resumo-produto__datas">Cadastrado em <span class="mono">{{ produto.criado_em|date:"d/m/Y H:i" }}</span> · atualizado em <span class="mono">{{ produto.atualizado_em|date:"d/m/Y H:i" }}</span></p>
 </section>

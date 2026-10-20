@@ -1,16 +1,15 @@
-"""Painel placeholder da fundação (FR-022)."""
+"""Painel da fundação (FR-022 da 001), com o conteúdo entregue pela 004."""
 
 import pytest
 
 pytestmark = pytest.mark.django_db
 
 
-@pytest.mark.parametrize("variante", ["normal", "boost", "htmx"])
-def test_fr022_painel_com_estado_vazio(client, urls_sem_secoes, variante):
-    """FR-022: / mostra o Painel com a região de KPIs em estado vazio (página completa)."""
-    if variante != "normal":
-        client.defaults["HTTP_HX_REQUEST"] = "true"
+@pytest.mark.parametrize("variante", ["normal", "boost"])
+def test_fr022_painel_pagina_completa_sem_secoes(client, urls_sem_secoes, variante):
+    """FR-022: / mostra o Painel com a região #painel-kpis; sem produtos convida a cadastrar."""
     if variante == "boost":
+        client.defaults["HTTP_HX_REQUEST"] = "true"
         client.defaults["HTTP_HX_BOOSTED"] = "true"
     resposta = client.get("/")
     conteudo = resposta.content.decode()
@@ -18,9 +17,15 @@ def test_fr022_painel_com_estado_vazio(client, urls_sem_secoes, variante):
     assert "<html" in conteudo
     assert "<h1" in conteudo and "Painel</h1>" in conteudo
     assert '<section id="painel-kpis"' in conteudo
-    assert "Os indicadores aparecem aqui" in conteudo
-    assert "Cadastrar produto" in conteudo
-    assert "(em breve)" in conteudo.split('id="painel-kpis"', 1)[1]
+    regiao = conteudo.split('id="painel-kpis"', 1)[1]
+    assert "Cadastre o primeiro produto" in regiao
+    assert "(em breve)" in regiao
+
+
+def test_fr022_painel_fragmento_htmx(client):
+    """FR-022 (004): requisição HTMX parcial recebe só a região #painel-kpis."""
+    conteudo = client.get("/", HTTP_HX_REQUEST="true").content.decode()
+    assert conteudo.lstrip().startswith('<section id="painel-kpis"') and "<html" not in conteudo
 
 
 def test_fr022_acao_vira_link_quando_produtos_existe(client, urls_com_secoes):

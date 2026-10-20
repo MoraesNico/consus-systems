@@ -1,4 +1,4 @@
-<tr id="produto-{{ produto.pk|unlocalize }}" class="tabela__linha--interativa{% if produto.situacao_estoque == 'sem_estoque' %} tabela__linha--sem-estoque{% elif produto.em_alerta %} tabela__linha--alerta{% endif %}{% if destaque_id and produto.pk == destaque_id %} tabela__linha--destaque{% endif %}"{% if oob %} hx-swap-oob="true"{% endif %}>
+<tr id="produto-{{ produto.pk|unlocalize }}" class="tabela__linha--interativa{% if produto.variante_situacao == 'sem_estoque' %} tabela__linha--sem-estoque{% elif produto.em_alerta %} tabela__linha--alerta{% endif %}{% if destaque_id and produto.pk == destaque_id %} tabela__linha--destaque{% endif %}"{% if oob %} hx-swap-oob="true"{% endif %}>
   <td class="tabela__id"><a href="{{ produto.get_absolute_url }}">{{ produto.codigo }}</a></td>
   <td><a class="tabela__principal tabela__link" href="{{ produto.get_absolute_url }}">{{ produto.nome }}</a>{% if destaque_id and produto.pk == destaque_id %} <span class="badge badge--info">NOVO</span>{% endif %}</td>
   <td class="num">{{ produto.quantidade_atual }}</td>

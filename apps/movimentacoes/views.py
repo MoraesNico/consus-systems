@@ -160,10 +160,14 @@ def _registrar(request):
 
 
 def _sucesso(request, mov, origem: str):
+    from apps.alertas.regras import confirmacao_com_alerta
+
     produto = Produto.objects.com_situacao().get(pk=mov.produto_id)
-    texto = mov.mensagem_confirmacao
+    # Feature 004: a confirmação ganha o aviso de reposição quando a situação muda.
+    aviso = confirmacao_com_alerta(mov)
     if not eh_fragmento(request):
-        messages.success(request, texto)
+        nivel = messages.WARNING if aviso.nivel == "alerta" else messages.SUCCESS
+        messages.add_message(request, nivel, aviso.texto)
         destino = (
             reverse("movimentacoes:nova")
             + "?"
@@ -186,4 +190,4 @@ def _sucesso(request, mov, origem: str):
         resposta = reswap(resposta, "none")
         disparar_evento(resposta, "fechar-dialogo")
     disparar_evento(resposta, "estoque-alterado", carga)
-    return disparar_toast(resposta, "sucesso", texto)
+    return disparar_toast(resposta, aviso.nivel, aviso.texto)

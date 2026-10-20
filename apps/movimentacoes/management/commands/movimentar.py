@@ -52,3 +52,9 @@ class Command(BaseCommand):
         except MovimentacaoError as erro:
             raise CommandError(str(erro)) from erro
         self.stdout.write(self.style.SUCCESS(mov.mensagem_confirmacao))
+        from apps.alertas.regras import aviso_movimentacao
+
+        aviso = aviso_movimentacao(mov)
+        if aviso is not None:
+            estilo = self.style.WARNING if aviso.nivel == "alerta" else self.style.SUCCESS
+            self.stdout.write(estilo(aviso.texto))

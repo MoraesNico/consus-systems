@@ -18,12 +18,13 @@ def html(resposta) -> str:
 
 
 @pytest.fixture(params=["normal", "htmx", "boost"])
-def resposta_painel(request, client):
+def resposta_painel(request, client, db):
     if request.param in ("htmx", "boost"):
         client.defaults["HTTP_HX_REQUEST"] = "true"
     if request.param == "boost":
         client.defaults["HTTP_HX_BOOSTED"] = "true"
-    return client.get("/")
+    # /design/ devolve a página completa nas três variantes (o Painel ganhou fragmento na 004).
+    return client.get("/design/")
 
 
 def test_fr011_estrutura_da_casca(resposta_painel):
@@ -138,3 +139,10 @@ def test_constituicao_ii_js_proprio_pequeno():
     """Constituição II: JavaScript próprio com menos de 100 linhas."""
     linhas = CONSUS_JS.read_text().splitlines()
     assert len(linhas) < 100, len(linhas)
+
+
+def test_fr045_atalhos_declarativos():
+    """FR-045: data-atalho genérico que ignora campos editáveis, modificadores e diálogo aberto."""
+    js = CONSUS_JS.read_text()
+    for trecho in ("data-atalho", "ctrlKey", "metaKey", "altKey", "contenteditable", ".open"):
+        assert trecho in js, trecho

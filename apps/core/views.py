@@ -9,6 +9,7 @@ from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_http_methods, require_safe
+from django.views.decorators.vary import vary_on_headers
 
 from . import design_tokens
 from .forms import FormularioExemplo
@@ -93,10 +94,23 @@ ICONES = (
 
 
 @require_safe
+@never_cache
+@vary_on_headers("HX-Request", "HX-Target")
 def painel(request):
-    return render(
-        request, "core/painel.html", {"url_cadastro_produto": url_se_existir("produtos:novo")}
-    )
+    from apps.alertas.selectors import resumo_painel  # feature 004: KPIs do Painel
+
+    resumo = resumo_painel()
+    contexto = {
+        "resumo": resumo,
+        "meta_alerta": f"{resumo.total_sem_estoque} sem estoque",
+        "url_cadastro_produto": url_se_existir("produtos:novo"),
+        "url_lista_produtos": url_se_existir("produtos:lista"),
+        "url_relatorio": url_se_existir("alertas:relatorio"),
+        "url_movimentacoes": url_se_existir("movimentacoes:lista"),
+    }
+    if eh_fragmento(request):
+        return render(request, "core/partials/painel_kpis.html", contexto)
+    return render(request, "core/painel.html", contexto)
 
 
 def _tokens_por_secao() -> list[dict]:

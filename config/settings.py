@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     "apps.core",
     "apps.produtos",
     "apps.movimentacoes",
+    "apps.alertas",
 ]
 
 MIDDLEWARE = [
@@ -137,6 +138,12 @@ SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_REFERRER_POLICY = "same-origin"
 SESSION_COOKIE_SECURE = _bool("DJANGO_SECURE_COOKIES", False)
 CSRF_COOKIE_SECURE = SESSION_COOKIE_SECURE
+
+# Intervalo (s) do contador automático de alertas no menu (feature 004).
+try:
+    ALERTAS_INTERVALO_SEGUNDOS = max(int(os.environ.get("ALERTAS_INTERVALO_SEGUNDOS", "30")), 5)
+except ValueError:
+    ALERTAS_INTERVALO_SEGUNDOS = 30
 
 LOGGING = {
     "version": 1,

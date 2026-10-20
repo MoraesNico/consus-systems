@@ -135,6 +135,7 @@ def test_fr020_localizacao_pt_br():
     assert renderizado == "20/10/2026 14:30"
 
 
+@pytest.mark.django_db
 def test_fr043_cabecalhos_de_seguranca(client):
     """FR-043: respostas trazem X-Frame-Options, nosniff e Referrer-Policy."""
     resposta = client.get("/nao-existe/")

@@ -1,4 +1,4 @@
-<form id="form-produto" class="formulario" method="post" action="{% url 'produtos:novo' %}" novalidate{% if contexto == "dialogo" %} hx-post="{% url 'produtos:novo' %}" hx-target="#dialogo" hx-disabled-elt="#salvar-produto"{% endif %}>
+<form id="form-produto" class="formulario" method="post" action="{% url 'produtos:novo' %}" novalidate{% if contexto == "dialogo" %} hx-post="{% url 'produtos:novo' %}" hx-target="#dialogo" hx-disabled-elt="#salvar-produto" hx-disinherit="*"{% endif %}>
   {% csrf_token %}
   {{ form }}
   {% if contexto != "dialogo" %}

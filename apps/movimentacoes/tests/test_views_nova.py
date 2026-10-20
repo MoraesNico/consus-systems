@@ -120,6 +120,9 @@ def test_fr020_formulario_desabilita_envio_e_boost_recebe_pagina(client, produto
     assert "<html" in conteudo
     formulario = re.search(r'<form id="form-movimentacao"[^>]*>', conteudo).group(0)
     assert 'hx-disabled-elt="#confirmar-movimentacao"' in formulario
+    # A prévia do saldo fica dentro do form: sem disinherit ela herdaria o hx-disabled-elt e
+    # desabilitaria o botão no meio do clique (regressão encontrada no teste com navegador).
+    assert 'hx-disinherit="*"' in formulario
     assert 'id="confirmar-movimentacao"' in conteudo
 
 

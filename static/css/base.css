@@ -455,6 +455,12 @@
     .marca {
       inline-size: 100%;
     }
+
+    .navegacao {
+      flex: 1 1 100%;
+      margin-inline: calc(-1 * var(--page-margin));
+      border-block-start: var(--border-width) solid var(--color-border-subtle);
+    }
   }
 
   [aria-busy="true"],

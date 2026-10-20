@@ -1,0 +1,28 @@
+{% load alertas_tags %}<section id="relatorio" class="relatorio pilha pilha--compacta" aria-labelledby="titulo-resultado" hx-get="{% url 'alertas:relatorio' %}" hx-trigger="estoque-alterado from:body" hx-swap="outerHTML">
+  <p id="titulo-resultado" class="resumo-varredura">Varredura em <span class="mono">{{ resultado.executada_em|date:"d/m/Y H:i" }}</span> · <span class="mono">{{ resultado.total_analisado }}</span> produto{{ resultado.total_analisado|pluralize }} analisado{{ resultado.total_analisado|pluralize }} · <strong><span class="mono">{{ resultado.total_em_alerta }}</span> em alerta</strong> (<span class="mono">{{ resultado.total_sem_estoque }}</span> sem estoque)</p>
+  {% if resultado.sem_produtos %}
+    {% url 'produtos:novo' as url_novo %}
+    {% include "components/estado_vazio.html" with icone="package" titulo="Nenhum produto cadastrado" descricao="Cadastre produtos com estoque mínimo de segurança para acompanhar a reposição." acao_rotulo="Cadastrar produto" acao_url=url_novo %}
+  {% elif resultado.sem_alertas %}
+    <div class="estado-vazio estado-vazio--positivo">
+      <span class="estado-vazio__icone">{% icone "circle-check" tamanho="md" %}</span>
+      <h3 class="estado-vazio__titulo">Nenhum produto precisa de reposição</h3>
+      <p class="estado-vazio__descricao">{{ resultado.total_analisado }} produto{{ resultado.total_analisado|pluralize }} analisado{{ resultado.total_analisado|pluralize }}, todos acima do estoque mínimo.</p>
+    </div>
+  {% else %}
+    <div class="tabela-contenedor">
+      <table class="tabela">
+        <caption class="visualmente-oculto">Produtos que precisam de reposição, do mais crítico ao menos crítico</caption>
+        <thead>
+          <tr>
+            <th scope="col">ID</th><th scope="col">Produto</th><th scope="col">Situação</th>
+            <th scope="col" class="num">Atual</th><th scope="col" class="num">Mínimo</th><th scope="col" class="num">Déficit</th>
+            <th scope="col" class="coluna-cobertura">Cobertura</th><th scope="col" class="num">Sugestão</th>
+            <th scope="col" class="tabela__acoes"><span class="visualmente-oculto">Ações</span></th>
+          </tr>
+        </thead>
+        <tbody>{% for produto in resultado.itens %}{% include "alertas/partials/linha_reposicao.html" %}{% endfor %}</tbody>
+      </table>
+    </div>
+  {% endif %}
+</section>

@@ -1109,6 +1109,7 @@
 
   .opcoes-segmentadas {
     display: inline-flex;
+    align-self: flex-start;
     border: var(--border-width) solid var(--color-border);
     border-radius: var(--radius-sm);
     background-color: var(--color-surface);
@@ -1194,6 +1195,112 @@
 
   .historico-produto .cartao__cabecalho {
     margin-block-end: 0;
+  }
+
+  /* ---------- Alertas de reposição (004) ---------- */
+  .contador-alertas {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    min-inline-size: calc(var(--size-xs) - var(--space-2));
+    min-block-size: calc(var(--size-xs) - var(--space-2));
+    padding: 0 var(--space-2);
+    background-color: var(--color-warning);
+    border: var(--border-width) solid var(--color-border);
+    border-radius: var(--radius-sm);
+    color: var(--color-on-warning);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    line-height: var(--leading-xs);
+    font-weight: var(--font-weight-semibold);
+  }
+
+  .contador-alertas[hidden] {
+    display: none;
+  }
+
+  .contador-alertas .icone {
+    inline-size: var(--text-xs);
+    block-size: var(--text-xs);
+  }
+
+  .resumo-varredura {
+    color: var(--color-ink-muted);
+  }
+
+  .resumo-varredura strong {
+    color: var(--color-ink);
+    font-weight: var(--font-weight-semibold);
+  }
+
+  .estado-vazio--positivo {
+    border-style: solid;
+    border-color: var(--color-success);
+    background-color: var(--color-success-subtle);
+    color: var(--color-success-ink);
+  }
+
+  .estado-vazio--positivo .estado-vazio__icone {
+    color: var(--color-success);
+  }
+
+  .estado-vazio--positivo .estado-vazio__descricao {
+    color: var(--color-success-ink);
+  }
+
+  .coluna-cobertura {
+    min-inline-size: calc(var(--size-lg) * 3);
+  }
+
+  .barra-progresso--compacta {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+  }
+
+  .barra-progresso--compacta .barra-progresso__textos {
+    order: 2;
+    min-inline-size: var(--size-lg);
+    justify-content: flex-end;
+    margin: 0;
+  }
+
+  .barra-progresso--compacta .barra-progresso__trilha {
+    flex: 1;
+  }
+
+  .lista-cobertura {
+    display: grid;
+    gap: var(--space-4);
+    padding: 0;
+    list-style: none;
+  }
+
+  .lista-cobertura li {
+    display: grid;
+    gap: var(--space-2);
+  }
+
+  .celula-produto {
+    max-inline-size: calc(var(--size-lg) * 5);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .painel__secao {
+    display: grid;
+    align-content: start;
+    gap: var(--space-4);
+  }
+
+  .painel__secao .cartao__cabecalho {
+    margin-block-end: 0;
+  }
+
+  .tabela-contenedor--sem-borda {
+    border: 0;
+    border-block-start: var(--border-width) solid var(--color-border);
   }
 
   /* ---------- Catálogo (/design/) ---------- */
