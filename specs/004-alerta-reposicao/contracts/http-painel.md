@@ -33,7 +33,7 @@ resumo + contador do menu + folga para o layout da 001).
      ├ rodapé: link "Ver relatório completo (7)" → alertas:relatorio
      └ sem alertas: estado vazio positivo "Nenhum produto precisa de reposição."
 
-  ── Coluna lateral (4 col): "Cobertura do mínimo" — components/bar_list.html
+  ── Coluna lateral (4 col): "Cobertura do mínimo" — {% cobertura_bar_list resumo.cobertura %} → components/bar_list.html
      até 8 itens, menor cobertura primeiro (empate: menor ID); barra = min(cobertura, 100)%,
      valor "40%"; cor por situação; itens com cobertura "não se aplica" excluídos;
      sem itens: "Sem produtos com estoque mínimo definido."

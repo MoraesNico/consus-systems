@@ -68,9 +68,9 @@ Espelham as anotações para uso sem consulta. Tabela-verdade de referência (us
 
 | Código | Rótulo exibido | Gravidade | Variante visual |
 |--------|----------------|----------:|-----------------|
-| `OK` | OK | 0 | neutra (texto atenuado, sem cor de alerta, sem ícone de alerta) |
-| `REPOSICAO_NECESSARIA` | REPOSIÇÃO NECESSÁRIA | 1 | `alerta` — ícone SVG ⚠ + texto + cor de alerta |
-| `SEM_ESTOQUE` | SEM ESTOQUE | 2 | `perigo` — ícone SVG ⚠ + texto + cor de perigo |
+| `OK` | OK | 0 | selo `neutro` (texto atenuado, sem cor de alerta, sem ícone); barra `sucesso` |
+| `REPOSICAO_NECESSARIA` | REPOSIÇÃO NECESSÁRIA | 1 | selo e barra `alerta` — ícone SVG ⚠ + texto + cor de alerta |
+| `SEM_ESTOQUE` | SEM ESTOQUE | 2 | selo e barra `perigo` — ícone SVG ⚠ + texto + cor de perigo |
 
 ### Transições de situação (aviso na confirmação — FR-019)
 
@@ -129,8 +129,8 @@ Os itens da varredura e do painel são instâncias reais de `Produto` (para reut
 | `total_em_alerta` | int | `Count("id", filter=Q(quantidade_atual__lte=F("estoque_minimo")))` |
 | `total_sem_estoque` | int | `Count("id", filter=Q(quantidade_atual=0))` |
 | `movimentacoes_24h` | int | `ENTRADA`+`SAIDA` com `criado_em >= agora − 24 h` |
-| `criticos` | tuple[Produto, …] | 5 primeiros da ordem de criticidade (anotados) |
-| `cobertura` | tuple[Produto, …] | 8 menores `cobertura_percentual` não nulas (empate: menor ID; anotados) |
+| `criticos` | tuple[Produto, …] | 5 primeiros da ordem de criticidade (anotados, com `situacao_estoque`) |
+| `cobertura` | tuple[Produto, …] | 8 menores `cobertura_percentual` não nulas (empate: menor ID; anotados, com `situacao_estoque`) |
 | `ultimas_movimentacoes` | tuple[Movimentacao, …] | 5 mais recentes, com produto |
 
 ### `Aviso` (dataclass imutável)

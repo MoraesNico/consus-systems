@@ -114,7 +114,8 @@ apps/alertas/                                   # NOVO (feature 004)
 ├── demo.py                                     # PRODUTOS_DEMO + popular()
 ├── templatetags/
 │   ├── __init__.py
-│   └── alertas_tags.py                         # {% contador_alertas %}, filtro limitar_100
+│   └── alertas_tags.py                         # {% contador_alertas %}, {% cobertura_bar_list %},
+│                                               # filtro limitar_100
 ├── management/commands/
 │   ├── __init__.py
 │   ├── varrer_estoque.py
@@ -128,19 +129,23 @@ apps/alertas/                                   # NOVO (feature 004)
 │       └── anuncio.html                        # OOB para #anuncio-alertas (aria-live)
 └── tests/
     ├── __init__.py
-    ├── conftest.py                             # fábrica criar_produto(nome, quantidade, minimo)
+    ├── conftest.py                             # criar_produto, movimentar, cabeçalhos HTMX, agora fixo
     ├── test_regras.py
+    ├── test_transicoes.py
     ├── test_equivalencia_regra.py
     ├── test_selectors_varredura.py
     ├── test_selectors_painel.py
     ├── test_exportacao.py
     ├── test_views_relatorio.py
+    ├── test_views_exportacao.py
     ├── test_views_contador.py
     ├── test_templatetags.py
     ├── test_selo_produtos.py
-    ├── test_aviso_movimentacao.py
+    ├── test_integracao_movimentacoes.py
     ├── test_comando_varrer_estoque.py
     ├── test_comando_popular_demo.py
+    ├── test_concordancia.py
+    ├── test_acessibilidade.py
     └── test_desempenho.py
 
 apps/produtos/models.py                         # ALTERA (002): com_situacao() + deficit, cobertura_percentual (bigint)

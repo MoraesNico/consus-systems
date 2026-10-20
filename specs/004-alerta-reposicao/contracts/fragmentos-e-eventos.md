@@ -58,15 +58,19 @@ Parâmetros (`{% include … with … %}`): `percentual` (int ou `None`), `varia
 
 - `percentual_limitado = min(percentual, 100)` (filtro `limitar_100` em `alertas_tags`) — a barra
   nunca ultrapassa o trilho.
-- `variante` vem de `produto.situacao_estoque.variante` (SEM ESTOQUE → `perigo`, REPOSIÇÃO →
-  `alerta`) ou `sucesso` para OK.
+- `variante` vem de `produto.situacao_estoque.variante_barra` (SEM ESTOQUE → `perigo`,
+  REPOSIÇÃO NECESSÁRIA → `alerta`, OK → `sucesso`).
 - Trilho: borda 1px, raio 0–2px, altura e largura de token; a barra é decorativa
   (`aria-hidden`) porque o percentual é texto visível.
 
 ### `templates/components/bar_list.html` (estilo BarList do Tremor)
 
 Parâmetros: `itens` — iterável de dicionários com `rotulo`, `valor_texto`, `percentual` (0–100),
-`variante`, `href` (opcional).
+`variante`, `href` (opcional). Como templates Django não montam dicionários, o painel usa a
+*inclusion tag* `{% cobertura_bar_list resumo.cobertura %}` (`apps/alertas/templatetags/alertas_tags.py`),
+que converte cada `Produto` anotado em `{rotulo: "#0005 Cola branca 90 g", valor_texto: "0%",
+percentual: min(cobertura, 100), variante: situacao_estoque.variante_barra, href:
+produto.get_absolute_url()}` e renderiza o componente genérico.
 
 ```text
 <ul class="bar-list">

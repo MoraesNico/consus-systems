@@ -39,7 +39,7 @@ from apps.produtos.models import QUANTIDADE_MAXIMA     # teto de saldo (002/003)
 
 FATOR_ESTOQUE_ALVO: int = 2
 
-class Situacao(enum.StrEnum):          # valor = código; propriedades .rotulo, .gravidade, .variante
+class Situacao(enum.StrEnum):          # valor = código; propriedades .rotulo, .gravidade, .variante, .variante_barra
     OK = "OK"
     REPOSICAO_NECESSARIA = "REPOSICAO_NECESSARIA"
     SEM_ESTOQUE = "SEM_ESTOQUE"
@@ -74,7 +74,8 @@ def confirmacao_com_alerta(movimentacao) -> Aviso: ...                    # mov.
 | `confirmacao_com_alerta(mov)` | idem | `t = mov.mensagem_confirmacao`; piorou → `Aviso("alerta", f"{t}. {aviso.texto}")`; saiu do alerta → `Aviso("sucesso", f"{t}. {aviso.texto}")`; senão `Aviso("sucesso", t)` (texto da 003 intacto) |
 
 `Situacao.rotulo`: `"OK"`, `"REPOSIÇÃO NECESSÁRIA"`, `"SEM ESTOQUE"`.
-`Situacao.gravidade`: `0`, `1`, `2`. `Situacao.variante`: `"neutro"`, `"alerta"`, `"perigo"`.
+`Situacao.gravidade`: `0`, `1`, `2`. `Situacao.variante` (selo): `"neutro"`, `"alerta"`, `"perigo"`.
+`Situacao.variante_barra` (barras de cobertura): `"sucesso"`, `"alerta"`, `"perigo"`.
 
 ## 3. `apps/alertas/selectors.py` — leitura
 
@@ -96,7 +97,7 @@ def resumo_painel(*, agora: datetime | None = None) -> ResumoPainel: ...
 | `produtos_por_criticidade()` | 0 (lazy) | `com_situacao()` + `gravidade` + `sugestao_reposicao`, ordem `gravidade DESC, deficit DESC, cobertura_percentual ASC NULLS LAST, id ASC`; só em alerta salvo `incluir_ok=True` |
 | `varrer()` | 2 | `executada_em = agora or timezone.now()`; cada item é um `Produto` anotado com o atributo extra `situacao_estoque: Situacao` (= `classificar(...)`); totais coerentes com os itens (I-4) |
 | `total_em_alerta()` | 1 | `Produto.objects.em_alerta().count()` |
-| `resumo_painel()` | ≤ 5 | KPIs em 1 agregação + 24 h (1) + críticos (1) + cobertura (1) + últimas movimentações (1, `select_related("produto")`) |
+| `resumo_painel()` | ≤ 5 | KPIs em 1 agregação + 24 h (1) + críticos (1) + cobertura (1) + últimas movimentações (1, `select_related("produto")`); itens de `criticos` e `cobertura` recebem `situacao_estoque` como em `varrer()` |
 
 ## 4. `apps/alertas/exportacao.py` — serialização única (web e terminal)
 
