@@ -124,7 +124,7 @@ API de `apps/core/htmx.py`:
 | Função | Assinatura | Comportamento |
 |--------|-----------|---------------|
 | `eh_parcial` | `(request) -> bool` | `bool(request.htmx) and not request.htmx.boosted` |
-| `disparar_toast` | `(response, texto, nivel="sucesso") -> HttpResponse` | valida `nivel` (senão `ValueError`), acrescenta o evento `toast`, devolve a mesma resposta |
+| `disparar_toast` | `(response, texto, nivel="sucesso") -> HttpResponse` | valida `nivel` ∈ `sucesso\|info\|alerta\|erro` e `texto` com 1–200 caracteres (senão `ValueError`), acrescenta o evento `toast`, devolve a mesma resposta |
 | `fechar_dialogo` | `(response) -> HttpResponse` | acrescenta o evento `fechar-dialogo` |
 
 ## 5. Navegação e slot do badge

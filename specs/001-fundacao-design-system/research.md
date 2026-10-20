@@ -352,4 +352,12 @@ foi editado**; proponho incorporá-los ao contrato (seção "Convenções HTMX")
    `alertas:relatorio` e `alertas:contador` do contrato passam a ser também o "interruptor" que
    ativa os itens de navegação e o badge — não devem ser renomeados.
 9. **Correção de referência**: o repositório do Carbon é `carbon-design-system/carbon`
-   (o link `IBM/carbon` citado na constituição não existe publicamente). Não altera requisitos.
+   (o nome `IBM/carbon`, citado na constituição e no pedido da feature, não existe como
+   repositório público). Não altera requisitos.
+10. **`templates/components/` × API de classes**: o contrato lista "botões" e "tabela" entre os
+    templates de componentes. Esta feature os entrega como **API de classes** documentada no
+    catálogo (`<button class="botao botao--primario">`, `<table class="tabela">`), porque botões e
+    tabelas precisam de atributos HTMX e linhas arbitrárias que um `{% include %}` não expressa
+    bem. Os demais itens citados (badges, KPI, campo, diálogo, estado vazio, toast) são templates.
+    Proposta: ajustar o comentário da árvore em `docs/arquitetura.md` para "componentes compostos
+    (badges, kpi, campo, diálogo, estado vazio, toast…); botões e tabelas são classes CSS".

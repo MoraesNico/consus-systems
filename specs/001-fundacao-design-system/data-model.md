@@ -93,7 +93,7 @@ Fontes: cabeçalho `HX-Trigger` (evento `toast`) ou framework de mensagens do Dj
 | Campo | Tipo | Regra |
 |-------|------|-------|
 | `nivel` | enum | `sucesso` \| `info` \| `alerta` \| `erro` (inválido ⇒ tratado como `info` no cliente; no servidor, `disparar_toast` levanta `ValueError`) |
-| `texto` | str | 1–200 caracteres, frase curta com ponto final, sem HTML (escapado) |
+| `texto` | str | 1–200 caracteres (fora disso, `disparar_toast` levanta `ValueError`), frase curta com ponto final, exibido como texto puro (`textContent` no cliente; escapado no servidor) |
 
 Mapeamento de mensagens do Django (`MESSAGE_TAGS`): `DEBUG→info`, `INFO→info`,
 `SUCCESS→sucesso`, `WARNING→alerta`, `ERROR→erro`.

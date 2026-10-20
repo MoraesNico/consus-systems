@@ -18,7 +18,7 @@ renderiza sem JavaScript.
 | Tabela densa | `.tabela-contenedor` > `table.tabela` (+ `.tabela--compacta`); célula numérica `.num`; ID `.tabela__id`; linha `.tabela__linha--alerta` \| `--sem-estoque` | `aria-selected="true"` (linha), `tbody[aria-busy="true"]` |
 | Badge genérico | `.badge` + `--neutro` \| `--info` \| `--sucesso` \| `--alerta` \| `--perigo` | — |
 | Cartão | `.cartao` (+ `--amplo`, `--interativo`); `.cartao__cabecalho`, `.cartao__titulo` | interativo: hover/foco/ativo |
-| Grade | `.grade` > `.col-{n}` / `.col-md-{n}` / `.col-lg-{n}` (n = 1…12) | — |
+| Grade | `.grade` > filhos com `.col-md-{1..8}` (≥ 672 px) e `.col-lg-{1..12}` (≥ 1056 px); abaixo de 672 px cada filho ocupa a linha inteira | — |
 | Utilitários | `.visualmente-oculto`, `.num`, `.mono`, `.pilha`, `.cluster`, `.texto-atenuado`, `.texto-sutil` | — |
 
 Exemplo (botão que abre diálogo):

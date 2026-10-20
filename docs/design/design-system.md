@@ -251,7 +251,9 @@ dupla (cartão dentro de cartão com borda).
 | `--shadow-lg` | `var(--shadow-offset-lg) var(--shadow-offset-lg) 0 0 var(--color-ink)` | diálogo |
 
 **Regra de elevação (RUI-22):** quanto mais "acima" do papel, maior o deslocamento. **Nunca** em:
-tabela, campo, badge, aviso inline, cartão estático, cabeçalho. **Pressionar = afundar:** no
+tabela, campo, badge, aviso inline, cartão estático, cabeçalho. (O `box-shadow: inset` usado como
+**barra de destaque** — linha de tabela em alerta, borda de erro do campo — não é sombra de
+elevação: não tem deslocamento externo e some sem perda de informação no modo de cores forçadas.) **Pressionar = afundar:** no
 `:active`, o elemento translada `(offset, offset)` e a sombra vai a `--shadow-none` — o objeto
 "encosta" no papel.
 
@@ -283,11 +285,16 @@ anel ≥ 3:1 contra papel e superfície (§3).
 Media queries não aceitam `var()`: o literal em rem **deve** ser igual ao token documentado e vir
 acompanhado de comentário `/* --bp-lg */` (única exceção à regra "sem valores mágicos").
 
+`--grid-columns` vale 4 abaixo de 672 px, 8 de 672 a 1055 px e 12 a partir de 1056 px
+(redefinido por media query em `tokens.css`).
+
 Classes de grade (`utilities.css`): `.grade` (`display:grid;
 grid-template-columns: repeat(var(--grid-columns), minmax(0, 1fr)); column-gap:
-var(--grid-gutter); row-gap: var(--grid-gutter)`), `.col-{1..12}` (span), `.col-md-{n}`,
-`.col-lg-{n}`. Tudo alinhado à esquerda; nenhum bloco usa `margin-inline: auto` para centralizar
-conteúdo, exceto o contêiner da página.
+var(--grid-gutter); row-gap: var(--grid-gutter)`); abaixo de 672 px todo filho ocupa a linha
+inteira (`grid-column: 1 / -1`); `.col-md-{1..8}` vale a partir de 672 px e `.col-lg-{1..12}` a
+partir de 1056 px. Não há classe de span sem prefixo (evita exceder as 4 colunas do celular e
+criar colunas implícitas). Tudo alinhado à esquerda; nenhum bloco usa `margin-inline: auto` para
+centralizar conteúdo, exceto o contêiner da página.
 
 ### 2.9 Tabela
 
@@ -952,7 +959,7 @@ primária "Voltar ao Painel". A 500 não depende de banco nem de contexto e usa 
 | `static/css/tokens.css` | **única** fonte de valores: `:root { --palette-*; --color-*; --font-*; --text-*; --leading-*; --tracking-*; --space-*; --size-*; --icon-*; --border-*; --radius-*; --shadow-*; --focus-*; --grid-*; --page-margin; --bp-*; --table-*; --z-*; --duration-*; --ease-*; --opacity-*; --measure; … }` + media queries que trocam `--grid-gutter`/`--page-margin` + bloco `prefers-reduced-motion` |
 | `static/css/base.css` | `@layer` (ordem: `base, components, utilities`); `@font-face` das 5 fontes; reset mínimo; elementos (`html`, `body`, `h1–h3`, `a`, `table`, `input/select/textarea`); foco global; casca (cabeçalho, navegação, `main`, rodapé, link de pular) |
 | `static/css/components.css` | um bloco por componente da §4, só com tokens semânticos |
-| `static/css/utilities.css` | `.visualmente-oculto`, `.num`, `.mono`, `.grade`, `.col-*`, `.pilha` (gap vertical por token), `.cluster`, `.texto-atenuado`, `.texto-sutil` |
+| `static/css/utilities.css` | `.visualmente-oculto`, `.num`, `.mono`, `.grade`, `.col-md-*`, `.col-lg-*`, `.pilha` (gap vertical por token), `.cluster`, `.texto-atenuado`, `.texto-sutil` |
 | `static/vendor/lucide/sprite.svg` | subset da §2.13 + `LICENSE` (ISC) |
 | `static/fonts/` | `IBMPlexSans-{Regular,Medium,SemiBold}-Latin1.woff2`, `IBMPlexMono-{Regular,SemiBold}-Latin1.woff2` + `OFL.txt` |
 | `templates/components/` | `icone`, `campo`, `formulario`, `badge_estoque`, `delta`, `kpi`, `lista_barras`, `barra_categorias`, `rastreador`, `barra_progresso`, `dialogo`, `toast`, `aviso`, `estado_vazio`, `paginacao`, `navegacao` |
