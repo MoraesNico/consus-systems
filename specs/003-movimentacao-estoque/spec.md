@@ -20,6 +20,16 @@ saldo atual e estoque mínimo, e alimenta o alerta de reposição (feature 004),
 mudança de saldo. Toda mudança de saldo passa a ser explicada por um registro de movimentação
 imutável (livro-razão).
 
+## Clarifications
+
+### Session 2026-10-20
+
+- Q: Quando a Quantidade Inicial informada no cadastro for 0, o sistema deve registrar mesmo assim a movimentação "Saldo inicial"? → A: Sim — todo produto começa o histórico com exatamente uma movimentação "Saldo inicial", inclusive de quantidade 0 (saldo 0 → 0).
+- Q: Depois de registrar uma movimentação com sucesso pela página Nova movimentação, o que o operador deve ver? → A: A própria página Nova movimentação, pronta para o próximo registro: mesmo produto e tipo pré-selecionados, quantidade e observação vazias, saldo atual já atualizado e o aviso de sucesso — igual com ou sem o aprimoramento interativo.
+- Q: Quantas movimentações o detalhe do produto deve exibir? → A: As 10 mais recentes, com o link "Ver histórico completo" que abre a página Movimentações já filtrada por aquele produto.
+- Q: Existe limite máximo para a quantidade de uma movimentação e para o saldo? → A: Sim — Entrada e Saída aceitam no máximo 1.000.000 unidades por movimentação, e nenhum saldo pode passar de 2.147.483.647 unidades (uma Entrada que ultrapassaria esse teto é recusada com "Saldo máximo excedido: atual X, entrada Y, máximo 2.147.483.647"); o Saldo inicial respeita apenas o teto de saldo.
+- Q: Quando duas saídas do mesmo produto são confirmadas ao mesmo tempo, o que acontece com a que chega em segundo lugar? → A: Ela aguarda a primeira terminar e é avaliada com o saldo já atualizado — aceita se couber, recusada com "Saldo insuficiente: disponível X, solicitado Y" se não couber; o operador nunca recebe um erro genérico de "tente novamente".
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Registrar Entrada e Saída sem jamais negativar o saldo (Priority: P1)
@@ -40,7 +50,9 @@ registro novo). Entrega valor sozinha: o operador já controla o saldo de qualqu
 **Acceptance Scenarios**:
 
 1. **Given** o produto #0001 com saldo 10, **When** o operador registra uma Entrada de 5,
-   **Then** o saldo passa a 15 e é exibida a confirmação "Entrada registrada: #0001 … — saldo 10 → 15".
+   **Then** o saldo passa a 15, é exibida a confirmação "Entrada registrada: #0001 … — saldo 10 → 15"
+   e a página Nova movimentação volta pronta para o próximo registro (mesmo produto e tipo
+   pré-selecionados, quantidade e observação vazias, saldo atual 15).
 2. **Given** o produto #0001 com saldo 15, **When** o operador registra uma Saída/Venda de 4 com a
    observação "NF 123", **Then** o saldo passa a 11 e a movimentação guarda a observação.
 3. **Given** o produto #0001 com saldo 11, **When** o operador registra uma Saída de 11,
@@ -49,10 +61,11 @@ registro novo). Entrega valor sozinha: o operador já controla o saldo de qualqu
    **Then** nada é gravado, o saldo continua 3, o formulário é reapresentado com os valores
    digitados e a mensagem "Saldo insuficiente: disponível 3, solicitado 5".
 5. **Given** qualquer produto, **When** o operador informa quantidade 0, negativa, fracionária,
-   não numérica ou vazia, **Then** nada é gravado e o campo quantidade exibe uma mensagem específica.
+   não numérica, vazia ou acima de 1.000.000, **Then** nada é gravado e o campo quantidade exibe
+   uma mensagem específica.
 6. **Given** o produto #0001 com saldo 10, **When** duas saídas de 6 unidades são confirmadas ao
-   mesmo tempo (por dois operadores), **Then** apenas uma é aceita, a outra é recusada com
-   "Saldo insuficiente: disponível 4, solicitado 6" e o saldo final é 4.
+   mesmo tempo (por dois operadores), **Then** a segunda aguarda a primeira, apenas uma é aceita,
+   a outra é recusada com "Saldo insuficiente: disponível 4, solicitado 6" e o saldo final é 4.
 7. **Given** o navegador sem o aprimoramento interativo, **When** o
    operador registra uma movimentação pela página, **Then** o fluxo funciona por envio
    tradicional, com as mesmas regras e mensagens.
@@ -128,8 +141,10 @@ excluir.
    explicativo com a opção de limpar os filtros.
 5. **Given** qualquer movimentação exibida, **When** o operador procura editar ou excluir,
    **Then** não existe essa opção em nenhuma tela.
-6. **Given** o detalhe do produto #0001, **When** o operador o abre, **Then** vê o histórico de
-   movimentações desse produto, das mais recentes para as mais antigas.
+6. **Given** o detalhe do produto #0001 com 14 movimentações, **When** o operador o abre,
+   **Then** vê as 10 movimentações mais recentes desse produto, das mais recentes para as mais
+   antigas, e o link "Ver histórico completo", que abre a página Movimentações já filtrada pelo
+   produto #0001.
 
 ---
 
@@ -151,13 +166,15 @@ histórico dele tem exatamente uma movimentação "Saldo inicial" 0 → 10 e que
 1. **Given** o cadastro de produto, **When** o operador cadastra "Parafuso" com Quantidade
    Inicial 10, **Then** o produto nasce com saldo 10 e uma movimentação "Saldo inicial" de 10
    (0 → 10).
-2. **Given** um cadastro que falha por qualquer motivo, **When** a operação é desfeita, **Then**
+2. **Given** o cadastro de produto, **When** o operador cadastra "Arruela" com Quantidade
+   Inicial 0, **Then** o produto nasce com saldo 0 e uma movimentação "Saldo inicial" de 0 (0 → 0).
+3. **Given** um cadastro que falha por qualquer motivo, **When** a operação é desfeita, **Then**
    nem o produto nem a movimentação de saldo inicial ficam gravados.
-3. **Given** a página Nova movimentação, **When** o operador escolhe o tipo, **Then** "Saldo
+4. **Given** a página Nova movimentação, **When** o operador escolhe o tipo, **Then** "Saldo
    inicial" não está entre as opções (só o cadastro o gera).
-4. **Given** produtos cadastrados antes desta feature existir (sem histórico), **When** a feature
+5. **Given** produtos cadastrados antes desta feature existir (sem histórico), **When** a feature
    é instalada, **Then** cada um recebe uma movimentação "Saldo inicial" equivalente ao seu saldo
-   atual, de modo que o histórico explique o saldo.
+   atual (inclusive 0), de modo que o histórico explique o saldo.
 
 ---
 
@@ -195,7 +212,10 @@ código de saída de erro.
 - Saída com saldo 0: recusada com "Saldo insuficiente: disponível 0, solicitado Y".
 - Quantidade 0, negativa, fracionária (2,5 ou 2.5), com letras, vazia ou só espaços: recusada
   com mensagem no campo; nada gravado.
-- Quantidades muito grandes: o sistema não pode falhar nem gravar valores corrompidos.
+- Quantidade acima de 1.000.000 em uma Entrada ou Saída: recusada com mensagem no campo
+  ("Informe no máximo 1.000.000"); nada gravado.
+- Entrada que levaria o saldo acima de 2.147.483.647: recusada com "Saldo máximo excedido: atual
+  X, entrada Y, máximo 2.147.483.647"; nada gravado.
 - Observação com mais de 200 caracteres: recusada com mensagem; observação só com espaços é
   tratada como vazia; espaços nas pontas são removidos.
 - Produto inexistente (ID manipulado no endereço ou no formulário): recusado com mensagem no
@@ -206,7 +226,9 @@ código de saída de erro.
   formulário reapresentado exibe o saldo atual.
 - Duplo clique em "Confirmar": durante o processamento o botão fica indisponível, evitando
   registros duplicados acidentais.
-- Duas ou mais saídas simultâneas do mesmo produto: nunca levam o saldo abaixo de zero.
+- Duas ou mais saídas simultâneas do mesmo produto: são processadas uma de cada vez sobre o
+  saldo mais recente; nunca levam o saldo abaixo de zero e as excedentes recebem a mensagem de
+  saldo insuficiente (nunca um erro genérico).
 - Falha inesperada durante o registro: nada é gravado (nem movimentação nem alteração de saldo).
 - Histórico vazio (nenhuma movimentação, ou filtros sem resultado): estado vazio projetado com
   orientação e ação.
@@ -237,16 +259,20 @@ código de saída de erro.
   "Saldo insuficiente: disponível X, solicitado Y". Uma saída igual ao saldo é permitida e zera o
   saldo. *(Atividade, item 2 — regra de validação: "não pode permitir que o estoque de um produto
   fique negativo".)*
-- **FR-005**: A quantidade de uma movimentação MUST ser um número inteiro maior que zero; valores
-  zero, negativos, fracionários, não numéricos ou vazios são recusados com mensagem específica no
-  campo e nada é gravado.
+- **FR-005**: A quantidade de uma Entrada ou Saída MUST ser um número inteiro entre 1 e
+  1.000.000; valores zero, negativos, fracionários, não numéricos, vazios ou acima de 1.000.000
+  são recusados com mensagem específica no campo e nada é gravado. Nenhum saldo pode ultrapassar
+  2.147.483.647 unidades: uma Entrada que levaria o saldo acima desse teto é recusada com
+  "Saldo máximo excedido: atual X, entrada Y, máximo 2.147.483.647" e nada é gravado.
 - **FR-006**: A observação MUST ser opcional, com no máximo 200 caracteres (ex.: nº da nota
   fiscal, cliente); espaços nas pontas são removidos e textos maiores são recusados com mensagem.
 - **FR-007**: O registro MUST exigir um produto existente e um tipo entre **Entrada** e
   **Saída/Venda**; o tipo **Saldo inicial** nunca é selecionável pelo operador.
 - **FR-008**: O sistema MUST manter a regra do FR-004 mesmo quando várias movimentações do mesmo
-  produto são confirmadas ao mesmo tempo: as saídas aceitas nunca somam mais do que o saldo
-  disponível e as excedentes são recusadas com a mensagem do FR-004.
+  produto são confirmadas ao mesmo tempo: elas são processadas uma de cada vez, cada uma
+  aguardando a anterior e sendo avaliada sobre o saldo já atualizado; as saídas aceitas nunca
+  somam mais do que o saldo disponível e as excedentes são recusadas com a mensagem do FR-004,
+  nunca com um erro genérico.
 - **FR-009**: A regra do FR-004 MUST ser garantida em camadas independentes — na validação do
   formulário, na regra de negócio executada ao confirmar e no próprio armazenamento de dados —,
   de modo que nenhuma gravação que deixe saldo negativo seja aceita, mesmo que contorne a
@@ -261,7 +287,10 @@ código de saída de erro.
 
 - **FR-012**: O sistema MUST oferecer a página **Nova movimentação**, com seleção do produto
   (exibido como #ID e nome), do tipo, da quantidade e da observação, que pode ser aberta já com
-  produto e/ou tipo pré-selecionados.
+  produto e/ou tipo pré-selecionados. Após um registro bem-sucedido nessa página, ela é
+  reapresentada pronta para o próximo registro — mesmo produto e tipo pré-selecionados,
+  quantidade e observação vazias e saldo atual atualizado —, com e sem o aprimoramento
+  interativo.
 - **FR-013**: Cada linha da lista de produtos e a página de detalhe do produto MUST oferecer as
   ações rápidas **"+ Entrada"** e **"− Saída"**, que abrem um diálogo com produto e tipo
   preenchidos; sem o aprimoramento interativo, as mesmas ações levam à página Nova movimentação
@@ -302,9 +331,10 @@ código de saída de erro.
   (data inicial e data final, inclusivas), de forma combinável; os filtros ficam refletidos no
   endereço da página e são preservados ao navegar entre páginas.
 - **FR-024**: A página Movimentações MUST ser paginada com 25 movimentações por página.
-- **FR-025**: A página de detalhe do produto MUST exibir o histórico de movimentações daquele
+- **FR-025**: A página de detalhe do produto MUST exibir as 10 movimentações mais recentes daquele
   produto, das mais recentes para as mais antigas, com as mesmas colunas da página Movimentações
-  exceto a coluna produto.
+  exceto a coluna produto, e o link "Ver histórico completo", que abre a página Movimentações
+  filtrada por esse produto.
 - **FR-026**: Listas de movimentação sem resultado MUST exibir um estado vazio explicativo com uma
   ação (limpar filtros ou registrar movimentação); filtros de período inválidos (data malformada
   ou data inicial posterior à final) são sinalizados ao operador e não são aplicados.
@@ -313,15 +343,16 @@ código de saída de erro.
 
 - **FR-027**: Ao cadastrar um produto (feature 002), a Quantidade Inicial MUST gerar
   automaticamente a movimentação **Saldo inicial** (saldo anterior 0, saldo posterior igual à
-  quantidade inicial) na mesma operação indivisível do cadastro. *(Atividade, item 1:
-  "Quantidade Inicial", integrada ao item 2.)*
-- **FR-028**: A movimentação Saldo inicial MUST ser gerada apenas pelo cadastro, no máximo uma vez
-  por produto, e ser sempre a primeira do histórico do produto.
+  quantidade inicial) na mesma operação indivisível do cadastro, inclusive quando a Quantidade
+  Inicial é 0. *(Atividade, item 1: "Quantidade Inicial", integrada ao item 2.)*
+- **FR-028**: A movimentação Saldo inicial MUST ser gerada apenas pelo cadastro (ou pela carga
+  retroativa do FR-030), exatamente uma vez por produto, e ser sempre a primeira do histórico do
+  produto.
 - **FR-029**: Para todo produto, o saldo atual MUST ser igual à soma das suas movimentações
   (Saldo inicial + Entradas − Saídas), e o saldo posterior de cada movimentação MUST ser igual ao
   saldo anterior da movimentação seguinte do mesmo produto.
 - **FR-030**: Produtos que já existirem sem histórico quando esta feature for instalada MUST
-  receber uma movimentação Saldo inicial equivalente ao seu saldo atual.
+  receber uma movimentação Saldo inicial equivalente ao seu saldo atual (inclusive 0).
 
 **Terminal, acessibilidade e apresentação**
 
@@ -340,9 +371,10 @@ código de saída de erro.
 
 - **Movimentação**: registro imutável de uma mudança de saldo de um produto. Atributos: produto,
   tipo (Saldo inicial, Entrada, Saída/Venda), quantidade (inteiro; maior que zero, exceto no
-  Saldo inicial), saldo anterior, saldo posterior, observação (até 200 caracteres, opcional) e
-  data/hora do registro. Pertence a exatamente um produto; um produto tem zero ou mais
-  movimentações e no máximo uma de Saldo inicial.
+  Saldo inicial, que aceita 0; no máximo 1.000.000 em Entrada e Saída), saldo anterior, saldo
+  posterior, observação (até 200 caracteres, opcional) e data/hora do registro. Pertence a
+  exatamente um produto; todo produto tem exatamente uma movimentação de Saldo inicial (a
+  primeira) e zero ou mais Entradas e Saídas.
 - **Produto** *(definido na feature 002)*: item de estoque com ID numérico automático (exibido
   como #0001), nome, saldo atual (nunca negativo) e estoque mínimo de segurança. Nesta feature, o
   saldo atual só muda por meio de movimentações, e um produto com movimentações não pode ser
@@ -360,8 +392,12 @@ código de saída de erro.
 - **SC-002**: Em 100% das tentativas de saída maior que o saldo, o saldo permanece inalterado e
   maior ou igual a zero, nenhuma movimentação é gravada e a mensagem informa o disponível e o
   solicitado.
-- **SC-003**: Sob tentativas simultâneas de saída do mesmo produto, o saldo nunca fica negativo e
-  as saídas aceitas nunca somam mais que o saldo disponível.
+- **SC-003**: Sob tentativas simultâneas de saída do mesmo produto, o saldo nunca fica negativo:
+  com saldo 10 e 20 saídas simultâneas de 1 unidade, exatamente 10 são aceitas, 10 são recusadas
+  com a mensagem de saldo insuficiente, o saldo final é 0 e o histórico tem exatamente 10 saídas
+  novas; com saldo 10 e duas saídas simultâneas de 6, exatamente uma é aceita e o saldo final é
+  4. O resultado se repete em 100% de 20 execuções consecutivas da verificação, sem nenhum erro
+  inesperado.
 - **SC-004**: Em qualquer momento, para 100% dos produtos, o saldo atual é igual à soma das suas
   movimentações e a sequência de saldos anterior → posterior do histórico é contínua.
 - **SC-005**: Após a confirmação de uma movimentação, o saldo exibido e os indicadores de alerta
