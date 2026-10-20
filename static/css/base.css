@@ -396,6 +396,13 @@
     color: var(--color-ink-muted);
   }
 
+  .cabecalho-pagina__sobretitulo:empty,
+  .cabecalho-pagina__descricao:empty,
+  .cabecalho-pagina__acoes:empty,
+  .mensagens:empty {
+    display: none;
+  }
+
   .cabecalho-pagina__acoes {
     display: flex;
     flex-wrap: wrap;
