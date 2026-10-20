@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block titulo %}Produto não encontrado{% endblock %}
+{% block cabecalho_pagina %}{% endblock %}
+{% block conteudo %}
+<section class="pagina-erro">
+  <p class="pagina-erro__codigo">404</p>
+  <h1>Produto não encontrado</h1>
+  <p class="texto-atenuado">Não existe produto com este ID. Confira o código ou busque na lista.</p>
+  <a class="botao botao--primario" href="{% url 'produtos:lista' %}">Voltar para a lista</a>
+</section>
+{% endblock %}

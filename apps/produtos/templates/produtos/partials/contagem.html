@@ -1,0 +1,1 @@
+<p id="contagem-produtos" class="contagem texto-atenuado" role="status"{% if oob %} hx-swap-oob="true"{% endif %}>{% if page_obj.paginator.count %}<span class="mono">{{ page_obj.start_index }}–{{ page_obj.end_index }}</span> de <span class="mono">{{ page_obj.paginator.count }}</span>{% else %}<span class="mono">0</span> produtos{% endif %}</p>

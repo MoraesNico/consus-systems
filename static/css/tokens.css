@@ -1,0 +1,214 @@
+/*
+ * Consus — tokens do design system (docs/design/design-system.md §2, versão 1.0.0).
+ * ÚNICA fonte de valores visuais. Componentes usam apenas os tokens semânticos;
+ * as primitivas --palette-* só podem ser referenciadas dentro deste arquivo.
+ */
+
+:root {
+  color-scheme: light;
+
+  /* ---------- 2.1.1 Primitivas: neutros "tinta" (matiz ≈ 40°) ---------- */
+  --palette-neutral-0: #FFFFFF;
+  --palette-neutral-50: #F6F4EF;
+  --palette-neutral-100: #EEEBE3;
+  --palette-neutral-200: #E3DFD5;
+  --palette-neutral-300: #CFCABF;
+  --palette-neutral-400: #ADA89C;
+  --palette-neutral-500: #8A8579;
+  --palette-neutral-600: #6B665C;
+  --palette-neutral-700: #4F4B43;
+  --palette-neutral-800: #36332D;
+  --palette-neutral-900: #1A1814;
+
+  /* ---------- 2.1.1 Primitivas: acento e semânticas ---------- */
+  --palette-blue-50: #E6E9FA;
+  --palette-blue-600: #2337C6;
+  --palette-blue-700: #1B2A9E;
+  --palette-green-50: #E3F2E7;
+  --palette-green-700: #1F7A3E;
+  --palette-green-900: #14532B;
+  --palette-amber-50: #FFF3CC;
+  --palette-amber-400: #F2B300;
+  --palette-amber-700: #A87400;
+  --palette-amber-900: #6B4400;
+  --palette-red-50: #FCE8E6;
+  --palette-red-600: #C4261D;
+  --palette-red-700: #A11F17;
+  --palette-red-800: #8F1A13;
+
+  /* ---------- 2.1.2 Cores semânticas ---------- */
+  --color-paper: var(--palette-neutral-50);
+  --color-surface: var(--palette-neutral-0);
+  --color-surface-hover: var(--palette-neutral-50);
+  --color-muted: var(--palette-neutral-100);
+  --color-muted-strong: var(--palette-neutral-200);
+  --color-ink: var(--palette-neutral-900);
+  --color-ink-muted: var(--palette-neutral-700);
+  --color-ink-subtle: var(--palette-neutral-600);
+  --color-ink-disabled: var(--palette-neutral-500);
+  --color-border: var(--color-ink);
+  --color-border-subtle: var(--palette-neutral-300);
+  --color-accent: var(--palette-blue-600);
+  --color-accent-hover: var(--palette-blue-700);
+  --color-accent-subtle: var(--palette-blue-50);
+  --color-accent-ink: var(--palette-blue-700);
+  --color-on-accent: var(--palette-neutral-0);
+  --color-ring: var(--color-accent);
+  --color-success: var(--palette-green-700);
+  --color-success-subtle: var(--palette-green-50);
+  --color-success-ink: var(--palette-green-900);
+  --color-on-success: var(--palette-neutral-0);
+  --color-warning: var(--palette-amber-400);
+  --color-warning-strong: var(--palette-amber-700);
+  --color-warning-subtle: var(--palette-amber-50);
+  --color-warning-ink: var(--palette-amber-900);
+  --color-on-warning: var(--color-ink);
+  --color-danger: var(--palette-red-600);
+  --color-danger-hover: var(--palette-red-700);
+  --color-danger-subtle: var(--palette-red-50);
+  --color-danger-ink: var(--palette-red-800);
+  --color-on-danger: var(--palette-neutral-0);
+  --color-info: var(--color-accent);
+  --color-info-subtle: var(--color-accent-subtle);
+  --color-info-ink: var(--color-accent-ink);
+  --color-overlay: rgb(26 24 20 / 60%);
+
+  /* ---------- 2.2 Tipografia ---------- */
+  --font-sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, "DejaVu Sans Mono", monospace;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-md: 1rem;
+  --text-lg: 1.25rem;
+  --text-xl: 1.75rem;
+  --text-2xl: 2rem;
+  --text-3xl: 2.625rem;
+  --leading-xs: 1rem;
+  --leading-sm: 1.25rem;
+  --leading-md: 1.5rem;
+  --leading-lg: 1.75rem;
+  --leading-xl: 2.25rem;
+  --leading-2xl: 2.5rem;
+  --leading-3xl: 3rem;
+  --tracking-tight: -0.01em;
+  --tracking-normal: 0;
+  --tracking-caps: 0.06em;
+  --measure: 65ch;
+
+  /* ---------- 2.3 Espaçamento (Carbon spacing-01..13) ---------- */
+  --space-0: 0;
+  --space-1: 0.125rem;
+  --space-2: 0.25rem;
+  --space-3: 0.5rem;
+  --space-4: 0.75rem;
+  --space-5: 1rem;
+  --space-6: 1.5rem;
+  --space-7: 2rem;
+  --space-8: 2.5rem;
+  --space-9: 3rem;
+  --space-10: 4rem;
+  --space-11: 5rem;
+  --space-12: 6rem;
+  --space-13: 10rem;
+
+  /* ---------- 2.4 Tamanhos ---------- */
+  --size-xs: 1.5rem;
+  --size-sm: 2rem;
+  --size-md: 2.5rem;
+  --size-lg: 3rem;
+  --icon-sm: 1rem;
+  --icon-md: 1.25rem;
+  --header-h: 3rem;
+  --container-max: 82rem;
+  --form-max: 35rem;
+  --dialog-w-sm: 25rem;
+  --dialog-w-md: 35rem;
+  --toast-w: 22.5rem;
+
+  /* ---------- 2.5 Bordas e raios (px de propósito: filete não engrossa com zoom) ---------- */
+  --border-width: 1px;
+  --border-width-strong: 2px;
+  --border-width-accent: 3px;
+  --border-width-callout: 4px;
+  --radius-0: 0;
+  --radius-sm: 2px;
+
+  /* ---------- 2.6 Sombras sólidas deslocadas, sem desfoque ---------- */
+  --shadow-offset-sm: 2px;
+  --shadow-offset-md: 4px;
+  --shadow-offset-lg: 6px;
+  --shadow-none: 0 0 0 0 transparent;
+  --shadow-sm: var(--shadow-offset-sm) var(--shadow-offset-sm) 0 0 var(--color-ink);
+  --shadow-md: var(--shadow-offset-md) var(--shadow-offset-md) 0 0 var(--color-ink);
+  --shadow-lg: var(--shadow-offset-lg) var(--shadow-offset-lg) 0 0 var(--color-ink);
+
+  /* ---------- 2.7 Foco ---------- */
+  --focus-width: 2px;
+  --focus-offset: 2px;
+  --focus-color: var(--color-ring);
+
+  /* ---------- 2.8 Grid e layout ---------- */
+  --grid-columns: 4;
+  --grid-gutter: var(--space-5);
+  --page-margin: var(--space-5);
+  --bp-md: 42rem;
+  --bp-lg: 66rem;
+  --bp-xl: 82rem;
+  --bp-max: 99rem;
+
+  /* ---------- 2.9 Tabela ---------- */
+  --table-row-sm: var(--size-sm);
+  --table-row-md: var(--size-md);
+  --table-cell-px: var(--space-4);
+
+  /* ---------- 2.10 Camadas ---------- */
+  --z-base: 0;
+  --z-raised: 1;
+  --z-sticky: 100;
+  --z-dropdown: 200;
+  --z-toast: 400;
+
+  /* ---------- 2.11 Movimento (Carbon productive) ---------- */
+  --duration-instant: 0ms;
+  --duration-fast: 70ms;
+  --duration-moderate: 150ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0.38, 0.9);
+  --ease-entrance: cubic-bezier(0, 0, 0.38, 0.9);
+  --ease-exit: cubic-bezier(0.2, 0, 1, 0.9);
+
+  /* ---------- 2.12 Opacidade ---------- */
+  --opacity-busy: 0.55;
+}
+
+@media (min-width: 42rem) { /* --bp-md */
+  :root {
+    --grid-columns: 8;
+    --page-margin: var(--space-6);
+  }
+}
+
+@media (min-width: 66rem) { /* --bp-lg */
+  :root {
+    --grid-columns: 12;
+    --grid-gutter: var(--space-6);
+    --page-margin: var(--space-7);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-fast: var(--duration-instant);
+    --duration-moderate: var(--duration-instant);
+  }
+}
+
+/* 2.14 Cores forçadas: o navegador remove sombras e fundos; bordas e foco usam cores do sistema. */
+@media (forced-colors: active) {
+  :root {
+    --color-border: CanvasText;
+    --focus-color: Highlight;
+  }
+}

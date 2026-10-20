@@ -1,0 +1,11 @@
+{% extends "components/dialogo.html" %}
+{% block titulo %}Exemplo de formulário{% endblock %}
+{% block descricao %}Demonstração do padrão de validação: envie vazio para ver o erro 422.{% endblock %}
+{% block corpo %}
+<form id="formulario-exemplo" class="formulario" method="post" action="{% url 'core:design' %}" hx-post="{% url 'core:design' %}" hx-target="#dialogo" novalidate>
+  {% csrf_token %}
+  <input type="hidden" name="exemplo" value="formulario">
+  {{ form }}
+</form>
+{% endblock %}
+{% block rodape %}<button class="botao botao--primario" type="submit" form="formulario-exemplo" hx-disabled-elt="this"><span class="botao__carregando">{% icone "loader-circle" %}</span>Enviar exemplo</button>{% endblock %}

@@ -1,0 +1,249 @@
+{% extends "base.html" %}
+{% block titulo %}Catálogo de design{% endblock %}
+{% block head_extra %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+{% block sobretitulo %}Design system v1.0.0{% endblock %}
+{% block titulo_pagina %}Catálogo de design{% endblock %}
+{% block descricao %}High-Density Neo-Brutalism Sóbrio / Swiss Grid Enterprise. Tokens e componentes vivos do Consus — dados rotulados "Exemplo" são fictícios.{% endblock %}
+{% block conteudo %}
+<div class="pilha pilha--ampla">
+  <nav class="cartao catalogo__sumario" aria-label="Sumário do catálogo">
+    <p class="rotulo">Tokens</p>
+    <ul>{% for secao in secoes_tokens %}<li><a href="#{{ secao.ancora }}">{{ secao.titulo }}</a></li>{% endfor %}</ul>
+    <p class="rotulo">Componentes</p>
+    <ul>{% for c in componentes %}<li><a href="#{{ c.ancora }}">{{ c.nome }}</a></li>{% endfor %}</ul>
+  </nav>
+
+  {# ====================== TOKENS ====================== #}
+  {% for secao in secoes_tokens %}
+    <section id="{{ secao.ancora }}" class="catalogo__secao" aria-labelledby="titulo-{{ secao.ancora }}">
+      <header><p class="rotulo">Tokens</p><h2 id="titulo-{{ secao.ancora }}">{{ secao.titulo }}</h2></header>
+      {% if secao.ancora == "contraste" %}
+        <div class="tabela-contenedor">
+          <table class="tabela tabela--compacta">
+            <caption class="visualmente-oculto">Pares de contraste WCAG 2.1 calculados a partir de tokens.css</caption>
+            <thead><tr><th scope="col">Primeiro plano</th><th scope="col">Fundo</th><th scope="col" class="num">Razão</th><th scope="col" class="num">Mínimo</th><th scope="col">Resultado</th><th scope="col">Uso</th></tr></thead>
+            <tbody>
+              {% for par in pares_contraste %}
+                <tr>
+                  <td class="mono">{{ par.primeiro_plano }} <span class="texto-sutil">{{ par.hex_primeiro_plano }}</span></td>
+                  <td class="mono">{{ par.fundo }} <span class="texto-sutil">{{ par.hex_fundo }}</span></td>
+                  <td class="num">{{ par.razao|floatformat:2 }}:1</td>
+                  <td class="num">{% if par.isento %}—{% else %}{{ par.minimo|floatformat:1 }}:1{% endif %}</td>
+                  <td>{% if par.isento %}<span class="badge">Isento</span>{% elif par.aprovado %}<span class="badge badge--sucesso">{% icone "circle-check" %}AA</span>{% else %}<span class="badge badge--perigo">{% icone "octagon-x" %}Falha</span>{% endif %}</td>
+                  <td>{{ par.uso }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% elif secao.ancora == "cores" %}
+        <div class="grade">
+          {% for t in secao.tokens %}
+            <div class="amostra-cor col-md-2 col-lg-2"><span class="amostra-cor__cor" style="background-color: var({{ t.nome }})"></span><code>{{ t.nome }}</code><span class="ajuda mono">{{ t.resolvido }}</span></div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="tabela-contenedor">
+          <table class="tabela tabela--compacta">
+            <caption class="visualmente-oculto">Tokens de {{ secao.titulo|lower }}</caption>
+            <thead><tr><th scope="col">Token</th><th scope="col">Valor</th><th scope="col">Amostra</th></tr></thead>
+            <tbody>
+              {% for t in secao.tokens %}
+                <tr>
+                  <td class="mono">{{ t.nome }}</td>
+                  <td class="mono texto-atenuado">{{ t.valor }}</td>
+                  <td>{% if secao.ancora == "espacamento" %}<span class="amostra-espaco" style="display: block; inline-size: var({{ t.nome }})"></span>{% elif secao.ancora == "sombras" and "shadow-" in t.nome and "offset" not in t.nome %}<span class="amostra-sombra" style="display: block; box-shadow: var({{ t.nome }})"></span>{% elif t.nome|slice:":7" == "--text-" %}<span style="font-size: var({{ t.nome }})">Consus 1.240</span>{% endif %}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% endif %}
+    </section>
+  {% endfor %}
+
+  {# ====================== COMPONENTES ====================== #}
+  <section id="botao" class="catalogo__secao" aria-labelledby="titulo-botao">
+    <header><p class="rotulo">Componente · §4.1</p><h2 id="titulo-botao">Botão</h2><p class="texto-atenuado">Um primário por região; perigo só na confirmação. Pressionar = afundar.</p></header>
+    <div class="catalogo__demo">
+      <div class="catalogo__estado"><span class="ajuda">Primário</span><button class="botao botao--primario" type="button">{% icone "plus" %}Cadastrar produto</button></div>
+      <div class="catalogo__estado"><span class="ajuda">Secundário</span><button class="botao botao--secundario" type="button">Cancelar</button></div>
+      <div class="catalogo__estado"><span class="ajuda">Fantasma</span><button class="botao botao--fantasma" type="button">Limpar busca</button></div>
+      <div class="catalogo__estado"><span class="ajuda">Perigo</span><button class="botao botao--perigo" type="button">Confirmar exclusão</button></div>
+      <div class="catalogo__estado"><span class="ajuda">Hover</span><button class="botao botao--secundario forcar-hover" type="button">Secundário</button></div>
+      <div class="catalogo__estado"><span class="ajuda">Foco</span><button class="botao botao--primario forcar-foco" type="button">Primário</button></div>
+      <div class="catalogo__estado"><span class="ajuda">Desabilitado</span><button class="botao botao--primario" type="button" disabled>Salvar produto</button></div>
+      <div class="catalogo__estado"><span class="ajuda">Carregando</span><button class="botao botao--primario" type="button" aria-busy="true"><span class="botao__carregando">{% icone "loader-circle" %}</span>Salvando…</button></div>
+      <div class="catalogo__estado"><span class="ajuda">Pequeno</span><button class="botao botao--secundario botao--sm" type="button">{% icone "arrow-down-to-line" %}Entrada</button></div>
+      <div class="catalogo__estado"><span class="ajuda">Só ícone</span><button class="botao botao--secundario botao--icone" type="button" aria-label="Buscar">{% icone "search" %}</button></div>
+    </div>
+    <pre class="catalogo__codigo"><code>{% filter force_escape %}<a class="botao botao--primario" href="{% url 'core:painel' %}" hx-get="…" hx-target="#dialogo">{% templatetag openblock %} icone "plus" {% templatetag closeblock %} Cadastrar produto</a>{% endfilter %}</code></pre>
+  </section>
+
+  <section id="campo" class="catalogo__secao" aria-labelledby="titulo-campo">
+    <header><p class="rotulo">Componente · §4.2</p><h2 id="titulo-campo">Campo</h2><p class="texto-atenuado">Rótulo → controle → ajuda → erro, gerados pelo renderizador de formulários do projeto.</p></header>
+    <div class="grade">
+      <div class="cartao col-md-4 col-lg-6"><p class="rotulo">Padrão</p><div class="formulario">{{ formulario_vazio }}</div></div>
+      <div class="cartao col-md-4 col-lg-6"><p class="rotulo">Com erro (422)</p><div class="formulario">{{ formulario_erro }}</div></div>
+      <div class="cartao col-md-4 col-lg-6">
+        <p class="rotulo">Busca, select e desabilitado</p>
+        <div class="formulario">
+          <div class="campo"><label class="campo__rotulo" for="exemplo-busca">Buscar</label><span class="campo__busca">{% icone "search" %}<input id="exemplo-busca" type="search" placeholder="ID ou nome"></span></div>
+          <div class="campo"><label class="campo__rotulo" for="exemplo-select">Situação</label><span class="campo__select"><select id="exemplo-select"><option>Todos</option><option>Em alerta</option><option>OK</option></select>{% icone "chevron-down" %}</span></div>
+          <div class="campo"><label class="campo__rotulo" for="exemplo-desab">Quantidade atual</label><input id="exemplo-desab" value="1.240" disabled></div>
+        </div>
+      </div>
+    </div>
+    <pre class="catalogo__codigo"><code>{% templatetag openvariable %} form {% templatetag closevariable %}   {# ou #}   {% templatetag openvariable %} form.nome.as_field_group {% templatetag closevariable %}</code></pre>
+  </section>
+
+  <section id="tabela" class="catalogo__secao" aria-labelledby="titulo-tabela">
+    <header><p class="rotulo">Componente · §4.3</p><h2 id="titulo-tabela">Tabela densa</h2><p class="texto-atenuado">Números em mono à direita; sem linhas verticais nem zebra; barra lateral nas linhas em alerta.</p></header>
+    <div class="tabela-contenedor">
+      <table class="tabela">
+        <caption class="visualmente-oculto">Exemplo de produtos</caption>
+        <thead><tr><th scope="col">ID</th><th scope="col">Produto</th><th scope="col" class="num">Atual</th><th scope="col" class="num">Mínimo</th><th scope="col">Situação</th><th scope="col" class="tabela__acoes"><span class="visualmente-oculto">Ações</span></th></tr></thead>
+        <tbody>
+          <tr class="tabela__linha--interativa"><td class="tabela__id">#0001</td><td><span class="tabela__principal">Parafuso sextavado M8</span><span class="tabela__meta">Exemplo</span></td><td class="num">{{ 1240 }}</td><td class="num">200</td><td>{% include "components/badge_estoque.html" with situacao="ok" %}</td><td class="tabela__acoes"><span class="cluster"><button class="botao botao--secundario botao--sm" type="button">{% icone "arrow-down-to-line" %}Entrada</button><button class="botao botao--secundario botao--sm" type="button">{% icone "arrow-up-from-line" %}Saída</button></span></td></tr>
+          <tr class="tabela__linha--alerta"><td class="tabela__id">#0002</td><td><span class="tabela__principal">Arruela lisa 8 mm</span></td><td class="num">48</td><td class="num">50</td><td>{% include "components/badge_estoque.html" with situacao="reposicao" %}</td><td class="tabela__acoes"><span class="cluster"><button class="botao botao--secundario botao--sm" type="button">{% icone "arrow-down-to-line" %}Entrada</button></span></td></tr>
+          <tr class="tabela__linha--sem-estoque"><td class="tabela__id">#0003</td><td><span class="tabela__principal">Porca M8</span></td><td class="num">0</td><td class="num">30</td><td>{% include "components/badge_estoque.html" with situacao="sem_estoque" %}</td><td class="tabela__acoes"><span class="cluster"><button class="botao botao--secundario botao--sm" type="button">{% icone "arrow-down-to-line" %}Entrada</button></span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <pre class="catalogo__codigo"><code>{% filter force_escape %}<div class="tabela-contenedor"><table class="tabela"> … <td class="num"> … <tr class="tabela__linha--alerta"> …{% endfilter %}</code></pre>
+  </section>
+
+  <section id="badge" class="catalogo__secao" aria-labelledby="titulo-badge">
+    <header><p class="rotulo">Componente · §4.4</p><h2 id="titulo-badge">Badge</h2><p class="texto-atenuado">O alerta de reposição é sempre ícone + texto + cor; "SEM ESTOQUE" estende o alerta.</p></header>
+    <div class="catalogo__demo">
+      {% include "components/badge_estoque.html" with situacao="ok" %}
+      {% include "components/badge_estoque.html" with situacao="reposicao" %}
+      {% include "components/badge_estoque.html" with situacao="sem_estoque" %}
+      <span class="badge badge--neutro">Neutro</span>
+      <span class="badge badge--info">{% icone "arrow-down-to-line" %}Entrada</span>
+      <span class="badge badge--sucesso">Sucesso</span>
+      <span class="badge badge--alerta">Alerta</span>
+      <span class="badge badge--perigo">Perigo</span>
+      {% include "components/delta.html" with valor=12 sentido="positivo" %}
+      {% include "components/delta.html" with valor=-5 sentido="negativo" %}
+      {% include "components/delta.html" with valor=0 sentido="neutro" %}
+    </div>
+    <pre class="catalogo__codigo"><code>{% templatetag openblock %} include "components/badge_estoque.html" with situacao="reposicao" {% templatetag closeblock %}</code></pre>
+  </section>
+
+  <section id="cartao" class="catalogo__secao" aria-labelledby="titulo-cartao">
+    <header><p class="rotulo">Componente · §4.5</p><h2 id="titulo-cartao">Cartão</h2></header>
+    <div class="grade">
+      <div class="cartao col-md-4 col-lg-4"><div class="cartao__cabecalho"><h3 class="cartao__titulo">Cartão estático</h3></div><p class="texto-atenuado">Sem sombra: não é clicável.</p></div>
+      <a class="cartao cartao--interativo col-md-4 col-lg-4" href="#cartao"><h3 class="cartao__titulo">Cartão interativo</h3><p class="texto-atenuado">Sombra sólida; afunda ao clicar.</p></a>
+    </div>
+    <pre class="catalogo__codigo"><code>{% filter force_escape %}<div class="cartao"> … </div>   <a class="cartao cartao--interativo" href="…"> … </a>{% endfilter %}</code></pre>
+  </section>
+
+  <section id="kpi" class="catalogo__secao" aria-labelledby="titulo-kpi">
+    <header><p class="rotulo">Componente · §4.6</p><h2 id="titulo-kpi">KPI</h2></header>
+    <div class="grade">
+      <div class="col-md-4 col-lg-3">{% include "components/kpi.html" with rotulo="Produtos cadastrados" valor=120 meta="Exemplo" icone="package" %}</div>
+      <div class="col-md-4 col-lg-3">{% include "components/kpi.html" with rotulo="Produtos em alerta" valor=12 meta="de 120 produtos cadastrados" destaque="alerta" delta=3 delta_sentido="negativo" href="#kpi" %}</div>
+      <div class="col-md-4 col-lg-3">{% include "components/kpi.html" with rotulo="Sem estoque" valor=4 meta="Exemplo" destaque="perigo" %}</div>
+      <div class="col-md-4 col-lg-3">{% include "components/kpi.html" with rotulo="Movimentações 24 h" valor=None meta="sem dados no período" icone="arrow-left-right" %}</div>
+    </div>
+    <pre class="catalogo__codigo"><code>{% templatetag openblock %} include "components/kpi.html" with rotulo="Produtos em alerta" valor=12 destaque="alerta" href=url {% templatetag closeblock %}</code></pre>
+  </section>
+
+  <section id="lista-barras" class="catalogo__secao" aria-labelledby="titulo-lista-barras">
+    <header><p class="rotulo">Componente · §4.7</p><h2 id="titulo-lista-barras">BarList</h2></header>
+    <div class="cartao">{% include "components/lista_barras.html" with titulo="Mais movimentados (exemplo)" rotulo_valor="Unidades" itens=itens_barras %}</div>
+    <pre class="catalogo__codigo"><code>{% templatetag openblock %} include "components/lista_barras.html" with titulo="…" rotulo_valor="Unidades" itens=lista {% templatetag closeblock %}</code></pre>
+  </section>
+
+  <section id="barra-categorias" class="catalogo__secao" aria-labelledby="titulo-barra-categorias">
+    <header><p class="rotulo">Componente · §4.8</p><h2 id="titulo-barra-categorias">CategoryBar</h2></header>
+    <div class="cartao">{% include "components/barra_categorias.html" with titulo="Situação do estoque (exemplo)" segmentos=segmentos total=120 unidade="produtos" %}</div>
+    <pre class="catalogo__codigo"><code>{% templatetag openblock %} include "components/barra_categorias.html" with titulo="…" segmentos=lista total=120 unidade="produtos" {% templatetag closeblock %}</code></pre>
+  </section>
+
+  <section id="rastreador" class="catalogo__secao" aria-labelledby="titulo-rastreador">
+    <header><p class="rotulo">Componente · §4.9</p><h2 id="titulo-rastreador">Tracker</h2></header>
+    <div class="cartao">{% include "components/rastreador.html" with titulo="Movimentações — últimos 30 dias (exemplo)" blocos=blocos resumo="27 dias com movimentação · 3 dias em alerta" %}</div>
+    <pre class="catalogo__codigo"><code>{% templatetag openblock %} include "components/rastreador.html" with titulo="…" blocos=lista resumo="…" {% templatetag closeblock %}</code></pre>
+  </section>
+
+  <section id="barra-progresso" class="catalogo__secao" aria-labelledby="titulo-barra-progresso">
+    <header><p class="rotulo">Componente · §4.10</p><h2 id="titulo-barra-progresso">ProgressBar</h2></header>
+    <div class="grade">
+      <div class="cartao col-md-4 col-lg-4">{% include "components/barra_progresso.html" with rotulo="Saldo × mínimo" valor=48 maximo=50 tom="reposicao" %}</div>
+      <div class="cartao col-md-4 col-lg-4">{% include "components/barra_progresso.html" with rotulo="Saldo × mínimo" valor=1240 maximo=200 tom="ok" %}</div>
+    </div>
+    <pre class="catalogo__codigo"><code>{% templatetag openblock %} include "components/barra_progresso.html" with rotulo="Saldo × mínimo" valor=48 maximo=50 tom="reposicao" {% templatetag closeblock %}</code></pre>
+  </section>
+
+  <section id="dialogo" class="catalogo__secao" aria-labelledby="titulo-dialogo">
+    <header><p class="rotulo">Componente · §4.11</p><h2 id="titulo-dialogo">Diálogo</h2><p class="texto-atenuado">Abre com <kbd>hx-get</kbd> em <code>#dialogo</code>; erro de validação volta com 422; sucesso fecha e mostra toast. Sem JavaScript vira página.</p></header>
+    <div class="catalogo__demo">
+      <a class="botao botao--primario" href="?exemplo=dialogo" hx-get="?exemplo=dialogo" hx-target="#dialogo">{% icone "plus" %}Abrir diálogo de exemplo</a>
+    </div>
+    <pre class="catalogo__codigo"><code>{% templatetag openblock %} extends "components/dialogo.html" {% templatetag closeblock %} — blocos titulo, descricao, corpo, rodape</code></pre>
+  </section>
+
+  <section id="toast" class="catalogo__secao" aria-labelledby="titulo-toast">
+    <header><p class="rotulo">Componente · §4.12</p><h2 id="titulo-toast">Toast</h2><p class="texto-atenuado">Sucesso/info somem em 5 s (pausa ao passar o mouse); alerta/erro ficam até fechar.</p></header>
+    <div class="catalogo__demo">
+      {% for nivel in niveis_toast %}
+        <form method="post" action="{% url 'core:design' %}" hx-post="{% url 'core:design' %}">
+          {% csrf_token %}<input type="hidden" name="exemplo" value="toast"><input type="hidden" name="nivel" value="{{ nivel }}">
+          <button class="botao botao--secundario botao--sm" type="submit">Toast de {{ nivel }}</button>
+        </form>
+      {% endfor %}
+    </div>
+    <div class="pilha pilha--compacta">{% for nivel in niveis_toast %}{% include "components/toast.html" with nivel=nivel texto="Exemplo de toast." %}{% endfor %}</div>
+    <pre class="catalogo__codigo"><code>disparar_toast(resposta, "sucesso", "Produto cadastrado.")</code></pre>
+  </section>
+
+  <section id="aviso" class="catalogo__secao" aria-labelledby="titulo-aviso">
+    <header><p class="rotulo">Componente · §4.13</p><h2 id="titulo-aviso">Aviso inline</h2></header>
+    <div class="pilha pilha--compacta">
+      {% include "components/aviso.html" with nivel="sucesso" titulo="" texto="Produto cadastrado." %}
+      {% include "components/aviso.html" with nivel="info" titulo="" texto="Os indicadores são recalculados a cada movimentação." %}
+      {% include "components/aviso.html" with nivel="alerta" titulo="Atenção" texto="3 produtos precisam de reposição." %}
+      {% include "components/aviso.html" with nivel="erro" titulo="" texto="Corrija os 2 campos destacados." %}
+    </div>
+    <pre class="catalogo__codigo"><code>{% templatetag openblock %} include "components/aviso.html" with nivel="alerta" titulo="Atenção" texto="…" {% templatetag closeblock %}</code></pre>
+  </section>
+
+  <section id="estado-vazio" class="catalogo__secao" aria-labelledby="titulo-estado-vazio">
+    <header><p class="rotulo">Componente · §4.14</p><h2 id="titulo-estado-vazio">Estado vazio</h2></header>
+    {% include "components/estado_vazio.html" with icone="package" titulo="Nenhum produto cadastrado" descricao="Cadastre o primeiro produto para acompanhar saldo e alertas de reposição." acao_rotulo="Cadastrar produto" acao_url="#estado-vazio" %}
+    <pre class="catalogo__codigo"><code>{% templatetag openblock %} include "components/estado_vazio.html" with icone="package" titulo="…" descricao="…" acao_rotulo="…" acao_url=url {% templatetag closeblock %}</code></pre>
+  </section>
+
+  <section id="paginacao" class="catalogo__secao" aria-labelledby="titulo-paginacao">
+    <header><p class="rotulo">Componente · §4.15</p><h2 id="titulo-paginacao">Paginação</h2></header>
+    <div class="cartao">{% include "components/paginacao.html" with pagina=pagina_exemplo rotulo_itens="produtos (exemplo)" %}</div>
+    <pre class="catalogo__codigo"><code>{% templatetag openblock %} include "components/paginacao.html" with pagina=page_obj rotulo_itens="produtos" alvo="#resultados" {% templatetag closeblock %}</code></pre>
+  </section>
+
+  <section id="navegacao" class="catalogo__secao" aria-labelledby="titulo-navegacao">
+    <header><p class="rotulo">Componente · §4.16</p><h2 id="titulo-navegacao">Navegação com badge</h2><p class="texto-atenuado">Item ativo com barra de acento; seções sem rota aparecem "(em breve)"; o badge de alertas é preenchido pela feature 004.</p></header>
+    <div class="catalogo__demo"><span class="navegacao__item" aria-current="page">{% icone "layout-dashboard" %}Painel</span><span class="navegacao__item">{% icone "bell" %}Alertas <span class="badge-navegacao">{% icone "triangle-alert" %}<span aria-hidden="true">3</span><span class="visualmente-oculto">3 produtos com reposição necessária</span></span></span><span class="navegacao__item" aria-disabled="true">{% icone "package" %}Produtos <span class="navegacao__breve">(em breve)</span></span></div>
+    <pre class="catalogo__codigo"><code>{% templatetag openblock %} include "components/navegacao.html" {% templatetag closeblock %}</code></pre>
+  </section>
+
+  <section id="cabecalho-pagina" class="catalogo__secao" aria-labelledby="titulo-cabecalho-pagina">
+    <header><p class="rotulo">Componente · §4.17</p><h2 id="titulo-cabecalho-pagina">Cabeçalho de página</h2></header>
+    <div class="cartao">
+      <div class="cabecalho-pagina">
+        <div class="cabecalho-pagina__textos"><p class="cabecalho-pagina__sobretitulo">Produtos / #0012</p><p class="cartao__titulo">Parafuso sextavado M8 (exemplo)</p><p class="cabecalho-pagina__descricao">Cadastrado em 12/10/2026 14:30 · estoque mínimo 200</p></div>
+        <div class="cabecalho-pagina__acoes"><button class="botao botao--secundario" type="button">Registrar saída</button><button class="botao botao--primario" type="button">Registrar entrada</button></div>
+      </div>
+    </div>
+    <pre class="catalogo__codigo"><code>{% templatetag openblock %} block sobretitulo {% templatetag closeblock %} / titulo_pagina / descricao / acoes</code></pre>
+  </section>
+
+  <section id="icone" class="catalogo__secao" aria-labelledby="titulo-icone">
+    <header><p class="rotulo">Componente · §4.18</p><h2 id="titulo-icone">Ícone</h2><p class="texto-atenuado">Lucide (ISC), traço 2 px, 16/20 px. Nunca substitui texto em status.</p></header>
+    <div class="catalogo__demo">{% for nome in icones %}<span class="catalogo__estado">{% icone nome tamanho="md" %}<code class="ajuda">{{ nome }}</code></span>{% endfor %}</div>
+    <pre class="catalogo__codigo"><code>{% templatetag openblock %} icone "triangle-alert" tamanho="md" rotulo="Alerta" {% templatetag closeblock %}</code></pre>
+  </section>
+</div>
+{% endblock %}

@@ -1,0 +1,5 @@
+<div class="rastreador">
+  {% if titulo %}<p class="rotulo">{{ titulo }}</p>{% endif %}
+  <div class="rastreador__linha" role="img" aria-label="{{ resumo }}">{% for b in blocos %}<span class="rastreador__bloco tom--{{ b.tom }}" title="{{ b.rotulo }}"></span>{% endfor %}</div>
+  <p class="rastreador__resumo">{{ resumo }}</p>
+</div>

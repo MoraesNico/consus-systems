@@ -1,0 +1,9 @@
+<nav class="navegacao" aria-label="Principal">
+  <ul class="navegacao__lista">
+    {% for item in itens_navegacao %}
+      <li>
+        {% if item.disponivel %}<a class="navegacao__item" href="{{ item.url }}"{% if item.ativo %} aria-current="page"{% endif %}>{% icone item.icone %}{{ item.rotulo }}{% if item.alertas %}{% include "components/badge_navegacao.html" %}{% endif %}</a>{% else %}<span class="navegacao__item" aria-disabled="true">{% icone item.icone %}{{ item.rotulo }} <span class="navegacao__breve">(em breve)</span>{% if item.alertas %}{% include "components/badge_navegacao.html" %}{% endif %}</span>{% endif %}
+      </li>
+    {% endfor %}
+  </ul>
+</nav>

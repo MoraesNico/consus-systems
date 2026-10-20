@@ -1,0 +1,10 @@
+<form id="form-produto" class="formulario" method="post" action="{% url 'produtos:novo' %}" novalidate{% if contexto == "dialogo" %} hx-post="{% url 'produtos:novo' %}" hx-target="#dialogo" hx-disabled-elt="#salvar-produto" hx-disinherit="*"{% endif %}>
+  {% csrf_token %}
+  {{ form }}
+  {% if contexto != "dialogo" %}
+    <div class="formulario__acoes">
+      <a class="botao botao--secundario" href="{% url 'produtos:lista' %}">Voltar para a lista</a>
+      <button id="salvar-produto" class="botao botao--primario" type="submit"><span class="botao__carregando">{% icone "loader-circle" %}</span>Salvar produto</button>
+    </div>
+  {% endif %}
+</form>

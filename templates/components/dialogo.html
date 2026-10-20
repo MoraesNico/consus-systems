@@ -1,0 +1,22 @@
+{% comment %}
+Conteúdo do <dialog id="dialogo"> (design-system §4.11). Fragmentos o estendem com os blocos
+titulo, descricao, corpo e rodape (ações; o primário fica à direita). Em requisição HTMX não-boost
+vira o conteúdo do diálogo; sem HTMX o mesmo template é a página (cartão com "Voltar").
+{% endcomment %}
+<div class="{% if request.htmx and not request.htmx.boosted %}dialogo__conteudo{% else %}cartao dialogo-pagina{% endif %}">
+  <header class="dialogo__cabecalho">
+    <div>
+      <h2 id="dialogo-titulo">{% block titulo %}{% endblock %}</h2>
+      <p class="dialogo__descricao">{% block descricao %}{% endblock %}</p>
+    </div>
+    {% if request.htmx and not request.htmx.boosted %}<form method="dialog"><button class="botao botao--fantasma botao--icone botao--sm" aria-label="Fechar">{% icone "x" %}</button></form>{% endif %}
+  </header>
+  <div class="dialogo__corpo">
+    <div class="dialogo__toasts" data-toasts aria-live="polite"></div>
+    {% block corpo %}{% endblock %}
+  </div>
+  <footer class="dialogo__rodape">
+    {% if request.htmx and not request.htmx.boosted %}<form method="dialog"><button class="botao botao--secundario">Cancelar</button></form>{% else %}<a class="botao botao--secundario" href="{{ url_voltar|default:'/' }}">Voltar</a>{% endif %}
+    {% block rodape %}{% endblock %}
+  </footer>
+</div>

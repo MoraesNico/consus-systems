@@ -1,0 +1,1 @@
+{% if origem == "lista" %}<template>{% include "produtos/partials/linha.html" with oob=True %}</template>{% elif origem == "detalhe" %}{% load movimentacoes_tags %}{% include "produtos/partials/resumo.html" with oob=True %}{% historico_produto produto oob=True %}{% endif %}

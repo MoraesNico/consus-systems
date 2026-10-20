@@ -1,0 +1,3 @@
+{% if form.non_field_errors %}{% for erro in form.non_field_errors %}{% include "components/aviso.html" with nivel="erro" titulo="" texto=erro %}{% endfor %}{% elif form.errors %}{% with total=form.errors|length %}{% include "components/aviso.html" with nivel="erro" titulo="" texto="Corrija os campos destacados." %}{% endwith %}{% endif %}
+{% for campo in form.hidden_fields %}{{ campo }}{% endfor %}
+{% for campo in form.visible_fields %}{{ campo.as_field_group }}{% endfor %}

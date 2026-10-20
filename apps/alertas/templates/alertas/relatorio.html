@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block titulo %}Relatório de reposição{% endblock %}
+{% block sobretitulo %}Alertas{% endblock %}
+{% block titulo_pagina %}Relatório de reposição{% endblock %}
+{% block descricao %}Cruza a quantidade atual com o estoque mínimo de segurança: quantidade igual ou abaixo do mínimo exige reposição.{% endblock %}
+{% block acoes %}
+<a class="botao botao--secundario" href="{% url 'alertas:relatorio' %}?formato=csv" hx-boost="false" download>{% icone "arrow-down-to-line" %}Exportar CSV</a>
+<form method="get" action="{% url 'alertas:relatorio' %}" hx-get="{% url 'alertas:relatorio' %}" hx-target="#relatorio" hx-swap="outerHTML" hx-disabled-elt="find button">
+  <button type="submit" class="botao botao--primario"><span class="botao__carregando">{% icone "loader-circle" %}</span>{% icone "activity" %}Executar varredura</button>
+</form>
+{% endblock %}
+{% block conteudo %}
+{% include "alertas/partials/relatorio.html" %}
+{% endblock %}

@@ -1,0 +1,11 @@
+{% load alertas_tags %}<tr id="reposicao-{{ produto.pk|unlocalize }}" class="{% if produto.situacao_estoque.variante == 'sem_estoque' %}tabela__linha--sem-estoque{% else %}tabela__linha--alerta{% endif %}">
+  <td class="tabela__id"><a href="{{ produto.get_absolute_url }}">{{ produto.codigo }}</a></td>
+  <td><a class="tabela__link tabela__principal" href="{{ produto.get_absolute_url }}">{{ produto.nome }}</a></td>
+  <td>{% include "produtos/partials/situacao.html" %}</td>
+  <td class="num">{{ produto.quantidade_atual }}</td>
+  <td class="num">{{ produto.estoque_minimo }}</td>
+  <td class="num">{{ produto.deficit }}</td>
+  <td class="coluna-cobertura">{% if produto.cobertura_percentual is None %}<span class="texto-atenuado">—</span>{% else %}{% include "components/barra_progresso.html" with rotulo="Cobertura do mínimo" valor=produto.cobertura_percentual maximo=100 sufixo="%" tom=produto.situacao_estoque.variante compacto=True %}{% endif %}</td>
+  <td class="num">{% if produto.sugestao_reposicao %}+{{ produto.sugestao_reposicao }}{% else %}—{% endif %}</td>
+  <td class="tabela__acoes">{% with qtd=produto.sugestao_reposicao|limitar_movimentacao %}<a class="botao botao--secundario botao--sm" href="{% url 'movimentacoes:nova' %}?produto={{ produto.pk|unlocalize }}&amp;tipo=ENTRADA{% if qtd %}&amp;quantidade={{ qtd|unlocalize }}{% endif %}" hx-get="{% url 'movimentacoes:nova' %}?produto={{ produto.pk|unlocalize }}&amp;tipo=ENTRADA{% if qtd %}&amp;quantidade={{ qtd|unlocalize }}{% endif %}&amp;origem=alertas" hx-target="#dialogo" hx-swap="innerHTML" aria-label="Registrar entrada de {{ produto.codigo }} {{ produto.nome }}">+ Entrada</a>{% endwith %}</td>
+</tr>

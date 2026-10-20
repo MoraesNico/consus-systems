@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% load movimentacoes_tags %}
+{% block titulo %}{{ produto.nome }}{% endblock %}
+{% block sobretitulo %}Produtos / {{ produto.codigo }}{% endblock %}
+{% block titulo_pagina %}{{ produto.nome }}{% endblock %}
+{% block descricao %}Estoque mínimo de segurança: {{ produto.estoque_minimo }} unidades.{% endblock %}
+{% block acoes %}
+<a class="botao botao--secundario" href="{% url 'produtos:editar' produto.pk %}">Editar</a>
+{% acoes_rapidas produto "detalhe" %}
+{% endblock %}
+{% block conteudo %}
+<div class="grade">
+  <div class="col-md-8 col-lg-4">{% include "produtos/partials/resumo.html" %}</div>
+  <div class="col-md-8 col-lg-8">{% historico_produto produto %}</div>
+</div>
+{% endblock %}

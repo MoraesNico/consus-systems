@@ -1,0 +1,30 @@
+<form id="form-movimentacao" class="formulario" method="post" action="{% url 'movimentacoes:nova' %}" hx-post="{% url 'movimentacoes:nova' %}" hx-target="this" hx-swap="outerHTML" hx-disabled-elt="#confirmar-movimentacao" hx-disinherit="*" novalidate>
+  {% csrf_token %}
+  {{ form.origem }}
+  {% if form.errors %}
+    {% if form.non_field_errors %}{% for erro in form.non_field_errors %}{% include "components/aviso.html" with nivel="erro" titulo="" texto=erro %}{% endfor %}{% else %}{% include "components/aviso.html" with nivel="erro" titulo="" texto="Corrija os campos destacados. Nada foi registrado." %}{% endif %}
+  {% endif %}
+  {% if modo == "dialogo" and produto %}
+    <input type="hidden" name="produto" value="{{ produto.pk|unlocalize }}">
+  {% else %}
+    {{ form.produto.as_field_group }}
+  {% endif %}
+  <fieldset class="campo campo--opcoes{% if form.tipo.errors %} campo--erro{% endif %}">
+    <legend class="campo__rotulo">Tipo</legend>
+    <div class="opcoes-segmentadas">
+      {% for opcao in form.tipo %}
+        <label class="opcao-segmentada">{{ opcao.tag }}<span>{% if opcao.data.value == "ENTRADA" %}{% icone "arrow-down-to-line" %}{% else %}{% icone "arrow-up-from-line" %}{% endif %}{{ opcao.choice_label }}</span></label>
+      {% endfor %}
+    </div>
+    {% if form.tipo.errors %}<p class="campo__erro" id="id_tipo_error">{% icone "circle-alert" %}<span>{{ form.tipo.errors|join:" " }}</span></p>{% endif %}
+  </fieldset>
+  {{ form.quantidade.as_field_group }}
+  {% include "movimentacoes/partials/previa_saldo.html" %}
+  {{ form.observacao.as_field_group }}
+  {% if not em_dialogo %}
+    <div class="formulario__acoes">
+      <a class="botao botao--secundario" href="{% url 'produtos:lista' %}">Cancelar</a>
+      <button id="confirmar-movimentacao" class="botao botao--primario" type="submit"><span class="botao__carregando">{% icone "loader-circle" %}</span>Confirmar</button>
+    </div>
+  {% endif %}
+</form>

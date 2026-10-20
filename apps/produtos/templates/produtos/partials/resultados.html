@@ -1,0 +1,30 @@
+<div id="resultados" class="resultados">
+  <input type="hidden" id="ordem-atual" name="ordem" form="filtros-produtos" value="{{ ordem }}">
+  {% if page_obj.object_list %}
+    <div class="tabela-contenedor">
+      <table class="tabela">
+        <caption class="visualmente-oculto">Produtos cadastrados{% if q %} — busca por “{{ q }}”{% endif %}</caption>
+        <thead>
+          <tr>
+            {% for coluna in colunas %}
+              <th scope="col" aria-sort="{{ coluna.aria_sort }}"{% if coluna.num %} class="num"{% endif %}><a href="{% url 'produtos:lista' %}{% querystring ordem=coluna.nova_ordem pagina=None %}" hx-get="{% url 'produtos:lista' %}{% querystring ordem=coluna.nova_ordem pagina=None %}" hx-target="#resultados" hx-swap="outerHTML" hx-push-url="true">{{ coluna.rotulo }}{% if coluna.aria_sort == "ascending" %} <span aria-hidden="true">↑</span>{% elif coluna.aria_sort == "descending" %} <span aria-hidden="true">↓</span>{% endif %}</a></th>
+            {% endfor %}
+            <th scope="col" class="tabela__acoes"><span class="visualmente-oculto">Ações</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for produto in page_obj.object_list %}
+            {% include "produtos/partials/linha.html" %}
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% include "components/paginacao.html" with pagina=page_obj rotulo_itens="produtos" alvo="#resultados" %}
+  {% elif filtrado and total_geral %}
+    {% url 'produtos:lista' as url_limpar %}
+    {% include "components/estado_vazio.html" with icone="search" titulo="Nenhum produto encontrado" descricao="Nenhum produto corresponde à busca"|add:" “"|add:q|add:"”." acao_rotulo="" acao_secundaria="Limpar busca" acao_secundaria_url=url_limpar %}
+  {% else %}
+    {% url 'produtos:novo' as url_novo %}
+    {% include "components/estado_vazio.html" with icone="package" titulo="Nenhum produto cadastrado" descricao="Cadastre o primeiro produto informando nome, quantidade inicial e estoque mínimo de segurança." acao_rotulo="Cadastrar produto" acao_url=url_novo acao_alvo="#dialogo" %}
+  {% endif %}
+</div>

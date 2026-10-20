@@ -1,0 +1,6 @@
+<div class="campo{% if field.errors %} campo--erro{% endif %}">
+  <label class="campo__rotulo" for="{{ field.auto_id }}">{{ field.label }}{% if not field.field.required %} <span class="campo__opcional">(opcional)</span>{% endif %}</label>
+  {% if field.widget_type == "select" %}<span class="campo__select">{{ field }}{% icone "chevron-down" %}</span>{% else %}{{ field }}{% endif %}
+  {% if field.help_text %}<p class="campo__ajuda" id="{{ field.auto_id }}_helptext">{{ field.help_text }}</p>{% endif %}
+  {% if field.errors %}<p class="campo__erro" id="{{ field.auto_id }}_error">{% icone "circle-alert" %}<span>{{ field.errors|join:" " }}</span></p>{% endif %}
+</div>

@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block titulo %}Nova movimentação{% endblock %}
+{% block sobretitulo %}Movimentações{% endblock %}
+{% block titulo_pagina %}Nova movimentação{% endblock %}
+{% block descricao %}Registre uma entrada (soma ao estoque) ou uma saída/venda (subtrai). O saldo nunca fica negativo.{% endblock %}
+{% block acoes %}<a class="botao botao--secundario" href="{% url 'movimentacoes:lista' %}">Ver livro-razão</a>{% endblock %}
+{% block conteudo %}
+<div class="cartao cartao--amplo cartao--formulario">
+  {% include "movimentacoes/partials/form_movimentacao.html" %}
+</div>
+{% endblock %}

@@ -1,0 +1,9 @@
+{% if produtos %}
+<ul class="lista-cobertura">
+  {% for produto in produtos %}
+    <li><a class="tabela__link" href="{{ produto.get_absolute_url }}"><span class="tabela__id">{{ produto.codigo }}</span> {{ produto.nome }}</a>{% include "components/barra_progresso.html" with rotulo="Cobertura do mínimo" valor=produto.cobertura_percentual maximo=100 sufixo="%" tom=produto.situacao_estoque.variante compacto=True %}</li>
+  {% endfor %}
+</ul>
+{% else %}
+<p class="texto-atenuado">Sem produtos com estoque mínimo definido.</p>
+{% endif %}

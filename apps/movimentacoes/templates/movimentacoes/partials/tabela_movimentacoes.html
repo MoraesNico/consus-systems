@@ -1,0 +1,20 @@
+<div id="resultados" class="resultados pilha pilha--compacta">
+  {% for aviso in avisos %}<div class="aviso aviso--alerta" role="alert"><span class="aviso__icone">{% icone "triangle-alert" %}</span><div class="aviso__corpo"><p>{{ aviso }}</p></div></div>{% endfor %}
+  {% if page_obj.object_list %}
+    <p class="texto-atenuado" role="status"><span class="mono">{{ page_obj.paginator.count }}</span> movimentaç{{ page_obj.paginator.count|pluralize:"ão,ões" }} · página <span class="mono">{{ page_obj.number }}</span> de <span class="mono">{{ page_obj.paginator.num_pages }}</span></p>
+    <div class="tabela-contenedor">
+      <table class="tabela">
+        <caption class="visualmente-oculto">Livro-razão das movimentações</caption>
+        <thead><tr><th scope="col">Data/hora</th><th scope="col">Produto</th><th scope="col">Tipo</th><th scope="col" class="num">Quantidade</th><th scope="col" class="num">Saldo</th><th scope="col">Observação</th></tr></thead>
+        <tbody>{% for mov in page_obj.object_list %}{% include "movimentacoes/partials/linha_movimentacao.html" %}{% endfor %}</tbody>
+      </table>
+    </div>
+    {% include "components/paginacao.html" with pagina=page_obj rotulo_itens="movimentações" alvo="#resultados" %}
+  {% elif filtrado %}
+    {% url 'movimentacoes:lista' as url_limpar %}
+    {% include "components/estado_vazio.html" with icone="search" titulo="Nenhuma movimentação encontrada." descricao="Nenhum registro corresponde aos filtros escolhidos." acao_rotulo="" acao_secundaria="Limpar filtros" acao_secundaria_url=url_limpar %}
+  {% else %}
+    {% url 'movimentacoes:nova' as url_nova %}
+    {% include "components/estado_vazio.html" with icone="arrow-left-right" titulo="Registre a primeira movimentação" descricao="Entradas somam ao estoque; saídas/vendas subtraem — sem nunca deixar o saldo negativo." acao_rotulo="Nova movimentação" acao_url=url_nova %}
+  {% endif %}
+</div>

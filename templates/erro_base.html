@@ -1,0 +1,26 @@
+{% load static %}<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>{% block titulo %}Erro{% endblock %} — Consus</title>
+  <link rel="stylesheet" href="{% static 'css/tokens.css' %}">
+  <link rel="stylesheet" href="{% static 'css/base.css' %}">
+  <link rel="stylesheet" href="{% static 'css/components.css' %}">
+  <link rel="stylesheet" href="{% static 'css/utilities.css' %}">
+</head>
+<body>
+  <header class="cabecalho-app">
+    <div class="cabecalho-app__interno"><a class="marca" href="/"><span class="marca__simbolo" aria-hidden="true"></span>Consus</a></div>
+  </header>
+  <main id="conteudo" class="conteudo-app">
+    <section class="pagina-erro">
+      <p class="pagina-erro__codigo">{% block codigo %}{% endblock %}</p>
+      <h1>{% block titulo_erro %}{% endblock %}</h1>
+      <p class="texto-atenuado">{% block descricao_erro %}{% endblock %}</p>
+      <a class="botao botao--primario" href="/">Voltar ao Painel</a>
+    </section>
+  </main>
+</body>
+</html>
