@@ -1,0 +1,5 @@
+{% extends "components/dialogo.html" %}
+{% block titulo %}Novo produto{% endblock %}
+{% block descricao %}O ID numérico é gerado automaticamente.{% endblock %}
+{% block corpo %}{% include "produtos/partials/form_produto.html" with contexto="dialogo" %}{% endblock %}
+{% block rodape %}<button id="salvar-produto" class="botao botao--primario" type="submit" form="form-produto"><span class="botao__carregando">{% icone "loader-circle" %}</span>Salvar produto</button>{% endblock %}

@@ -45,8 +45,9 @@ def test_fr009_get_novo_dialogo_parcial(client, hx_parcial):
 def test_fr009_salvar_indisponivel_durante_envio(client, hx_parcial):
     """FR-009: o botão Salvar fica desabilitado durante o envio (hx-disabled-elt)."""
     conteudo = html(client.get("/produtos/novo/", **hx_parcial("dialogo")))
-    botao = re.search(r"<button[^>]*>[^<]*(?:<[^>]+>[^<]*)*Salvar", conteudo).group(0)
-    assert 'hx-disabled-elt="this"' in botao
+    formulario = re.search(r'<form id="form-produto"[^>]*>', conteudo).group(0)
+    assert 'hx-disabled-elt="#salvar-produto"' in formulario
+    assert re.search(r'<button[^>]+id="salvar-produto"[^>]+form="form-produto"', conteudo)
 
 
 def test_fr009_mesmas_mensagens_pagina_e_dialogo(client, hx_parcial):

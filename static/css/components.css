@@ -1001,6 +1001,99 @@
     block-size: var(--text-xs);
   }
 
+  /* ---------- Lista com busca (§5.3) ---------- */
+  .barra-lista {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--space-3) var(--space-5);
+  }
+
+  .filtros {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: var(--space-3);
+  }
+
+  .filtros__busca {
+    min-inline-size: calc(var(--form-max) / 2);
+  }
+
+  .filtros .botao {
+    align-self: flex-start;
+  }
+
+  .contagem {
+    padding-block-end: var(--space-2);
+  }
+
+  .resultados.htmx-request {
+    opacity: var(--opacity-busy);
+    transition: opacity var(--duration-fast) var(--ease-standard);
+  }
+
+  .tabela__link {
+    color: var(--color-ink);
+    text-decoration: none;
+  }
+
+  .tabela__link:hover {
+    color: var(--color-accent);
+    text-decoration: underline;
+  }
+
+  .tabela__id a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .tabela__id a:hover {
+    color: var(--color-accent);
+    text-decoration: underline;
+  }
+
+  /* ---------- Formulário em página e resumo do produto ---------- */
+  .cartao--formulario {
+    max-inline-size: var(--form-max);
+  }
+
+  .campo__somente-leitura {
+    min-block-size: var(--size-md);
+    display: flex;
+    align-items: center;
+    padding: 0 var(--space-4);
+    background-color: var(--color-muted);
+    border: var(--border-width) solid var(--color-border-subtle);
+    border-radius: var(--radius-sm);
+  }
+
+  .resumo-produto {
+    display: grid;
+    gap: var(--space-5);
+  }
+
+  .resumo-produto .cartao__cabecalho {
+    margin-block-end: 0;
+  }
+
+  .resumo-produto__dados {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-4);
+  }
+
+  .resumo-produto__dados dd {
+    margin: 0;
+  }
+
+  .resumo-produto__minimo {
+    font-size: var(--text-lg);
+    line-height: var(--leading-2xl);
+    color: var(--color-ink-muted);
+  }
+
   /* ---------- Catálogo (/design/) ---------- */
   .catalogo__sumario {
     display: grid;

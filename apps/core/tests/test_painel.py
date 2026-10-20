@@ -6,7 +6,7 @@ pytestmark = pytest.mark.django_db
 
 
 @pytest.mark.parametrize("variante", ["normal", "boost", "htmx"])
-def test_fr022_painel_com_estado_vazio(client, variante):
+def test_fr022_painel_com_estado_vazio(client, urls_sem_secoes, variante):
     """FR-022: / mostra o Painel com a região de KPIs em estado vazio (página completa)."""
     if variante != "normal":
         client.defaults["HTTP_HX_REQUEST"] = "true"

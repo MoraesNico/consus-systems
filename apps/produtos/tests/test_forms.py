@@ -1,4 +1,4 @@
-"""Formulários de produto: inteiros estritos e mensagens em pt-BR (FR-004, FR-006, FR-007, FR-025)."""
+"""Formulários de produto: inteiros estritos e mensagens pt-BR (FR-004, 006, 007, 025)."""
 
 import pytest
 

@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block titulo %}Produtos{% endblock %}
+{% block titulo_pagina %}Produtos{% endblock %}
+{% block descricao %}Cadastro com ID automático. Busque por ID (12, #12, #0012) ou parte do nome.{% endblock %}
+{% block acoes %}
+<a class="botao botao--primario" href="{% url 'produtos:novo' %}" hx-get="{% url 'produtos:novo' %}" hx-target="#dialogo" hx-swap="innerHTML" data-atalho="n">{% icone "plus" %}Novo produto <kbd>n</kbd></a>
+{% endblock %}
+{% block conteudo %}
+<div class="pilha">
+  <div class="barra-lista">
+    {% include "produtos/partials/filtros.html" %}
+    {% include "produtos/partials/contagem.html" %}
+  </div>
+  {% include "produtos/partials/resultados.html" %}
+</div>
+{% endblock %}

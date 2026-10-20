@@ -27,3 +27,14 @@ def urls_com_secoes(settings):
     clear_url_caches()
     yield
     clear_url_caches()
+
+
+@pytest.fixture
+def urls_sem_secoes(settings):
+    """Somente o core: Produtos, Movimentações e Alertas ficam "(em breve)"."""
+    settings.ROOT_URLCONF = "apps.core.tests.urls_core"
+    from django.urls import clear_url_caches
+
+    clear_url_caches()
+    yield
+    clear_url_caches()

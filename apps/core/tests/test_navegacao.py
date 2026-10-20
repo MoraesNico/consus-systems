@@ -37,7 +37,7 @@ def test_fr012_catalogo_nao_ativa_itens(client):
     assert 'aria-current="page"' not in nav(client.get("/design/"))
 
 
-def test_fr013_secoes_sem_rota_aparecem_em_breve(client):
+def test_fr013_secoes_sem_rota_aparecem_em_breve(client, urls_sem_secoes):
     """FR-013: sem a rota registrada, o item não tem link e mostra "(em breve)"."""
     lista = itens(nav(client.get("/")))
     for item in lista[1:]:
@@ -57,7 +57,7 @@ def test_fr013_secoes_com_rota_viram_links(client, urls_com_secoes):
         assert "(em breve)" not in item
 
 
-def test_fr014_slot_do_badge_vazio_sem_contador(client):
+def test_fr014_slot_do_badge_vazio_sem_contador(client, urls_sem_secoes):
     """FR-014: sem alertas:contador o slot #badge-alertas fica vazio e sem atributos hx-*."""
     slot = re.search(r'<span id="badge-alertas"[^>]*>(.*?)</span>', nav(client.get("/")), re.S)
     assert slot is not None
