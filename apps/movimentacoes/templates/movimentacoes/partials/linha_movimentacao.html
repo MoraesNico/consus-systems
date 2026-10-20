@@ -1,0 +1,8 @@
+<tr class="linha-movimentacao">
+  <td class="mono texto-atenuado">{{ mov.criado_em|date:"d/m/Y H:i" }}</td>
+  {% if not sem_produto %}<td><a class="tabela__link" href="{% url 'produtos:detalhe' mov.produto_id %}"><span class="tabela__id">{{ mov.produto.codigo }}</span> {{ mov.produto.nome }}</a></td>{% endif %}
+  <td><span class="badge badge--{{ mov.variante_selo }}">{% if mov.icone_selo %}{% icone mov.icone_selo %}{% endif %}{{ mov.get_tipo_display }}</span></td>
+  <td class="num{% if mov.eh_saida %} quantidade--saida{% endif %}">{% if mov.tipo == "INICIAL" %}{{ mov.quantidade }}{% else %}{{ mov.sinal }}{{ mov.quantidade }}{% endif %}</td>
+  <td class="num">{{ mov.saldo_anterior }} → {{ mov.saldo_posterior }}</td>
+  <td class="tabela__texto-longo" title="{{ mov.observacao }}">{{ mov.observacao|default:"—" }}</td>
+</tr>

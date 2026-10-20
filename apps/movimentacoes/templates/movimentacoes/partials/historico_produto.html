@@ -1,0 +1,17 @@
+<section id="produto-{{ produto.pk|unlocalize }}-historico" class="cartao historico-produto" aria-labelledby="produto-{{ produto.pk|unlocalize }}-historico-titulo"{% if oob %} hx-swap-oob="true"{% endif %}>
+  <div class="cartao__cabecalho">
+    <h2 id="produto-{{ produto.pk|unlocalize }}-historico-titulo" class="cartao__titulo">Histórico</h2>
+    <a class="botao botao--fantasma botao--sm" href="{% url 'movimentacoes:lista' %}?produto={{ produto.pk|unlocalize }}">Ver histórico completo{% icone "arrow-right" %}</a>
+  </div>
+  {% if movimentacoes %}
+    <div class="tabela-contenedor">
+      <table class="tabela tabela--compacta">
+        <caption class="visualmente-oculto">Últimas movimentações de {{ produto.codigo }}</caption>
+        <thead><tr><th scope="col">Data/hora</th><th scope="col">Tipo</th><th scope="col" class="num">Quantidade</th><th scope="col" class="num">Saldo</th><th scope="col">Observação</th></tr></thead>
+        <tbody>{% for mov in movimentacoes %}{% include "movimentacoes/partials/linha_movimentacao.html" with sem_produto=True %}{% endfor %}</tbody>
+      </table>
+    </div>
+  {% else %}
+    {% include "components/estado_vazio.html" with icone="arrow-left-right" titulo="Nenhuma movimentação registrada." descricao="" acao_rotulo="" compacto=True %}
+  {% endif %}
+</section>

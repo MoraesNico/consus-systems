@@ -67,8 +67,8 @@ def _validar_inteiro(campo: str, valor, erros: dict) -> None:
 def cadastrar_produto(*, nome: str, quantidade_inicial: int, estoque_minimo: int) -> Produto:
     """Cadastra um produto (FR-001, FR-029).
 
-    Ponto de extensão da feature 003 (FR-030): a Quantidade Inicial passa a ser registrada como
-    a movimentação `INICIAL`, na mesma transação, preservando assinatura e pós-condições.
+    Com a feature 003, a Quantidade Inicial é registrada como a movimentação `INICIAL`, na mesma
+    transação (FR-027 da 003; FR-030 da 002): assinatura e pós-condições preservadas.
     """
     nome = normalizar_nome(nome)
     erros: dict = {}
@@ -79,11 +79,21 @@ def cadastrar_produto(*, nome: str, quantidade_inicial: int, estoque_minimo: int
         raise _erro_nome_duplicado(nome)
     if erros:
         raise ValidationError(erros)
+    # Importação tardia: movimentacoes depende de produtos (evita ciclo no carregamento).
+    from apps.movimentacoes import services as servicos_mov
+    from apps.movimentacoes.models import TipoMovimentacao
+
     try:
         with transaction.atomic():
-            return Produto.objects.create(
-                nome=nome, quantidade_atual=quantidade_inicial, estoque_minimo=estoque_minimo
+            # O produto nasce com saldo 0; a Quantidade Inicial entra como movimentação INICIAL.
+            produto = Produto.objects.create(
+                nome=nome, quantidade_atual=0, estoque_minimo=estoque_minimo
             )
+            servicos_mov.registrar_movimentacao(
+                produto_id=produto.pk, tipo=TipoMovimentacao.INICIAL, quantidade=quantidade_inicial
+            )
+            produto.refresh_from_db()
+            return produto
     except IntegrityError as erro:
         if "produto_nome_unico_ci" in str(erro) or "UNIQUE" in str(erro).upper():
             raise _erro_nome_duplicado(nome) from erro

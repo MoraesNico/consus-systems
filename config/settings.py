@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     "django_htmx",
     "apps.core",
     "apps.produtos",
+    "apps.movimentacoes",
 ]
 
 MIDDLEWARE = [

@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block titulo %}Movimentações{% endblock %}
+{% block titulo_pagina %}Movimentações{% endblock %}
+{% block descricao %}Livro-razão imutável: cada entrada e saída com o saldo anterior e o posterior.{% endblock %}
+{% block acoes %}<a class="botao botao--primario" href="{% url 'movimentacoes:nova' %}">{% icone "plus" %}Nova movimentação</a>{% endblock %}
+{% block conteudo %}
+<div class="pilha">
+  {% include "movimentacoes/partials/filtros.html" %}
+  {% include "movimentacoes/partials/tabela_movimentacoes.html" %}
+</div>
+{% endblock %}
