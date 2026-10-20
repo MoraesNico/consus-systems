@@ -16,6 +16,9 @@ exclusão — FR-026).
 | Restauração de histórico | `HX-History-Restore-Request: true` | igual à comum |
 | Parcial | `HX-Request: true`, sem `HX-Boosted`, com `HX-Target` reconhecido | somente o fragmento indicado abaixo |
 
+A decisão é de `apps.core.htmx.eh_fragmento(request)` (001, contrato v1.1); eventos e toasts são
+emitidos por `disparar_evento`/`disparar_toast`.
+
 - **Erro de validação**: sempre **422** (página completa ou fragmento, conforme a variante).
 - **CSRF**: token em `hx-headers` no `<body>` (001) e campo oculto `csrfmiddlewaretoken` nos
   formulários (funciona sem scripts).
@@ -52,9 +55,10 @@ exclusão — FR-026).
 - **Estados vazios** (FR-019): `total_geral == 0` → "Nenhum produto cadastrado" + ação
   "Cadastrar produto"; resultado vazio com filtros → "Nenhum produto encontrado" citando `q` +
   ação "Limpar busca" (link para `/produtos/`).
-- **Consultas ao banco**: no máximo 4 (sessão, contagem filtrada, página e — só quando há
-  filtro e o resultado é vazio — contagem total), independentemente do número de produtos;
-  verificado com `django_assert_max_num_queries`.
+- **Consultas ao banco**: no máximo 4 na variante parcial (sessão, contagem filtrada, página e —
+  só quando há filtro e o resultado é vazio — contagem total), independentemente do número de
+  produtos; verificado com `django_assert_max_num_queries` sobre o fragmento. A página completa
+  soma as consultas do layout (após a 004, +1 `COUNT` do contador de alertas no menu).
 
 ## `GET /produtos/novo/` — `produtos:novo`
 
@@ -77,7 +81,7 @@ do serviço é anexada aos campos do formulário.
 |----------|-----------|--------|-------|----------------------|
 | Comum / boosted | válido | **302** → `/produtos/` | — | `messages.success("Produto #0007 cadastrado")`; `session["produtos_destaque"] = 7` |
 | Comum / boosted | inválido | **422** | `produtos/novo.html` com erros e valores preservados | — |
-| Parcial (`HX-Target: dialogo`) | válido | **200** | `produtos/partials/resultados.html` na visão padrão (página 1, `-id`, `destaque_id=7`) + `produtos/partials/filtros.html` (campos limpos) e `produtos/partials/contagem.html`, ambos com `hx-swap-oob="true"` | `HX-Retarget: #resultados`; `HX-Reswap: outerHTML`; `HX-Push-Url: /produtos/`; `HX-Trigger: {"toast": {"nivel": "sucesso", "texto": "Produto #0007 cadastrado"}, "estoque-alterado": {}, "dialogo-fechar": {}}` |
+| Parcial (`HX-Target: dialogo`) | válido | **200** | `produtos/partials/resultados.html` na visão padrão (página 1, `-id`, `destaque_id=7`) + `produtos/partials/filtros.html` (campos limpos) e `produtos/partials/contagem.html`, ambos com `hx-swap-oob="true"` | `HX-Retarget: #resultados`; `HX-Reswap: outerHTML`; `HX-Push-Url: /produtos/`; `HX-Trigger: {"toast": {"nivel": "sucesso", "texto": "Produto #0007 cadastrado"}, "estoque-alterado": {"produto_id": 7, "saldo_anterior": 0, "saldo_posterior": 50}, "fechar-dialogo": {}}` |
 | Parcial (`HX-Target: dialogo`) | inválido | **422** | `produtos/partials/dialogo_novo.html` com erros; primeiro campo inválido com `autofocus` | — |
 
 ## `GET /produtos/<int:produto_id>/` — `produtos:detalhe`
@@ -87,8 +91,8 @@ do serviço é anexada aos campos do formulário.
 | Comum / boosted | produto existe | 200 | `produtos/detalhe.html` |
 | Qualquer | produto inexistente (inclui ID acima do máximo de `BigAutoField`) | **404** | `produtos/nao_encontrado.html` |
 
-- Exibe `produtos/partials/resumo.html` (`#produto-resumo`), ação "Editar" e a região vazia
-  `#produto-movimentacoes` (sem controles — FR-022).
+- Exibe `produtos/partials/resumo.html` (`#produto-<id>-resumo`), ação "Editar" e a região vazia
+  `<section id="produto-<id>-historico">` (sem controles — FR-022; preenchida pela 003).
 - `POST`/`DELETE` → **405** (não há exclusão).
 - URL não numérica (ex.: `/produtos/abc/`) não casa com a rota → 404 genérico da 001.
 
@@ -112,4 +116,5 @@ do serviço é anexada aos campos do formulário.
 | Qualquer | inexistente | **404** | `produtos/nao_encontrado.html` | — |
 
 Na navegação *boosted* o `<body>` inteiro é re-renderizado, levando o contador de alertas da
-004 já atualizado (FR-031), sem evento adicional.
+004 já atualizado (FR-031), sem evento adicional. Uma eventual variante parcial da edição DEVE
+emitir `estoque-alterado` (contrato v1.1: edição do estoque mínimo muda a situação).

@@ -66,10 +66,10 @@ das features 002/003); 0 linhas novas de JS; aritmética da regra imune a estour
 | Princípio | Avaliação (pré-pesquisa) | Avaliação (pós-design) |
 |-----------|--------------------------|------------------------|
 | **I. Integridade do Estoque** (NÃO-NEGOCIÁVEL) | ✅ A feature é de leitura: nenhuma view, comando ou template altera `quantidade_atual`. O único escritor, `popular_demo`, usa `produtos.services.cadastrar_produto` e `movimentacoes.services.registrar_movimentacao` (FR-034/FR-037); nunca faz `update()` de saldo nem de `criado_em`. | ✅ Confirmado em [data-model.md](data-model.md) (invariantes I-1…I-4) e [contracts/cli.md](contracts/cli.md); teste de `popular_demo` verifica que `saldo == soma das movimentações` e a cadeia `saldo_anterior → saldo_posterior`. |
-| **II. Interface Dirigida pelo Servidor** | ✅ Relatório, contador e painel são fragmentos HTML; atualização por `hx-trigger="every 30s, estoque-alterado from:body"`, `hx-swap-oob` (contador e anúncio) e `HX-Trigger` (toast da 003). Sem SPA. | ✅ 0 linhas novas de JS; todas as rotas respondem página completa sem HTMX (aprimoramento progressivo — FR-013), fragmento com `HX-Request` e página completa com `HX-Boosted`; `Vary: HX-Request` ([contracts/http-alertas.md](contracts/http-alertas.md)). |
+| **II. Interface Dirigida pelo Servidor** | ✅ Relatório, contador e painel são fragmentos HTML; atualização por `hx-trigger="every 30s, estoque-alterado from:body"`, `hx-swap-oob` (contador e anúncio) e `HX-Trigger` (toast da 003). Sem SPA. | ✅ 0 linhas novas de JS; todas as rotas respondem página completa sem HTMX (aprimoramento progressivo — FR-013), fragmento quando `apps.core.htmx.eh_fragmento(request)` e página completa com `HX-Boosted`; `Vary: HX-Request, HX-Target` ([contracts/http-alertas.md](contracts/http-alertas.md)). |
 | **III. Testes Primeiro** (NÃO-NEGOCIÁVEL) | ✅ Cada FR-001…FR-037 tem tarefa de teste que o cita, escrita antes da implementação (tasks.md). Regra nos `selectors`/`regras`/queryset antes das views. | ✅ Testes de limite em grade (equivalência SQL × Python), variantes comum/HTMX/boosted em todas as views, cobertura ≥ 90% em `selectors.py`, `regras.py`, `exportacao.py` e `apps/produtos/models.py`. |
-| **IV. Design System** | ✅ Selo sempre ícone SVG + texto + cor (FR-021); números em mono tabular à direita; estados vazios projetados; `aria-live` para o contador (FR-017). | ✅ Novos componentes `components/barra_cobertura.html` e `components/bar_list.html` usam apenas tokens de `static/css/tokens.css`; nenhum valor mágico (a largura da barra é dado, via custom property `--valor`); tabela densa 40 px; sem emoji como ícone na web (⚠ só no terminal, como texto). |
-| **V. Simplicidade, Containers e 12-Factor** | ✅ Nenhuma dependência nova; intervalo de polling configurável por variável de ambiente `ALERTAS_INTERVALO_SEGUNDOS` (padrão 30). | ✅ Sem persistência nova (Clarificação 1, YAGNI); `docker compose up --build` inalterado; comandos rodam via `docker compose exec web python manage.py …`. |
+| **IV. Design System** | ✅ Selo sempre ícone SVG + texto + cor (FR-021), com SEM ESTOQUE como selo composto que mantém "⚠ REPOSIÇÃO NECESSÁRIA"; números em mono tabular à direita; estados vazios projetados; `aria-live` para o contador (FR-017). | ✅ Nenhum componente novo: reutiliza `components/badge_estoque.html` (via selo único `produtos/partials/situacao.html` da 002), `components/barra_progresso.html` (cobertura, `maximo=100`, `sufixo="%"`), `components/kpi.html` e `components/estado_vazio.html` da 001, e a classe `.contador-alertas` (001); tabela densa 40 px; sem emoji como ícone na web (⚠ só no terminal, como texto). |
+| **V. Simplicidade, Containers e 12-Factor** | ✅ Nenhuma dependência nova; intervalo de polling configurável por variável de ambiente `ALERTAS_INTERVALO_SEGUNDOS` (padrão 30). | ✅ Sem persistência nova (Clarificação 1, YAGNI); `docker compose up --build` inalterado; comandos rodam via `docker compose exec app python manage.py …` (serviço `app` da 001). |
 
 **Resultado**: nenhuma violação; nenhum item na tabela de Complexity Tracking exige justificativa
 constitucional. Os desvios do *padrão de app* do contrato (não da constituição) estão listados
@@ -114,8 +114,7 @@ apps/alertas/                                   # NOVO (feature 004)
 ├── demo.py                                     # PRODUTOS_DEMO + popular()
 ├── templatetags/
 │   ├── __init__.py
-│   └── alertas_tags.py                         # {% contador_alertas %}, {% cobertura_bar_list %},
-│                                               # filtro limitar_100
+│   └── alertas_tags.py                         # {% contador_alertas %}, {% lista_cobertura %}
 ├── management/commands/
 │   ├── __init__.py
 │   ├── varrer_estoque.py
@@ -126,6 +125,7 @@ apps/alertas/                                   # NOVO (feature 004)
 │       ├── relatorio.html                      # região #relatorio (resumo + tabela | estado vazio)
 │       ├── linha_reposicao.html
 │       ├── contador.html                       # #contador-alertas (polling e OOB)
+│       ├── lista_cobertura.html                # <ul> de components/barra_progresso.html (painel)
 │       └── anuncio.html                        # OOB para #anuncio-alertas (aria-live)
 └── tests/
     ├── __init__.py
@@ -148,35 +148,36 @@ apps/alertas/                                   # NOVO (feature 004)
     ├── test_acessibilidade.py
     └── test_desempenho.py
 
-apps/produtos/models.py                         # ALTERA (002): com_situacao() + deficit, cobertura_percentual (bigint)
+apps/produtos/models.py                         # ESTENDE (002): com_situacao() + deficit, cobertura_percentual (bigint)
 apps/produtos/tests/test_queryset_situacao.py   # NOVO: limites da regra e anotações
-apps/produtos/templates/produtos/partials/situacao.html  # ALTERA (002): ramo SEM ESTOQUE (selo único)
-apps/movimentacoes/views.py                     # ALTERA (003): toast/messages via alertas.regras.confirmacao_com_alerta
-apps/movimentacoes/forms.py                     # ALTERA (003): origem aceita "alertas"
-apps/movimentacoes/templates/movimentacoes/partials/sucesso_dialogo.html  # ALTERA (003): origem=alertas sem OOB
-apps/movimentacoes/management/commands/movimentar.py  # ALTERA (003): imprime o aviso de reposição
-apps/core/views.py                              # ALTERA (001): painel usa alertas.selectors.resumo_painel
-apps/core/templates/core/painel.html            # ALTERA (001): KPIs, listas, região #painel-conteudo
-apps/core/templates/core/partials/painel_conteudo.html   # NOVO
+apps/movimentacoes/views.py                     # ESTENDE (003): toast/messages via alertas.regras.confirmacao_com_alerta
+apps/movimentacoes/management/commands/movimentar.py  # ESTENDE (003): imprime o aviso de reposição
+apps/core/views.py                              # ESTENDE (001): painel usa alertas.selectors.resumo_painel
+apps/core/templates/core/painel.html            # ESTENDE (001): inclui core/partials/painel_kpis.html na região #painel-kpis
+apps/core/templates/core/partials/painel_kpis.html       # NOVO: raiz <section id="painel-kpis"> (nome previsto pela 001)
+apps/core/tests/test_painel.py                  # ATUALIZA (001): estado vazio provisório → KPIs
 apps/core/tests/test_painel_kpis.py             # NOVO
-templates/base.html                             # ALTERA (001): {% contador_alertas %} no menu + #anuncio-alertas
-templates/components/barra_cobertura.html       # NOVO componente (estilo ProgressBar/CategoryBar do Tremor)
-templates/components/bar_list.html              # NOVO componente (estilo BarList do Tremor)
-static/css/components.css                       # ALTERA (001): .selo-situacao, .contador-alertas,
-                                                # .barra-cobertura, .bar-list (somente tokens)
-config/settings.py                              # ALTERA (001): INSTALLED_APPS += "apps.alertas";
+templates/components/navegacao.html             # ESTENDE (001): {% contador_alertas %} dentro de #badge-alertas
+config/settings.py                              # ESTENDE (001): INSTALLED_APPS += "apps.alertas";
                                                 # ALERTAS_INTERVALO_SEGUNDOS (env, padrão 30, mínimo 5)
-config/urls.py                                  # ALTERA (001): path("alertas/", include("apps.alertas.urls"))
-.env.example                                    # ALTERA (001): ALERTAS_INTERVALO_SEGUNDOS=30
+config/urls.py                                  # ESTENDE (001): path("alertas/", include("apps.alertas.urls"))
+.env.example                                    # ESTENDE (001): ALERTAS_INTERVALO_SEGUNDOS=30
+README.md                                       # ESTENDE (001): seção da feature 004
+# Usados sem alteração: produtos/partials/situacao.html (selo único da 002, já com SEM ESTOQUE),
+# movimentacoes/forms.py e partials/sucesso_dialogo.html (origem=alertas e quantidade já são da
+# 003, contrato v1.1), templates/base.html (#anuncio-alertas e #dialogo já são da 001),
+# static/css/components.css (.contador-alertas, badges e barras já são da 001),
+# components/barra_progresso.html, kpi.html, estado_vazio.html (001).
 ```
 
 **Structure Decision**: aplicação Django única do contrato (`config/` + `apps/`). Todo o código
 novo vive em `apps/alertas/`; as alterações fora dele são **pontos de integração** previstos pelo
 contrato (queryset da 002 "anotações para a 004", painel da 001 "placeholder → 004 (KPIs)",
-toast/evento da 003, menu do `base.html`). Os nomes usados (`produtos/partials/situacao.html`,
-`Produto.em_alerta`/`codigo`, anotação `alerta`, `QUANTIDADE_MAXIMA`, `Movimentacao.mensagem_confirmacao`,
-`origem`, `sucesso_dialogo.html`, `movimentar`) vêm dos contratos já publicados pela 002 e pela
-003; o selo é **um único parcial**, o da 002, estendido com SEM ESTOQUE
+toast/evento da 003, contêiner `#badge-alertas` da navegação). Os nomes usados
+(`produtos/partials/situacao.html`, `Produto.em_alerta`/`codigo`, anotação `alerta`,
+`QUANTIDADE_MAXIMA`, `Movimentacao.mensagem_confirmacao`, `origem=alertas`, `quantidade`,
+`sucesso_dialogo.html`, `movimentar`, `#painel-kpis`, `#anuncio-alertas`) são os de
+`docs/arquitetura.md` v1.1; o selo é **um único parcial**, o da 002, que já cobre SEM ESTOQUE
 ([contracts/fragmentos-e-eventos.md](contracts/fragmentos-e-eventos.md)).
 
 ## Complexity Tracking

@@ -13,7 +13,8 @@ class ProdutoQuerySet(models.QuerySet):
     def buscar(self, q: str | None) -> "ProdutoQuerySet": ...
     def em_alerta(self) -> "ProdutoQuerySet": ...      # quantidade_atual <= estoque_minimo
     def sem_alerta(self) -> "ProdutoQuerySet": ...     # quantidade_atual >  estoque_minimo
-    def com_situacao(self) -> "ProdutoQuerySet": ...   # anota alerta: bool
+    def com_situacao(self) -> "ProdutoQuerySet": ...   # anota alerta: bool (a 004 acrescenta
+                                                      # deficit e cobertura_percentual, bigint)
 
 class Produto(models.Model):
     # campos e restrições: ver data-model.md
@@ -23,7 +24,9 @@ class Produto(models.Model):
     @property
     def em_alerta(self) -> bool: ...
     @property
-    def situacao(self) -> str: ...      # "alerta" | "ok"
+    def situacao(self) -> str: ...      # "alerta" | "ok" (binária; o selo de 3 variações
+                                        # é decidido em partials/situacao.html)
+    # PROIBIDO (contrato v1.1): propriedades alerta, deficit ou cobertura_percentual
     def get_absolute_url(self) -> str: ...
     def __str__(self) -> str: ...       # "#0001 — Caneta Azul"
 ```

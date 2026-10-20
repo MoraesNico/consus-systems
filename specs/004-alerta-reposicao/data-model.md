@@ -66,11 +66,11 @@ Espelham as anotações para uso sem consulta. Tabela-verdade de referência (us
 
 ### Enumeração `Situacao`
 
-| Código | Rótulo exibido | Gravidade | Variante visual |
+| Código | Rótulo exibido | Gravidade | `variante` (selo `badge_estoque` / `tom` de `barra_progresso`, 001) |
 |--------|----------------|----------:|-----------------|
-| `OK` | OK | 0 | selo `neutro` (texto atenuado, sem cor de alerta, sem ícone); barra `sucesso` |
-| `REPOSICAO_NECESSARIA` | REPOSIÇÃO NECESSÁRIA | 1 | selo e barra `alerta` — ícone SVG ⚠ + texto + cor de alerta |
-| `SEM_ESTOQUE` | SEM ESTOQUE | 2 | selo e barra `perigo` — ícone SVG ⚠ + texto + cor de perigo |
+| `OK` | OK | 0 | `ok` — "OK" discreto, sem cor de alerta; barra no tom de sucesso |
+| `REPOSICAO_NECESSARIA` | REPOSIÇÃO NECESSÁRIA | 1 | `reposicao` — ícone SVG `triangle-alert` + texto + cor de alerta |
+| `SEM_ESTOQUE` | SEM ESTOQUE | 2 | `sem_estoque` — selo composto "⚠ REPOSIÇÃO NECESSÁRIA │ SEM ESTOQUE" (o texto de reposição nunca some — constituição IV); barra no tom de perigo |
 
 ### Transições de situação (aviso na confirmação — FR-019)
 
@@ -79,7 +79,7 @@ Espelham as anotações para uso sem consulta. Tabela-verdade de referência (us
 | De → Para | Resultado | Efeito na confirmação |
 |-----------|-----------|-----------------------|
 | OK → REPOSIÇÃO NECESSÁRIA | `PIOROU` | nível `alerta`; "REPOSIÇÃO NECESSÁRIA: #0003 Parafuso M6 ficou com 10 un. (mínimo 10)." |
-| OK → SEM ESTOQUE | `PIOROU` | nível `alerta`; "SEM ESTOQUE: #0003 Parafuso M6 zerou (mínimo 10)." |
+| OK → SEM ESTOQUE | `PIOROU` | nível `alerta`; "REPOSIÇÃO NECESSÁRIA · SEM ESTOQUE: #0003 Parafuso M6 zerou (mínimo 10)." |
 | REPOSIÇÃO NECESSÁRIA → SEM ESTOQUE | `PIOROU` | idem SEM ESTOQUE |
 | REPOSIÇÃO NECESSÁRIA → OK, SEM ESTOQUE → OK | `SAIU_DO_ALERTA` | nível `sucesso`; "#0003 Parafuso M6 saiu do alerta de reposição." |
 | SEM ESTOQUE → REPOSIÇÃO NECESSÁRIA | `NENHUMA` | sem aviso extra |
@@ -135,7 +135,9 @@ Os itens da varredura e do painel são instâncias reais de `Produto` (para reut
 
 ### `Aviso` (dataclass imutável)
 
-`nivel: Literal["sucesso", "alerta"]`, `texto: str`.
+`nivel: Literal["sucesso", "alerta"]` (vocabulário de toast do contrato v1.1), `texto: str` com
+no máximo 200 caracteres (limite de `disparar_toast` da 001; nome do produto encurtado com "…" se
+necessário).
 
 ## 5. Invariantes
 

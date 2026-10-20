@@ -1,6 +1,9 @@
 # Consus — Design System
 
-**High-Density Neo-Brutalism Sóbrio / Swiss Grid Enterprise** · versão **1.0.0** · 2026-10-20
+**High-Density Neo-Brutalism Sóbrio / Swiss Grid Enterprise** · versão **1.1.0** · 2026-10-20
+(1.1.0 — auditoria de especificações: parâmetro opcional `sufixo` no ProgressBar, classe
+`.contador-alertas` do badge da navegação, paginação com `hx-swap="outerHTML"`; sem mudança de
+token nem de contraste)
 
 > **Fonte de verdade visual do Consus.** Todo valor visual usado pela aplicação está definido aqui
 > e é implementado **uma única vez** em `static/css/tokens.css`. Componentes (`components.css`,
@@ -584,8 +587,10 @@ estilo **rótulo** (12/16, 600, caixa alta, tracking), raio `--radius-sm`, borda
 Por que composto: a constituição exige que o alerta de reposição seja **sempre** ícone + texto
 "REPOSIÇÃO NECESSÁRIA" + cor. Quantidade 0 também é "≤ mínimo", logo é alerta; "SEM ESTOQUE" é
 uma **extensão** de severidade, não um substituto. Assim o alerta tem sempre a mesma cara
-(escaneável) e o zero ganha uma cauda vermelha. A situação é calculada pela feature 004; o
-componente só a desenha.
+(escaneável) e o zero ganha uma cauda vermelha. A situação é derivada pela regra única da
+feature 002 (`quantidade_atual ≤ estoque_minimo`; zero = `sem_estoque`) e mapeada para este
+parâmetro pelo selo único `produtos/partials/situacao.html` (contrato v1.1); o componente só a
+desenha.
 
 O badge `reposicao` é o **elemento de maior destaque** de qualquer linha ou cartão onde aparece
 (P6): nenhum outro componente usa fundo âmbar sólido nem a combinação âmbar + borda tinta.
@@ -691,9 +696,10 @@ resumo; o resumo também aparece visível abaixo. Uso previsto: histórico de um
 
 Trilha de altura `--space-3` (8) em `muted-strong` com borda `border`; preenchimento no tom
 (`acento`|`ok`|`reposicao`|`sem_estoque`); rótulo à esquerda (14 `ink-muted`) e valor à direita
-(mono: "48 / 50"). `role="meter"` com `aria-valuenow/min/max` e `aria-valuetext`. Uso: saldo
-atual × estoque mínimo no detalhe do produto (002/004). Valores acima do máximo: barra cheia +
-texto real.
+(mono: "48 / 50"; com o parâmetro opcional `sufixo`, "40%"). `role="meter"` com
+`aria-valuenow/min/max` e `aria-valuetext`. Uso: saldo atual × estoque mínimo no detalhe do
+produto (002/004) e cobertura do mínimo em % no relatório e no painel (004: `maximo=100`,
+`sufixo="%"`, tom pela situação). Valores acima do máximo: barra cheia + texto real.
 
 ### 4.11 Diálogo — `<dialog id="dialogo">` + `components/dialogo.html`
 
@@ -794,7 +800,9 @@ cabeçalho de tabela e paginação.
 `justify-content: space-between`, padding-block `--space-3`, texto 14 `ink-muted`, **números em
 mono**. Botões secundários `sm` com ícone (`chevron-left/right`); nas pontas, desabilitados
 (`aria-disabled="true"`, sem `href`). Links preservam os parâmetros da busca/filtro e, com HTMX,
-usam `hx-get` + `hx-target="#resultados"` + `hx-push-url="true"` (contrato da arquitetura).
+usam `hx-get` + `hx-target="#resultados"` + `hx-swap="outerHTML"` + `hx-push-url="true"` e o
+parâmetro `pagina` (contrato da arquitetura v1.1; o fragmento devolvido tem `#resultados` como
+raiz).
 Página única → componente não é renderizado.
 
 ### 4.16 Navegação com badge — `components/navegacao.html`
@@ -821,11 +829,13 @@ Página única → componente não é renderizado.
 | ativo (`aria-current="page"`) | texto `ink` peso 600 + barra inferior `--border-width-accent` `accent` (RUI-24) |
 | indisponível (`aria-disabled="true"`, sem `href`) | texto `ink-disabled`, sufixo visível "(em breve)" em 12 px, sem hover, `cursor: not-allowed` |
 
-- **Badge da navegação** (slot `#badge-alertas` no item Alertas): altura 20 px
+- **Badge da navegação** (contêiner `#badge-alertas` no item Alertas, só layout; dentro dele a
+  feature 004 renderiza `#contador-alertas` com a classe `.contador-alertas`): altura 20 px
   (`calc(var(--size-xs) - var(--space-2))`), `min-inline-size` igual, padding `0 var(--space-2)`,
   fundo `warning`, borda `border`, texto `on-warning` mono 12 600, ícone `triangle-alert` 12–16 px
-  + número; texto acessível "3 produtos com reposição necessária". Quantidade 0 ou sem fonte de
-  dados → slot vazio (nada visível, nada anunciado). Conteúdo é responsabilidade da feature 004.
+  + número; texto acessível "3 produtos em alerta de reposição". Quantidade 0 ou sem fonte de
+  dados → nada visível, nada anunciado (o elemento vem com o atributo `hidden`). Conteúdo é
+  responsabilidade da feature 004; o estilo, da 001.
 - Abaixo de 672 px: marca em cima, itens em linha rolável horizontalmente (`overflow-x: auto`),
   sem menu hambúrguer (funciona sem JS).
 

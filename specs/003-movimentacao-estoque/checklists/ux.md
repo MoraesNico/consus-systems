@@ -34,7 +34,7 @@ Profundidade: padrão · Público: revisor da spec (PR) · Foco: princípios II 
 
 ## Scenario Coverage
 
-- [x] CHK014 O retorno após sucesso está definido para cada ponto de entrada (diálogo na lista, diálogo no detalhe, página dedicada)? [Coverage, Spec §FR-012, §FR-015]
+- [x] CHK014 O retorno após sucesso está definido para cada ponto de entrada (diálogo na lista, diálogo no detalhe, diálogo aberto pelo relatório/painel da 004, página dedicada)? [Coverage, Spec §FR-012, §FR-013, §FR-015]
 - [x] CHK015 O retorno após erro está definido para cada ponto de entrada, com preservação dos valores digitados? [Coverage, Spec §FR-018]
 - [x] CHK016 O caminho alternativo das ações rápidas sem aprimoramento interativo está especificado? [Coverage, Spec §FR-013, §US2]
 - [x] CHK017 Estados vazios estão definidos para o histórico geral e para o histórico do produto? [Coverage, Spec §FR-026]
@@ -59,3 +59,5 @@ Profundidade: padrão · Público: revisor da spec (PR) · Foco: princípios II 
 - Leave items unchecked when they still require clarification, correction, or reviewer evaluation
 - `/speckit-implement` reads checklist checkbox state as a gate and must not modify markers
 - `checklists/requirements.md` has a separate built-in lifecycle maintained by `/speckit-specify` and `/speckit-clarify`
+- **Auditoria de especificações (2026-10-20)**: CHK014 ampliado para a origem "alertas" (FR-013 e
+  FR-015 alinhados ao contrato v1.1, com `quantidade` pré-preenchida). Continua 21/21.

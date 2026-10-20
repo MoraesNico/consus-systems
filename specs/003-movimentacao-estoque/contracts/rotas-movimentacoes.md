@@ -5,11 +5,14 @@
 
 Convenções gerais (de `docs/arquitetura.md`):
 
-- "Requisição HTMX" = `request.htmx and not request.htmx.boosted`. Requisições *boosted*
-  (`hx-boost` no `<body>`) recebem a página completa, como uma requisição comum.
+- "Requisição HTMX" = `apps.core.htmx.eh_fragmento(request)` (001, contrato v1.1: HTMX, não
+  *boosted* e não restauração de histórico). Requisições *boosted* (`hx-boost` no `<body>`)
+  recebem a página completa, como uma requisição comum. As duas views declaram
+  `Vary: HX-Request, HX-Target`.
 - Erro de validação → status **422** (a 001 configura o HTMX para trocar 422).
 - CSRF enviado por `hx-headers` no `<body>` (001) e pelo `{% csrf_token %}` do formulário.
-- Eventos via cabeçalho `HX-Trigger` (JSON), emitidos com `django_htmx.http.trigger_client_event`.
+- Eventos via cabeçalho `HX-Trigger` (JSON), emitidos com `apps.core.htmx.disparar_evento` e
+  `disparar_toast(response, nivel, texto)` (001), que acumulam num único cabeçalho.
 - Sem rota, método ou view de edição/exclusão de movimentação (FR-021): `PUT`, `PATCH` e
   `DELETE` → 405.
 
@@ -28,16 +31,16 @@ Página **Movimentações** (livro-razão). FR-022, FR-023, FR-024, FR-026; SC-0
 | `de` | `aaaa-mm-dd` ou `dd/mm/aaaa` | `criado_em >= 00:00 de` (fuso local) | aviso "Data inicial inválida." e período ignorado |
 | `ate` | `aaaa-mm-dd` ou `dd/mm/aaaa` | `criado_em < 00:00 do dia seguinte` | aviso "Data final inválida." e período ignorado |
 | `de` > `ate` | — | — | aviso "A data final deve ser igual ou posterior à inicial." e período ignorado |
-| `page` | inteiro ≥ 1 | página (25 por página) | não numérico → 1; acima do total → última |
+| `pagina` | inteiro ≥ 1 | página (25 por página; nome do contrato v1.1, nunca `page`) | não numérico → 1; acima do total → última |
 
 ### Respostas
 
 | Requisição | Status | Template | Conteúdo |
 |------------|--------|----------|----------|
-| comum / *boosted* | 200 | `movimentacoes/lista.html` (extends `base.html`) | título, ação "Nova movimentação", `partials/filtros.html`, `<div id="resultados">` com `partials/tabela_movimentacoes.html` |
-| HTMX com `HX-Target: resultados` | 200 | `movimentacoes/partials/tabela_movimentacoes.html` | só o conteúdo de `#resultados` |
+| comum / *boosted* | 200 | `movimentacoes/lista.html` (extends `base.html`) | título, ação "Nova movimentação", `partials/filtros.html` e `partials/tabela_movimentacoes.html` |
+| HTMX com `HX-Target: resultados` | 200 | `movimentacoes/partials/tabela_movimentacoes.html` | o fragmento, cuja raiz é o próprio `<div id="resultados">` (trocado com `hx-swap="outerHTML"`, mesma convenção da 002) |
 
-`partials/tabela_movimentacoes.html`:
+`partials/tabela_movimentacoes.html` (raiz `<div id="resultados">`):
 
 - avisos de filtro no topo (`role="alert"`), quando houver;
 - contagem "N movimentações" e "Página X de Y";
@@ -45,15 +48,17 @@ Página **Movimentações** (livro-razão). FR-022, FR-023, FR-024, FR-026; SC-0
   para `produtos:detalhe`), **Tipo** (selo com texto), **Quantidade** (`+5` / `−3`, mono tabular,
   alinhada à direita), **Saldo** (`10 → 15`, mono tabular, à direita), **Observação**; cada linha
   vem de `partials/linha_movimentacao.html`; **nenhuma** coluna de ações;
-- paginação com links `href` (funciona sem HTMX) + `hx-get`, `hx-target="#resultados"`,
-  `hx-push-url="true"`, preservando os filtros;
+- paginação pelo componente `components/paginacao.html` da 001 (`pagina=page_obj`,
+  `rotulo_itens="movimentações"`, `alvo="#resultados"`): links `href` com `?pagina=<n>` (funcionam
+  sem HTMX) + `hx-get`, `hx-target="#resultados"`, `hx-swap="outerHTML"`, `hx-push-url="true"`,
+  preservando os filtros;
 - estado vazio: "Nenhuma movimentação encontrada." + "Limpar filtros" (link para
   `/movimentacoes/`) quando há filtros, ou "Registre a primeira movimentação" (link para
   `movimentacoes:nova`) quando não há nenhuma.
 
 `partials/filtros.html`: `<form id="filtros" method="get" action="{% url 'movimentacoes:lista' %}"
-hx-get="{% url 'movimentacoes:lista' %}" hx-target="#resultados" hx-push-url="true"
-hx-trigger="change, submit">` com `produto` (select "#0001 — Nome", opção "Todos os produtos"),
+hx-get="{% url 'movimentacoes:lista' %}" hx-target="#resultados" hx-swap="outerHTML"
+hx-push-url="true" hx-trigger="change, submit">` com `produto` (select "#0001 — Nome", opção "Todos os produtos"),
 `tipo` (Todos, Saldo inicial, Entrada, Saída/Venda), `de`, `ate` (`type="date"`), botão
 "Filtrar" (necessário sem HTMX) e link "Limpar".
 
@@ -69,8 +74,8 @@ Formulário de movimentação. FR-012, FR-013, FR-014, FR-019.
 |------|---------|--------|----------|
 | `produto` | ID inteiro | pré-seleciona o produto e mostra seu saldo | ignorado (formulário sem produto) |
 | `tipo` | `ENTRADA` \| `SAIDA` | pré-seleciona o tipo | ignorado (inclui `INICIAL`) |
-| `origem` | `lista` \| `detalhe` | só no `hx-get` do diálogo: preenche o campo oculto `origem` | tratado como `lista` |
-| `quantidade` | texto | só na prévia | prévia mostra apenas o saldo atual |
+| `origem` | `lista` \| `detalhe` \| `alertas` | só no `hx-get` do diálogo: preenche o campo oculto `origem` (`alertas` = relatório/painel da 004) | tratado como `lista` |
+| `quantidade` | inteiro `1..1.000.000` (só dígitos) | pré-preenche o campo quantidade (ex.: sugestão de reposição da 004) e a prévia | ignorado (campo vazio; prévia mostra apenas o saldo atual) |
 
 ### Respostas
 
@@ -86,10 +91,11 @@ Formulário de movimentação. FR-012, FR-013, FR-014, FR-019.
 <form id="form-movimentacao" method="post" action="/movimentacoes/nova/"
       hx-post="/movimentacoes/nova/" hx-target="this" hx-swap="outerHTML"
       hx-disabled-elt="find button[type=submit]">
-  csrf · origem (hidden: pagina|lista|detalhe)
+  csrf · origem (hidden: pagina|lista|detalhe|alertas)
   produto     select "#0001 — Nome" (página)  |  hidden + texto (diálogo)
   tipo        rádio: Entrada | Saída/Venda (fieldset com legenda "Tipo")
-  quantidade  type=number inputmode=numeric min=1 max=1000000 step=1 required autofocus
+  quantidade  type=text inputmode=numeric pattern="[0-9]*" required autofocus (só dígitos — igual à 002;
+              type=number é evitado porque o navegador descartaria/reinterpretaria "2,5", "+5" e "1.000")
   observacao  type=text maxlength=200, dica "Ex.: nº da nota, cliente"
   <output id="previa-saldo" aria-live="polite" hx-get="/movimentacoes/nova/"
           hx-include="closest form" hx-target="this"
@@ -119,7 +125,7 @@ FR-001…FR-008, FR-012, FR-015…FR-020.
 ### Campos
 
 `produto` (ID), `tipo` (`ENTRADA`|`SAIDA`), `quantidade`, `observacao` (opcional), `origem`
-(`pagina` padrão | `lista` | `detalhe`), `csrfmiddlewaretoken`.
+(`pagina` padrão | `lista` | `detalhe` | `alertas`), `csrfmiddlewaretoken`.
 
 ### Respostas
 
@@ -128,8 +134,9 @@ FR-001…FR-008, FR-012, FR-015…FR-020.
 | comum | sucesso | 302 → `/movimentacoes/nova/?produto=<id>&tipo=<tipo>` | — | `messages.success(<mensagem de confirmação>)` (exibida pela 001 como toast) |
 | comum | erro | 422 | `movimentacoes/nova.html` com erros e valores preservados | — |
 | HTMX, `origem=pagina` | sucesso | 200 | `partials/form_movimentacao.html` limpo: mesmo produto e tipo, quantidade/observação vazias, saldo atualizado | `HX-Trigger`: `estoque-alterado`, `toast` |
-| HTMX, `origem=lista` | sucesso | 200 | `partials/sucesso_dialogo.html` com `<template><tr id="produto-<id>" hx-swap-oob="true">…</tr></template>` | `HX-Reswap: none`; `HX-Trigger`: `estoque-alterado`, `toast`, `fechar-dialogo` |
-| HTMX, `origem=detalhe` | sucesso | 200 | `partials/sucesso_dialogo.html` com `#produto-<id>-resumo` e `#produto-<id>-historico` (`hx-swap-oob="true"`) | `HX-Reswap: none`; `HX-Trigger`: `estoque-alterado`, `toast`, `fechar-dialogo` |
+| HTMX, `origem=lista` | sucesso | 200 | `partials/sucesso_dialogo.html` com `<template><tr id="produto-<id>" hx-swap-oob="true">…</tr></template>` (`produtos/partials/linha.html` com `oob=True`) | `HX-Reswap: none`; `HX-Trigger`: `estoque-alterado`, `toast`, `fechar-dialogo` |
+| HTMX, `origem=detalhe` | sucesso | 200 | `partials/sucesso_dialogo.html` com `#produto-<id>-resumo` (`produtos/partials/resumo.html`) e `#produto-<id>-historico` (`hx-swap-oob="true"`) | `HX-Reswap: none`; `HX-Trigger`: `estoque-alterado`, `toast`, `fechar-dialogo` |
+| HTMX, `origem=alertas` | sucesso | 200 | `partials/sucesso_dialogo.html` **sem** fragmentos OOB (relatório e painel da 004 não têm `#produto-<id>`; atualizam-se por `estoque-alterado`) | `HX-Reswap: none`; `HX-Trigger`: `estoque-alterado`, `toast`, `fechar-dialogo` |
 | HTMX (qualquer origem) | erro | 422 | `partials/form_movimentacao.html` com erros, valores preservados e saldo atual relido | sem `HX-Trigger` (nada mudou) |
 
 **Erros e campos**: saldo insuficiente, quantidade inválida e saldo máximo → campo `quantidade`;

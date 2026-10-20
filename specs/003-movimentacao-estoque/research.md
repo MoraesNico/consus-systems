@@ -89,13 +89,16 @@ As decisões de produto vieram da sessão de esclarecimentos da [spec](spec.md#c
 ## R6. Validação da quantidade e limites
 
 - **Decision**: campo `QuantidadeField` (subclasse de `forms.IntegerField`) que aceita **apenas**
-  `^[+-]?\d+$` (após aparar espaços) antes de converter; qualquer outro texto ("2,5", "2.5",
-  "1.000", "abc") recebe "Informe um número inteiro, sem casas decimais nem separadores.". Depois,
-  validadores de mínimo (1 → "Informe uma quantidade maior que zero.") e máximo
-  (`QUANTIDADE_MAXIMA = 1_000_000` → "Informe no máximo 1.000.000."). Teto de saldo
-  `SALDO_MAXIMO = 2_147_483_647` (limite de `PositiveIntegerField` no PostgreSQL) verificado no
-  formulário e no serviço (`SaldoMaximoExcedidoError`). `INICIAL` aceita `0..SALDO_MAXIMO`.
-  O `<input>` usa `type="number" inputmode="numeric" min="1" max="1000000" step="1"`.
+  `^[0-9]+$` (após aparar espaços; contrato v1.1 — "Campos aceitam só dígitos", igual à 002)
+  antes de converter; `-<dígitos>` recebe "Informe uma quantidade maior que zero."; qualquer
+  outro texto ("+5", "2,5", "2.5", "1.000", "abc") recebe "Informe um número inteiro, sem casas
+  decimais nem separadores.". Depois, validadores de mínimo (0 → "Informe uma quantidade maior
+  que zero.") e máximo (`QUANTIDADE_MAXIMA_MOVIMENTACAO = 1_000_000` → "Informe no máximo
+  1.000.000."). Teto de saldo `SALDO_MAXIMO` = `apps.produtos.models.QUANTIDADE_MAXIMA`
+  (2.147.483.647, limite de `PositiveIntegerField` no PostgreSQL) verificado no formulário e no
+  serviço (`SaldoMaximoExcedidoError`). `INICIAL` aceita `0..SALDO_MAXIMO`. O `<input>` usa
+  `type="text" inputmode="numeric" pattern="[0-9]*"` (como na 002): `type="number"` faria o
+  navegador descartar "2,5"/"+5" (enviando vazio) ou reinterpretar "1.000", trocando a mensagem.
 - **Rationale**: o `IntegerField` do Django remove sufixos `.0*` (`re_decimal`), o que faria
   "1.000" (mil, em pt-BR) virar **1** silenciosamente — erro grave num controle de estoque. Os
   limites evitam estouro de inteiro (erro 500) e atendem ao esclarecimento Q4.
@@ -106,11 +109,12 @@ As decisões de produto vieram da sessão de esclarecimentos da [spec](spec.md#c
 
 - **Decision**: manter apenas as rotas do contrato (`movimentacoes:lista`, `movimentacoes:nova`)
   e despachar a variante na view:
-  - parcial somente quando `request.htmx and not request.htmx.boosted`;
+  - parcial somente quando `apps.core.htmx.eh_fragmento(request)` (001, contrato v1.1);
   - `GET nova`: `HX-Target: dialogo` → conteúdo do diálogo; `HX-Target: previa-saldo` → prévia;
     demais → página completa;
-  - `POST nova`: campo oculto `origem` (`pagina` | `lista` | `detalhe`) define a resposta de
-    sucesso (formulário limpo vs. OOB + fechar diálogo);
+  - `POST nova`: campo oculto `origem` (`pagina` | `lista` | `detalhe` | `alertas`, contrato
+    v1.1) define a resposta de sucesso (formulário limpo vs. OOB + fechar diálogo; `alertas` sem
+    OOB); `GET nova` aceita `quantidade` para pré-preencher a sugestão de reposição da 004;
   - `GET lista`: `HX-Target: resultados` → só a tabela; demais → página completa.
 - **Rationale**: não cria rotas fora do contrato; navegação com `hx-boost` continua recebendo a
   página completa.
@@ -140,7 +144,7 @@ As decisões de produto vieram da sessão de esclarecimentos da [spec](spec.md#c
       `<tr>` solto);
     - `origem=detalhe`: `#produto-<id>-resumo` (partial da 002) e `#produto-<id>-historico`
       (partial da 003), ambos com `hx-swap-oob="true"`.
-  - Cabeçalho `HX-Trigger` (via `django_htmx.http.trigger_client_event`) com
+  - Cabeçalho `HX-Trigger` (via `apps.core.htmx.disparar_evento`/`disparar_toast` da 001) com
     `estoque-alterado` (`{produto_id, saldo_anterior, saldo_posterior}`), `toast`
     (`{nivel: "sucesso", texto: <mensagem de confirmação>}`) e, no diálogo, `fechar-dialogo`.
   - **Página** (`origem=pagina`) com HTMX: 200 com o formulário limpo (mesmo produto e tipo,
@@ -175,11 +179,13 @@ As decisões de produto vieram da sessão de esclarecimentos da [spec](spec.md#c
     `criado_em >= início(de)` e `criado_em < início(ate + 1 dia)` (evita `__date`, que impede o uso
     do índice).
   - Ordenação `-criado_em, -id` (desempate estável). `select_related("produto")`.
-  - `Paginator(…, 25).get_page(page)` (número inválido → primeira; acima do total → última);
-    links de paginação preservam a querystring dos filtros.
+  - `Paginator(…, 25).get_page(pagina)` — parâmetro `pagina` do contrato v1.1 (número inválido →
+    primeira; acima do total → última); links de paginação (componente `paginacao.html` da 001)
+    preservam a querystring dos filtros.
   - Índices: `criado_em` (contrato) e `(produto, -criado_em)` para o histórico do produto.
-  - Filtros com `hx-get` + `hx-target="#resultados"` + `hx-push-url="true"` +
-    `hx-trigger="change, submit"`; avisos de filtro renderizados no topo de `#resultados`
+  - Filtros com `hx-get` + `hx-target="#resultados"` + `hx-swap="outerHTML"` +
+    `hx-push-url="true"` + `hx-trigger="change, submit"` (o fragmento tem `#resultados` como
+    raiz, convenção da 002); avisos de filtro renderizados no topo de `#resultados`
     (`role="alert"`), pois o formulário de filtros não é trocado.
 - **Rationale**: FR-022…FR-026 e SC-007; endereço compartilhável; desempenho com 100k linhas.
 - **Alternatives considered**: busca textual de produto com autocomplete (YAGNI para ~1.000
@@ -233,16 +239,18 @@ As decisões de produto vieram da sessão de esclarecimentos da [spec](spec.md#c
   `formatar_numero(n)` em `services.py` (`f"{n:,}".replace(",", ".")`) — usado nas exceções e na
   mensagem de confirmação; nos templates, o filtro de número da 001 (ou `intcomma` com
   `pt-br`). Sinal com `+` e `−` (U+2212). Datas com `|date:"d/m/Y H:i"` no fuso
-  `America/Sao_Paulo`. Código do produto via `produto.codigo` ("#0001"). Selo do tipo:
-  `INICIAL` → neutro, `ENTRADA` → sucesso, `SAIDA` → neutro forte (inverso), sempre com texto.
+  `America/Sao_Paulo`. Código do produto via `produto.codigo` ("#0001"). Selo do tipo conforme
+  a sugestão do design-system §4.4.2: `ENTRADA` → `.badge--info` + `arrow-down-to-line`,
+  `SAIDA` → `.badge--neutro` + `arrow-up-from-line`, `INICIAL` → `.badge--neutro`, sempre com
+  texto (sem variante nova de badge).
   Botões de ação rápida com `aria-label="Registrar entrada de #0001 Parafuso"`.
 - **Rationale**: princípio IV (idioma, números tabulares, cor nunca sozinha); a cor de perigo fica
   reservada a erros e a cor de alerta à reposição (004).
 
 ## R16. Dependências
 
-- **Decision**: nenhuma dependência nova. Usa `django-htmx` (já no stack) para
-  `request.htmx`, `trigger_client_event` e `reswap`.
+- **Decision**: nenhuma dependência nova. Usa `django-htmx` (já no stack) para `request.htmx` e
+  `reswap`, e os helpers `apps.core.htmx` da 001 para eventos e toasts.
 - **Rationale**: princípio V (YAGNI).
 
 ---
@@ -251,11 +259,18 @@ As decisões de produto vieram da sessão de esclarecimentos da [spec](spec.md#c
 
 Registradas aqui (sem editar `docs/arquitetura.md`), para o coordenador consolidar:
 
+> **Status (auditoria 2026-10-20)**: consolidadas em `docs/arquitetura.md` v1.1, que prevalece
+> sobre o texto abaixo onde divergir: proposta 1 → partials **`produtos/partials/linha.html`** e
+> **`produtos/partials/resumo.html`** (não `linha_produto.html`/`resumo_produto.html`); proposta 6
+> → paginação com **`pagina`** (não `page`) e `origem` também aceita **`alertas`**, com
+> `quantidade` opcional para pré-preencher a sugestão de reposição; proposta 9 → o marcador
+> `postgres` é registrado pela 001.
+
 1. **Alvos OOB e partials da 002** — fixar: linha da lista de produtos como
-   `<tr id="produto-<id>">` renderizada por `apps/produtos/templates/produtos/partials/linha_produto.html`
+   `<tr id="produto-<id>">` renderizada por ~~`partials/linha_produto.html`~~ → `apps/produtos/templates/produtos/partials/linha.html` (v1.1)
    (contexto `produto` anotado por `com_situacao()`), e o bloco de saldo/mínimo/situação do
    detalhe como `<section id="produto-<id>-resumo">` em
-   `apps/produtos/templates/produtos/partials/resumo_produto.html`; ambos aceitam a variável de
+   ~~`partials/resumo_produto.html`~~ → `apps/produtos/templates/produtos/partials/resumo.html` (v1.1); ambos aceitam a variável de
    contexto `oob` para emitir `hx-swap-oob="true"` na raiz. A 003 acrescenta
    `#produto-<id>-historico`.
 2. **Fechamento do diálogo** — novo evento `fechar-dialogo` (via `HX-Trigger`) tratado pelo
@@ -269,9 +284,9 @@ Registradas aqui (sem editar `docs/arquitetura.md`), para o coordenador consolid
    `MovimentacaoImutavelError`.
 5. **Carga útil do evento** — `estoque-alterado` leva `{produto_id, saldo_anterior,
    saldo_posterior}` (opcional para quem escuta com `from:body`).
-6. **Parâmetros de rota** — `/movimentacoes/?produto=<id>&tipo=INICIAL|ENTRADA|SAIDA&de=aaaa-mm-dd&ate=aaaa-mm-dd&page=<n>`
-   e `/movimentacoes/nova/?produto=<id>&tipo=ENTRADA|SAIDA` (+ `origem=lista|detalhe` apenas no
-   `hx-get` do diálogo); paginação com `page` em todas as listas.
+6. **Parâmetros de rota** — `/movimentacoes/?produto=<id>&tipo=INICIAL|ENTRADA|SAIDA&de=aaaa-mm-dd&ate=aaaa-mm-dd&pagina=<n>` (v1.1; a proposta original usava `page`)
+   e `/movimentacoes/nova/?produto=<id>&tipo=ENTRADA|SAIDA&quantidade=<n>` (+ `origem=lista|detalhe|alertas`
+   apenas no `hx-get` do diálogo); paginação com `pagina` em todas as listas (v1.1).
 7. **Limites numéricos** — quantidade por Entrada/Saída de 1 a 1.000.000; saldo máximo
    2.147.483.647; a validação da Quantidade Inicial na 002 deve aceitar `0..2.147.483.647`.
 8. **Assinatura do cadastro** — fixar `produtos.services.cadastrar_produto(*, nome,

@@ -78,9 +78,10 @@
 
 ## Dependencies & Assumptions
 
-- [x] CHK042 Está documentado que a situação de estoque é calculada pela feature 004 e que a 001 fornece só o componente? [Assumption, Spec §Assumptions]
+- [x] CHK042 Está documentado que a situação de estoque é derivada pela regra única da feature 002 (selo `produtos/partials/situacao.html`, reutilizado pela 004) e que a 001 fornece só o componente? [Assumption, Spec §Assumptions, contrato v1.1]
 - [x] CHK043 A faixa de navegadores suportados que justifica `<dialog>` e CSS moderno está declarada? [Assumption, Spec §Assumptions]
-- [x] CHK044 A dependência do slot do badge em relação à feature 004 (fonte do contador) está explícita? [Dependency, Spec §FR-014]
+- [x] CHK044 A dependência do contêiner do badge em relação à feature 004 (que renderiza `#contador-alertas` dentro de `#badge-alertas`, com polling de 30 s e evento `estoque-alterado`) está explícita e descreve o mesmo mecanismo da spec 004? [Dependency, Spec §FR-014, contrato v1.1]
+- [x] CHK045 Os atalhos de teclado genéricos (`data-atalho`) usados pela 002 têm requisito na 001, com os casos de conflito (campo editável, modificadores, diálogo aberto)? [Completeness, Spec §FR-045]
 
 ## Notes
 
@@ -91,3 +92,6 @@
 - Avaliação 2026-10-20: 41/44 atendidos na geração. CHK010, CHK036 e CHK037 resolvidos em
   seguida na spec (FR-015, FR-028/FR-029 e Edge Cases, FR-025) e no design system (§2.13, §2.14):
   44/44.
+- **Auditoria de especificações (2026-10-20)**: CHK042 e CHK044 reescritos para o contrato v1.1
+  (regra de situação na 002; contêiner `#badge-alertas` + `#contador-alertas` da 004, 30 s, em vez
+  do slot com polling próprio de 60 s); CHK045 acrescentado (FR-045, atalhos `data-atalho`). 45/45.

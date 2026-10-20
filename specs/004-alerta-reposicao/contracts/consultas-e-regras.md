@@ -39,7 +39,7 @@ from apps.produtos.models import QUANTIDADE_MAXIMA     # teto de saldo (002/003)
 
 FATOR_ESTOQUE_ALVO: int = 2
 
-class Situacao(enum.StrEnum):          # valor = código; propriedades .rotulo, .gravidade, .variante, .variante_barra
+class Situacao(enum.StrEnum):          # valor = código; propriedades .rotulo, .gravidade, .variante
     OK = "OK"
     REPOSICAO_NECESSARIA = "REPOSICAO_NECESSARIA"
     SEM_ESTOQUE = "SEM_ESTOQUE"
@@ -71,11 +71,12 @@ def confirmacao_com_alerta(movimentacao) -> Aviso: ...                    # mov.
 | `sugestao_reposicao(q, m)` | idem | `None` se OK; senão `min(max(2*m − q, 1), QUANTIDADE_MAXIMA − q)` |
 | `transicao(a, p, m)` | `a, p, m ≥ 0` | conforme a tabela de transições do data-model |
 | `aviso_movimentacao(mov)` | `mov.produto` carregado | usa `mov.tipo`, `mov.saldo_anterior`, `mov.saldo_posterior`, `mov.produto.estoque_minimo` e `mov.produto.codigo`/`nome` |
-| `confirmacao_com_alerta(mov)` | idem | `t = mov.mensagem_confirmacao`; piorou → `Aviso("alerta", f"{t}. {aviso.texto}")`; saiu do alerta → `Aviso("sucesso", f"{t}. {aviso.texto}")`; senão `Aviso("sucesso", t)` (texto da 003 intacto) |
+| `confirmacao_com_alerta(mov)` | idem | `t = mov.mensagem_confirmacao`; piorou → `Aviso("alerta", f"{t}. {aviso.texto}")`; saiu do alerta → `Aviso("sucesso", f"{t}. {aviso.texto}")`; senão `Aviso("sucesso", t)` (texto da 003 intacto); `len(texto) <= 200` sempre (limite de `disparar_toast` da 001): se exceder, o nome do produto é encurtado com "…" |
 
 `Situacao.rotulo`: `"OK"`, `"REPOSIÇÃO NECESSÁRIA"`, `"SEM ESTOQUE"`.
-`Situacao.gravidade`: `0`, `1`, `2`. `Situacao.variante` (selo): `"neutro"`, `"alerta"`, `"perigo"`.
-`Situacao.variante_barra` (barras de cobertura): `"sucesso"`, `"alerta"`, `"perigo"`.
+`Situacao.gravidade`: `0`, `1`, `2`. `Situacao.variante`: `"ok"`, `"reposicao"`, `"sem_estoque"` —
+mesmo vocabulário do parâmetro `situacao` de `components/badge_estoque.html` e do `tom` de
+`components/barra_progresso.html` (001), usado pelo selo e pelas barras de cobertura.
 
 ## 3. `apps/alertas/selectors.py` — leitura
 

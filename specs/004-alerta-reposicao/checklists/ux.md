@@ -14,8 +14,8 @@ visual destacado (item 3 da atividade), estados, anúncios e operação sem scri
 ## Requirement Clarity
 
 - [x] CHK001 "Alerta visual destacado" está traduzido em propriedades verificáveis (ícone + texto + cor, contraste WCAG 2.1 AA)? [Clarity, Spec §FR-021]
-- [x] CHK002 Os textos exatos de cada selo ("⚠ REPOSIÇÃO NECESSÁRIA", "SEM ESTOQUE", "OK") estão definidos? [Clarity, Spec §FR-009, §FR-018]
-- [x] CHK003 A diferença visual entre "REPOSIÇÃO NECESSÁRIA" e a variação mais grave "SEM ESTOQUE" está especificada além do texto? [Clarity, Spec §FR-020]
+- [x] CHK002 Os textos exatos de cada selo ("⚠ REPOSIÇÃO NECESSÁRIA", o composto "⚠ REPOSIÇÃO NECESSÁRIA │ SEM ESTOQUE", "OK") estão definidos, sem que SEM ESTOQUE omita o texto de reposição exigido pela constituição IV? [Clarity, Spec §FR-009, §FR-018, §FR-020]
+- [x] CHK003 A diferença visual entre "REPOSIÇÃO NECESSÁRIA" e a variação mais grave "SEM ESTOQUE" está especificada além do texto (segmento extra na cor de perigo, com ícone próprio)? [Clarity, Spec §FR-020, design-system §4.4.1]
 - [x] CHK004 O conteúdo do aviso na confirmação da movimentação (nome do produto, saldo resultante, mínimo) e o seu nível de destaque estão definidos? [Clarity, Spec §FR-019, Contracts §fragmentos 5]
 - [x] CHK005 A aparência do contador com 0 e com ≥ 1 alertas está especificada, incluindo o texto acessível? [Clarity, Spec §FR-016]
 - [x] CHK006 A ordem das colunas do relatório e o alinhamento dos números estão especificados? [Clarity, Spec §FR-009, Contracts §http-alertas Linha]
@@ -35,7 +35,7 @@ visual destacado (item 3 da atividade), estados, anúncios e operação sem scri
 
 - [x] CHK015 A indicação "OK" na lista de produtos é coerente entre esta feature e a feature 002 (texto neutro, sem cor de alerta)? [Consistency, Spec §FR-018, spec 002 §FR-020]
 - [x] CHK016 A hierarquia do painel (indicadores, lista de reposição, cobertura, últimas movimentações) está definida e é coerente com o grid de 12 colunas da constituição? [Consistency, Contracts §http-painel, Constitution §IV]
-- [x] CHK017 As cores semânticas usadas (alerta, perigo, sucesso, neutra) correspondem às cores semânticas do design system, sem cores novas? [Consistency, Research §R13, Constitution §IV]
+- [x] CHK017 As cores semânticas usadas (alerta, perigo, sucesso, neutra) correspondem às cores semânticas do design system, sem cores nem componentes novos (selo e barras reutilizam `badge_estoque` e `barra_progresso` da 001)? [Consistency, Research §R13, Constitution §IV]
 - [ ] CHK018 Os textos com contagem usam regra de singular/plural consistente em todas as superfícies ("1 produto" × "2 produtos")? [Consistency, Gap] — aberto: os contratos usam a forma "produto(s)"; a spec não define a regra.
 
 ## Acceptance Criteria Quality
@@ -62,4 +62,8 @@ visual destacado (item 3 da atividade), estados, anúncios e operação sem scri
   CHK010, CHK011, CHK014 e CHK024 só passaram após ajustes na spec feitos nesta etapa (FR-007,
   FR-008, FR-009, FR-014, FR-020, FR-021, FR-024, FR-025, casos de borda e premissas). CHK018 fica
   aberto (baixo impacto) para decisão do revisor.
+- **Auditoria de especificações (2026-10-20)**: CHK002, CHK003 e CHK017 reescritos — o selo SEM
+  ESTOQUE da proposta original omitia "REPOSIÇÃO NECESSÁRIA" (violação da constituição IV) e a
+  cobertura usava componentes novos; agora selo composto único e componentes da 001. CHK018
+  continua aberto como pendência consciente (registrada em `docs/auditoria-especificacoes.md`).
 - Items are numbered sequentially for easy reference

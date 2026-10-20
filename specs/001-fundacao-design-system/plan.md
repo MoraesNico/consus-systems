@@ -11,8 +11,9 @@
 Criar o esqueleto executável do Consus: projeto Django 5.2 (`config/` + `apps/core`) configurado
 só por variáveis de ambiente, empacotado em Docker (Gunicorn + WhiteNoise, PostgreSQL 17 via
 Compose, migrações no entrypoint, `collectstatic` no build, healthcheck por `/saude/`), com a
-casca HTMX (`base.html` com navegação auto-ativada por nome de rota, slot do badge de alertas,
-região de toasts `aria-live`, `<dialog>` único, `consus.js` < 100 linhas), o design system
+casca HTMX (`base.html` com navegação auto-ativada por nome de rota, contêiner `#badge-alertas`
+para o contador da 004, região de toasts `aria-live`, região `#anuncio-alertas`, `<dialog>` único,
+`consus.js` < 100 linhas com toasts, diálogo e atalhos `data-atalho`), o design system
 **High-Density Neo-Brutalism Sóbrio / Swiss Grid Enterprise** implementado como tokens CSS
 (`docs/design/design-system.md` é a fonte de verdade) + 16 componentes de template, o catálogo
 vivo `/design/` (com demonstrações reais de diálogo/422/toasts), páginas de erro estilizadas e os
@@ -32,8 +33,9 @@ gerenciador uv (`pyproject.toml` + `uv.lock`).
 Nenhum modelo próprio nesta feature (só migrações de `contenttypes` e `sessions`).
 
 **Testing**: pytest + pytest-django + pytest-cov (`fail_under = 90`); testes de configuração em
-subprocesso; teste de integração Docker opt-in (`-m docker`); suíte também roda no PostgreSQL
-via serviço `testes` (perfil do Compose).
+subprocesso; teste de integração Docker opt-in (`-m docker`); marcador `postgres` registrado no
+`pyproject.toml` e pulado automaticamente fora do PostgreSQL (contrato v1.1, usado por 002–004);
+suíte também roda no PostgreSQL via serviço `testes` (perfil do Compose).
 
 **Target Platform**: contêiner Linux (python:3.13-slim-bookworm) servido a navegadores
 evergreen (2 últimas versões de Chrome, Edge, Firefox, Safari).
@@ -57,7 +59,7 @@ configuração só por ambiente; processo sem root.
 | Princípio / regra | Avaliação | Evidência no plano |
 |-------------------|-----------|--------------------|
 | **I. Integridade do Estoque** | ✅ Não se aplica diretamente (sem saldo nesta feature) e é **protegido**: admin não exposto, sem `django.contrib.admin`/`auth` (FR-044), eliminando a via de edição direta de saldo. | research R18; FR-044 |
-| **II. Interface dirigida pelo servidor** | ✅ HTML renderizado no servidor; HTMX 2 vendorizado; `hx-boost`, `HX-Trigger` (`toast`, `fechar-dialogo`), 422 configurado; `consus.js` < 100 linhas (teste conta as linhas); tudo funciona sem JS (fallbacks de diálogo e toasts); views usam `request.htmx` via `eh_parcial`. | R6, R7, R8; contracts/layout-e-htmx.md |
+| **II. Interface dirigida pelo servidor** | ✅ HTML renderizado no servidor; HTMX 2 vendorizado; `hx-boost`, `HX-Trigger` (`toast`, `fechar-dialogo`), 422 configurado; `consus.js` < 100 linhas (teste conta as linhas); tudo funciona sem JS (fallbacks de diálogo e toasts); views usam `request.htmx` via `eh_fragmento` (contrato v1.1); `consus.js` também trata atalhos `data-atalho` (FR-045). | R6, R7, R8; contracts/layout-e-htmx.md |
 | **III. Testes primeiro** | ✅ Cada FR-001…FR-044 tem tarefa de teste que o cita, escrita antes da implementação (tasks.md); testes de view cobrem variante normal e HTMX; cobertura ≥ 90 % (inclui `selectors.py`); suíte em SQLite e PostgreSQL. `core` não tem `models.py`/`services.py` (não há escrita de domínio). | R15; tasks.md |
 | **IV. Design system** | ✅ `docs/design/design-system.md` como fonte de verdade; tokens únicos em `tokens.css`; teste reprova literais fora dele; grade de 12 colunas e base 4/8 px; bordas 1 px (2 px foco/destaque), raio 0–2 px, sombras sólidas; paleta tinta/papel + 1 acento + semânticas; tabelas 32/40 px com mono tabular à direita; contraste AA testado; alerta = ícone SVG + "REPOSIÇÃO NECESSÁRIA" + cor; `aria-live`; pt-BR com `dd/mm/aaaa HH:MM` e milhar ".". | R10, R11, R12, R13, R14 |
 | **V. Simplicidade, containers, 12-factor** | ✅ `docker compose up --build` + cópia do `.env.example`; config só por ambiente; segredos fora do repositório; cada dependência justificada (R2 — `dj-database-url` é a única não citada na constituição, justificada); HTMX/fontes/ícones locais. | R2, R3, R4 |
@@ -102,7 +104,7 @@ docs/design/
 pyproject.toml                # uv: dependências, grupo dev, Ruff, pytest, coverage
 uv.lock
 manage.py
-conftest.py                   # storage de estáticos simples na suíte
+conftest.py                   # storage de estáticos simples; pula testes `postgres` fora do PostgreSQL
 Dockerfile                    # estágios base / testes / producao
 docker-compose.yml            # db (postgres:17-alpine) + app + testes (perfil)
 .dockerignore
@@ -130,8 +132,8 @@ apps/
     ├── views.py              # painel, design (GET/POST demos), saude
     ├── selectors.py          # estado_saude()
     ├── navegacao.py          # ItemNavegacao, ITENS_NAVEGACAO, resolver_itens(), url_se_existir()
-    ├── context_processors.py # consus(): itens_navegacao, badge_alertas_url, versao
-    ├── htmx.py               # eh_parcial, disparar_toast, fechar_dialogo
+    ├── context_processors.py # consus(): itens_navegacao, versao
+    ├── htmx.py               # eh_fragmento, disparar_evento, disparar_toast (contrato v1.1)
     ├── formularios.py        # RenderizadorConsus (FORM_RENDERER)
     ├── forms.py              # FormularioExemplo (demo do catálogo)
     ├── design_tokens.py      # leitura de tokens.css, WCAG, PARES_CONTRASTE
@@ -152,11 +154,12 @@ apps/
     └── tests/
         ├── __init__.py
         ├── conftest.py               # cliente HTMX, urlconf de teste
-        ├── urls_teste.py             # rotas fictícias produtos/movimentacoes/alertas + views que falham
+        ├── urls_teste.py             # só core + rotas fictícias produtos/movimentacoes/alertas + views que falham
+        ├── urls_somente_core.py      # só as rotas do core (estado "seções ainda não existem")
         ├── test_configuracao.py      # FR-004/005/006/009/020/043/044
         ├── test_infra_arquivos.py    # FR-001/002/003/007/010/036/042
         ├── test_infra_docker.py      # @docker: FR-001/002/003/007/010/035/036/041
-        ├── test_layout.py            # FR-011/015/016/017/018/019/020/021/023(tema)
+        ├── test_layout.py            # FR-011/014/015/016/017/018/019/020/021/023(tema)/045
         ├── test_navegacao.py         # FR-012/013/014
         ├── test_htmx.py              # FR-015/017/018 (utilitários)
         ├── test_painel.py            # FR-022

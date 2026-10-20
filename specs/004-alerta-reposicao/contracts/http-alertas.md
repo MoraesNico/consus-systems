@@ -7,9 +7,10 @@ Convenções comuns às duas rotas:
 
 - Somente `GET` (`@require_GET`); outros métodos → **405**.
 - `@never_cache` (`Cache-Control: max-age=0, no-cache, no-store, must-revalidate, private`) e
-  `Vary: HX-Request`.
-- "Fragmento" = `request.htmx and not request.htmx.boosted`; qualquer outra requisição
-  (sem HTMX ou navegação `hx-boost`) recebe a página completa.
+  `Vary: HX-Request, HX-Target` (contrato v1.1).
+- "Fragmento" = `apps.core.htmx.eh_fragmento(request)` (001: HTMX, não *boosted*, não
+  restauração de histórico); qualquer outra requisição (sem HTMX ou navegação `hx-boost`) recebe
+  a página completa.
 - Nenhuma rota escreve no banco; não há CSRF envolvido.
 
 ---
@@ -79,11 +80,11 @@ Raiz `<tr id="reposicao-<id>">` (nunca `produto-<id>`, ver fragmentos §4). Cont
 |--------|----------|-------------|
 | ID | `produto.codigo` (`#0003`), link para `produto.get_absolute_url` | esquerda, mono |
 | Produto | nome | esquerda |
-| Situação | `{% include "produtos/partials/situacao.html" %}` (ícone SVG + "REPOSIÇÃO NECESSÁRIA" / "SEM ESTOQUE") | esquerda |
+| Situação | `{% include "produtos/partials/situacao.html" %}` (selo único da 002: "⚠ REPOSIÇÃO NECESSÁRIA" ou o composto "⚠ REPOSIÇÃO NECESSÁRIA │ SEM ESTOQUE") | esquerda |
 | Atual / Mínimo / Déficit | inteiros com separador de milhar | direita, mono tabular |
-| Cobertura | `components/barra_cobertura.html` com `percentual=produto.cobertura_percentual`, `variante=produto.situacao_estoque.variante_barra` + "40%" | direita |
+| Cobertura | `components/barra_progresso.html` (001) com `valor=produto.cobertura_percentual`, `maximo=100`, `sufixo="%"`, `tom=produto.situacao_estoque.variante` ("40%"); `None` → "—" | direita |
 | Sugestão | `+16` (inteiro com separador) | direita, mono tabular |
-| Ações | "+ Entrada" conforme [fragmentos-e-eventos.md §4](fragmentos-e-eventos.md#4-ação--entrada-do-relatório-e-do-painel) (`origem=alertas`) | direita |
+| Ações | "+ Entrada" conforme [fragmentos-e-eventos.md §4](fragmentos-e-eventos.md#4-ação--entrada-do-relatório-e-do-painel) (`origem=alertas`, `quantidade` = sugestão limitada a 1.000.000) | direita |
 
 Após a entrada confirmada pelo diálogo da 003, a resposta da 003 dispara `estoque-alterado`; a
 região `#relatorio` se recarrega sozinha (nova varredura) e o contador também.
@@ -114,20 +115,24 @@ Mesma resposta com ou sem `HX-Request` (é sempre um fragmento). Orçamento: 1 c
 
 ```text
 <span id="contador-alertas" class="contador-alertas"
-      hx-get="/alertas/contador/?anterior={{ total }}"
+      hx-get="{% url 'alertas:contador' %}?anterior={{ total|unlocalize }}"
       hx-trigger="every {{ intervalo }}s, estoque-alterado from:body"
       hx-swap="outerHTML"
+      {% if not total %}hidden{% endif %}
       {% if oob %}hx-swap-oob="true"{% endif %}>
   {% if total %}
-    <svg aria-hidden="true" …>(ícone alerta)</svg>
+    <svg aria-hidden="true" …>(ícone triangle-alert do sprite da 001)</svg>
     <span class="contador-alertas__numero">{{ total }}</span>
     <span class="visualmente-oculto">produto(s) em alerta de reposição</span>
   {% endif %}
 </span>
 ```
 
-Com `total == 0` o elemento existe vazio (continua fazendo polling) e fica oculto por CSS
-(`.contador-alertas:empty { display: none }`).
+Com `total == 0` o elemento existe sem conteúdo e com o atributo `hidden` (continua fazendo
+polling; nada visível nem anunciado). Não se usa `:empty` porque a quebra de linha do template
+deixaria o elemento "não vazio" para o CSS. O elemento é renderizado dentro do
+contêiner `#badge-alertas` da 001; polling, evento e trocas OOB miram sempre `#contador-alertas`,
+nunca o contêiner (mecanismo único do contrato v1.1).
 
 ### Anúncio (`alertas/partials/anuncio.html`)
 

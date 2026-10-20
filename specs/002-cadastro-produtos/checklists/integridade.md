@@ -49,7 +49,7 @@
 
 - [x] CHK023 A divisão de responsabilidade da regra de alerta entre 002 (exibir/filtrar) e 004 (varredura/relatório) está documentada? [Premissa, Spec §FR-015, §Assumptions]
 - [x] CHK024 A ausência de autenticação/perfis está registrada como premissa explícita? [Premissa, Spec §Assumptions]
-- [x] CHK025 O aviso às regiões dependentes da situação (FR-031) está descrito de forma verificável na spec? [Clareza, Spec §FR-031, US1 cenário 9]
+- [x] CHK025 O aviso às regiões dependentes da situação (FR-031) está descrito de forma verificável na spec, com o evento `estoque-alterado` nas respostas parciais de cadastro e edição? [Clareza, Spec §FR-031, US1 cenário 9, contrato v1.1]
 
 ## Notes
 
@@ -64,3 +64,6 @@
 - **Após a autoanálise (2026-10-20)**: 25/25. FR-005 ganhou o exemplo "ÁGUA" = "água" (CHK011);
   FR-006 e Edge Cases passaram a definir espaços nas extremidades, zeros à esquerda e sinal "+"
   (CHK012), alinhados às tarefas T009/T013.
+- **Auditoria de especificações (2026-10-20)**: CHK025 reescrito — FR-031 passou a nomear o
+  evento `estoque-alterado` (cadastro e edição em resposta parcial) conforme o contrato v1.1.
+  Continua 25/25.

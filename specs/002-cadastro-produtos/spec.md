@@ -323,8 +323,11 @@ digitação acontece; desativar os scripts do navegador e verificar que a lista 
   "Nenhum produto encontrado" citando o termo buscado (quando houver) e oferecendo "Limpar busca",
   que remove busca e filtro.
 - **FR-020**: A situação DEVE ser exibida com o indicador visual padronizado do design system
-  (feature 001): em alerta, ícone de aviso + texto "REPOSIÇÃO NECESSÁRIA" + cor de alerta; ok,
-  texto "OK" com aparência neutra; a situação NUNCA DEVE ser comunicada apenas por cor.
+  (feature 001), por um selo único reutilizado em todas as telas do sistema: em alerta, ícone de
+  aviso + texto "REPOSIÇÃO NECESSÁRIA" + cor de alerta; em alerta com quantidade atual 0, a
+  variação mais grave — selo composto que mantém "⚠ REPOSIÇÃO NECESSÁRIA" e acrescenta
+  "SEM ESTOQUE"; ok, texto "OK" discreto, sem cor de alerta; a situação NUNCA DEVE ser comunicada
+  apenas por cor (contrato `docs/arquitetura.md` v1.1, "Variações do selo").
 
 **Detalhe**
 
@@ -369,9 +372,11 @@ digitação acontece; desativar os scripts do navegador e verificar que a lista 
   Inicial como primeiro registro do histórico ("Saldo inicial"), na mesma operação atômica, sem
   mudar sua assinatura nem seu resultado observável (produto com quantidade atual igual à
   Quantidade Inicial).
-- **FR-031**: Após um cadastro ou uma edição, as regiões da interface que dependem da situação
-  dos produtos (ex.: contador de alertas da feature 004) DEVEM ser avisadas para se atualizar,
-  sem recarregar a página.
+- **FR-031**: Após um cadastro ou uma edição bem-sucedidos, as regiões da interface que dependem
+  da situação dos produtos (ex.: contador de alertas da feature 004) DEVEM refletir a mudança sem
+  recarregar a página: toda resposta de atualização parcial DEVE emitir o aviso de estoque
+  alterado (evento `estoque-alterado`, contrato v1.1); a navegação de página inteira (com ou sem
+  scripts) re-renderiza essas regiões com os dados atuais.
 
 ### Key Entities *(include if feature involves data)*
 
@@ -426,9 +431,10 @@ digitação acontece; desativar os scripts do navegador e verificar que a lista 
 - **Localização**: interface em português do Brasil; números com separador de milhar "." e datas
   `dd/mm/aaaa HH:MM` no horário de Brasília.
 - **Situação**: derivada e não armazenada, pela regra "quantidade atual ≤ estoque mínimo" do
-  contrato de arquitetura. Esta feature exibe e filtra a situação; varredura, relatório de
-  reposição, contador de alertas e painel pertencem à feature 004, que reutiliza a mesma
-  derivação.
+  contrato de arquitetura. Esta feature define a regra (consultas e propriedades do produto),
+  exibe o selo único (OK / REPOSIÇÃO NECESSÁRIA / SEM ESTOQUE) e filtra a situação; varredura,
+  relatório de reposição, contador de alertas e painel pertencem à feature 004, que reutiliza a
+  mesma derivação e o mesmo selo.
 - **Visão padrão após cadastro pelo diálogo**: a lista volta a não ter busca nem filtro, na
   primeira página, para garantir que o produto recém-criado esteja visível no topo.
 - **Dependência da feature 001**: layout base e navegação; componentes do design system (tabela

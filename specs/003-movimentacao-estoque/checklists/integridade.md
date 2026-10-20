@@ -25,7 +25,7 @@ constituição (integridade do estoque).
 ## Requirement Clarity
 
 - [x] CHK009 A mensagem de recusa por saldo insuficiente está especificada literalmente, com a origem de X (saldo no momento da confirmação) e de Y (quantidade pedida)? [Clarity, Spec §FR-004, §Edge Cases]
-- [x] CHK010 O formato aceito para a quantidade está inequívoco quanto a separadores (ex.: "1.000" em pt-BR significa mil — aceitar como 1000, recusar ou ler como 1)? [Ambiguity, Spec §FR-005, §Edge Cases]
+- [x] CHK010 O formato aceito para a quantidade está inequívoco quanto a separadores e sinais (ex.: "1.000" em pt-BR significa mil — aceitar como 1000, recusar ou ler como 1; "+5") e é o mesmo da 002? [Ambiguity, Spec §FR-005, §Edge Cases, contrato v1.1]
 - [x] CHK011 O teto de saldo está especificado com o limite numérico e a mensagem exata? [Clarity, Spec §FR-005]
 - [x] CHK012 O comportamento sob confirmações simultâneas (aguardar a anterior × falhar imediatamente) está inequívoco? [Clarity, Spec §FR-008, §Clarifications]
 - [x] CHK013 A ordem que define "a movimentação seguinte" na regra de continuidade (data/hora de registro; desempate quando o horário coincide) está especificada? [Ambiguity, Spec §FR-029]
@@ -73,3 +73,5 @@ constituição (integridade do estoque).
 - Leave items unchecked when they still require clarification, correction, or reviewer evaluation
 - `/speckit-implement` reads checklist checkbox state as a gate and must not modify markers
 - `checklists/requirements.md` has a separate built-in lifecycle maintained by `/speckit-specify` and `/speckit-clarify`
+- **Auditoria de especificações (2026-10-20)**: CHK010 ampliado — FR-005 passou a recusar "+5" e
+  a exigir só dígitos, como a 002 (contrato v1.1). Continua 31/31.

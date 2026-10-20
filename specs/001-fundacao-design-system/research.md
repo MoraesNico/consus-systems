@@ -110,8 +110,9 @@ arquivo cobre as decisões técnicas. Não restou nenhum `NEEDS CLARIFICATION` n
   `<meta name="htmx-config">`: `responseHandling` = `204 → sem troca`; `2xx/3xx → troca`;
   `422 → troca`; `4xx/5xx → sem troca, erro`; `includeIndicatorStyles: false`;
   `historyCacheSize: 0` (evita restaurar páginas com saldo desatualizado). Regra de renderização
-  para as views de todas as features: `apps.core.htmx.eh_parcial(request)` =
-  `request.htmx and not request.htmx.boosted` → template parcial; senão → página completa
+  para as views de todas as features: `apps.core.htmx.eh_fragmento(request)` =
+  `request.htmx and not request.htmx.boosted and not request.htmx.history_restore_request`
+  (nome e definição do contrato v1.1) → template parcial; senão → página completa
   (navegação "boostada" recebe a página inteira e o HTMX troca o `<body>`, atualizando o item
   ativo da navegação e o `<title>`).
 - **Rationale**: a navegação boostada continua sendo HTML completo (funciona sem JS — FR-018);
@@ -127,7 +128,8 @@ arquivo cobre as decisões técnicas. Não restou nenhum `NEEDS CLARIFICATION` n
 - **Decision**: duas origens, uma aparência.
   1. **Respostas parciais**: evento `toast` no cabeçalho `HX-Trigger` com
      `{"nivel": "sucesso"|"info"|"alerta"|"erro", "texto": "…"}`, emitido por
-     `apps.core.htmx.disparar_toast(response, texto, nivel="sucesso")`, que usa
+     `apps.core.htmx.disparar_toast(response, nivel, texto)`, que usa
+     `apps.core.htmx.disparar_evento(response, nome, dados=None)` sobre
      `django_htmx.http.trigger_client_event` (mescla com outros eventos, ex.: `estoque-alterado`).
   2. **Página inteira** (POST sem HTMX → redirect): framework de mensagens do Django com
      `MESSAGE_TAGS = {DEBUG: "info", INFO: "info", SUCCESS: "sucesso", WARNING: "alerta",
@@ -152,7 +154,8 @@ arquivo cobre as decisões técnicas. Não restou nenhum `NEEDS CLARIFICATION` n
   `descricao`, `corpo`, `rodape`), que inclui o botão fechar (`<form method="dialog">`) e a região
   interna `[data-toasts]`. `consus.js`: guarda o elemento acionador no `htmx:beforeRequest`, chama
   `showModal()` no `htmx:afterSwap` do `#dialogo`, devolve o foco no evento `close`, fecha no
-  evento `fechar-dialogo` (emitido por `apps.core.htmx.fechar_dialogo(response)`), e direciona
+  evento `fechar-dialogo` (emitido por `apps.core.htmx.disparar_evento(response,
+  "fechar-dialogo")`), e direciona
   toasts para a região interna enquanto o diálogo está aberto. Foco inicial: atributo
   `autofocus` no primeiro campo (o algoritmo nativo de `showModal()` o respeita). Clique no
   `::backdrop` não fecha.
@@ -170,10 +173,12 @@ arquivo cobre as decisões técnicas. Não restou nenhum `NEEDS CLARIFICATION` n
   namespace `movimentacoes`), Alertas (`alertas:relatorio`, namespace `alertas`). Um context
   processor (`apps.core.context_processors.consus`) resolve cada item com `reverse()`; em
   `NoReverseMatch` o item sai como `disponivel=False` (renderizado sem `href`, com
-  `aria-disabled="true"` e "(em breve)"). O mesmo resolve o **slot do badge**: se
-  `alertas:contador` existir, o `<span id="badge-alertas">` recebe `hx-get`,
-  `hx-trigger="load, estoque-alterado from:body, every 60s"` e `hx-swap="innerHTML"`. Função
-  utilitária `url_se_existir(nome)` serve a ações como o botão do estado vazio do Painel.
+  `aria-disabled="true"` e "(em breve)"). O item Alertas contém o contêiner `<span
+  id="badge-alertas">`, vazio e sem atributos HTMX; a 004 renderiza dentro dele
+  `{% contador_alertas %}` (`#contador-alertas` com `hx-trigger="every 30s, estoque-alterado
+  from:body"` e `hx-swap="outerHTML"`), conforme o contrato v1.1 — a proposta original (polling
+  no próprio contêiner, `every 60s`, troca `innerHTML`) foi **superada**. Função utilitária
+  `url_se_existir(nome)` serve a ações como o botão do estado vazio do Painel.
 - **Rationale**: as features 002–004 só precisam registrar suas rotas com os nomes do contrato;
   a navegação e o badge se ligam sozinhos, sem editar templates do core (reduz conflitos de merge).
 - **Alternatives considered**: links fixos que caem no 404 — rejeitado na clarificação (experiência
@@ -328,18 +333,27 @@ arquivo cobre as decisões técnicas. Não restou nenhum `NEEDS CLARIFICATION` n
 Itens que esta feature define e que as features 002–004 consomem. **`docs/arquitetura.md` não
 foi editado**; proponho incorporá-los ao contrato (seção "Convenções HTMX"):
 
+> **Status (auditoria 2026-10-20)**: consolidadas em `docs/arquitetura.md` v1.1. Onde o
+> contrato decidiu diferente, vale o contrato: `eh_parcial` → **`eh_fragmento`** (inclui
+> restauração de histórico); `fechar_dialogo(response)` → **`disparar_evento(response,
+> "fechar-dialogo")`**; `disparar_toast(response, texto, nivel=…)` → **`disparar_toast(response,
+> nivel, texto)`**; slot com polling `every 60s`/`innerHTML:#badge-alertas` → **contêiner vazio
+> `#badge-alertas` + `#contador-alertas` da 004 (`every 30s`, `outerHTML`, 204)**; anotação
+> `situacao` de três valores → **anotação `alerta` (002) + selo único
+> `produtos/partials/situacao.html`**. O texto abaixo é o registro histórico da proposta.
+
 1. **Níveis do evento `toast`**: `nivel ∈ {"sucesso", "info", "alerta", "erro"}` (em português);
-   emissão por `apps.core.htmx.disparar_toast(response, texto, nivel="sucesso")`; mensagens do
+   emissão por ~~`disparar_toast(response, texto, nivel="sucesso")`~~ → `apps.core.htmx.disparar_toast(response, nivel, texto)` (v1.1); mensagens do
    Django mapeadas por `MESSAGE_TAGS` para os mesmos níveis.
 2. **Novo evento `fechar-dialogo`** (sem payload), emitido por
-   `apps.core.htmx.fechar_dialogo(response)` após uma ação concluída dentro de `#dialogo`.
-3. **Regra parcial × completa**: `apps.core.htmx.eh_parcial(request)` (= `request.htmx and not
-   request.htmx.boosted`); navegação boostada recebe página completa.
-4. **Slot do badge de alertas**: `<span id="badge-alertas">` no item Alertas é ligado
-   automaticamente quando `alertas:contador` existe (`hx-trigger="load, estoque-alterado
-   from:body, every 60s"`, `hx-swap="innerHTML"`); o fragmento de `alertas:contador` devolve
-   **apenas o conteúdo interno** (badge ou vazio). Atualizações por OOB DEVEM usar
-   `hx-swap-oob="innerHTML:#badge-alertas"` para não apagar os atributos do slot.
+   ~~`fechar_dialogo(response)`~~ → `apps.core.htmx.disparar_evento(response, "fechar-dialogo")` (v1.1) após uma ação concluída dentro de `#dialogo`.
+3. **Regra parcial × completa**: ~~`eh_parcial`~~ → `apps.core.htmx.eh_fragmento(request)` (v1.1: = `request.htmx and not
+   request.htmx.boosted and not request.htmx.history_restore_request`); navegação boostada recebe página completa.
+4. **Slot do badge de alertas** — *superada pela v1.1*: o `<span id="badge-alertas">` é um
+   contêiner vazio, sem atributos HTMX; a 004 renderiza nele `#contador-alertas` (`every 30s,
+   estoque-alterado from:body`, `outerHTML`, 204 sem mudança) e as trocas OOB miram
+   `#contador-alertas`. (Proposta original: polling no próprio contêiner a cada 60 s com troca
+   `innerHTML`.)
 5. **Situação `sem_estoque`**: `quantidade_atual == 0` é um caso particular de `em_alerta`;
    sugerimos que `ProdutoQuerySet.com_situacao()` anote `situacao ∈ {"ok", "reposicao",
    "sem_estoque"}`, que é o parâmetro do componente `components/badge_estoque.html`; o badge de

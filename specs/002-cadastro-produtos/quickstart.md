@@ -10,15 +10,16 @@ Guia de validação da feature. Detalhes de rotas, serviços e fragmentos estão
 - Branch `002-cadastro-produtos` com as tarefas de [tasks.md](./tasks.md) concluídas.
 - `.env` criado a partir de `.env.example`.
 
-> Os comandos abaixo usam `web` como nome do serviço da aplicação no `docker-compose.yml`
-> (definido pela 001); ajuste se o nome for outro.
+> Os comandos abaixo usam os serviços do `docker-compose.yml` da 001: `app` (aplicação, imagem de
+> produção, sem dependências de desenvolvimento) e `testes` (perfil `testes`, roda o `pytest`
+> contra o PostgreSQL).
 
 ## 1. Subir e migrar
 
 ```bash
 docker compose up --build -d
-docker compose exec web python manage.py migrate
-docker compose exec web python manage.py makemigrations --check --dry-run   # sem migrações pendentes
+docker compose exec app python manage.py migrate
+docker compose exec app python manage.py makemigrations --check --dry-run   # sem migrações pendentes
 ```
 
 Esperado: migração `produtos.0001_initial` aplicada; nenhuma migração pendente.
@@ -32,8 +33,8 @@ pytest apps/produtos -q
 # Cobertura exigida pela constituição (≥ 90% em models/services/selectors)
 pytest apps/produtos --cov=apps/produtos --cov-report=term-missing
 
-# PostgreSQL (inclui os testes de maiúsculas/minúsculas acentuadas, pulados no SQLite)
-docker compose exec web pytest apps/produtos -q
+# PostgreSQL (inclui os testes @pytest.mark.postgres, pulados no SQLite)
+docker compose --profile testes run --rm testes pytest apps/produtos -q
 
 # Rastreabilidade: todo FR da spec citado em algum teste
 for n in $(seq -w 1 31); do grep -rqi "fr0$n\|FR-0$n" apps/produtos/tests || echo "FR-0$n sem teste"; done
@@ -69,7 +70,7 @@ curl -s -o /dev/null -w "%{http_code}\n" -X DELETE http://localhost:8000/produto
 | M4 | US1 | Diálogo aberto → Esc | Fecha; nada criado |
 | M5 | US1 | Desativar JavaScript → "Novo produto" → salvar válido | Página `/produtos/novo/`; após salvar, lista com destaque e notificação; recarregar remove o destaque |
 | M6 | US2 | Cadastrar `#0012` "Parafuso Sextavado" e "Bucha 12 mm"; buscar `12`, `#12`, `#0012` | `12` → ambos; `#12`/`#0012` → só o `#0012`; URL acompanha a busca |
-| M7 | US2 | Filtrar "Em alerta", ordenar por "Quantidade" (duas vezes), ir à página 2 | Só produtos com quantidade ≤ mínimo, com "⚠ REPOSIÇÃO NECESSÁRIA"; sentido indicado no cabeçalho; filtro/ordem mantidos |
+| M7 | US2 | Filtrar "Em alerta", ordenar por "Quantidade" (duas vezes), ir à página 2 | Só produtos com quantidade ≤ mínimo, com "⚠ REPOSIÇÃO NECESSÁRIA" (os zerados com o selo composto "… │ SEM ESTOQUE"); sentido indicado no cabeçalho; filtro/ordem mantidos; URL com `pagina=2` |
 | M8 | US2 | Copiar a URL de M7 para outra aba; usar Voltar/Avançar | Mesmo resultado em todos os casos |
 | M9 | US2 | Buscar "xyz-inexistente" | "Nenhum produto encontrado" citando o termo + "Limpar busca" |
 | M10 | US3 | Abrir `#0001` pela lista; abrir `/produtos/999999/` | Dados completos com datas `dd/mm/aaaa HH:MM` e região de movimentações sem botões; página "Produto não encontrado" |
@@ -81,7 +82,7 @@ curl -s -o /dev/null -w "%{http_code}\n" -X DELETE http://localhost:8000/produto
 ## 5. Desempenho (SC-003) com 10.000 produtos
 
 ```bash
-docker compose exec web python manage.py shell -c "
+docker compose exec app python manage.py shell -c "
 from apps.produtos.services import cadastrar_produto
 for i in range(1, 10001):
     cadastrar_produto(nome=f'Produto de carga {i:05d}', quantidade_inicial=i % 50, estoque_minimo=10)
@@ -95,7 +96,7 @@ descartável — os dados de carga não devem ir para a demonstração.
 ## 6. Integridade no banco (SC-006)
 
 ```bash
-docker compose exec web pytest apps/produtos/tests/test_models.py -k "constraint or unique" -v
+docker compose --profile testes run --rm testes pytest apps/produtos/tests/test_models.py -k "constraint or unique" -v
 ```
 
 Esperado: os testes das restrições `produto_quantidade_atual_nao_negativa`,

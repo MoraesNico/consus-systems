@@ -1,102 +1,96 @@
 # Contrato de UI: fragmentos, componentes, eventos e integrações
 
-Todos os estilos usam apenas tokens de `static/css/tokens.css` (001). Classes novas em
-`static/css/components.css`. Ícone ⚠ = SVG `alerta` do conjunto de ícones da 001 (nunca o
-caractere/emoji na web). Nomes de templates e funções da 002/003 conforme os contratos
-publicados por essas features.
+Todos os estilos usam apenas tokens de `static/css/tokens.css` (001). Esta feature **não cria
+componentes nem classes CSS novas**: reutiliza os componentes e classes do design system
+entregues pela 001. Ícones vêm do sprite da 001 (`triangle-alert`, `octagon-x`, `circle-check`
+— nunca o caractere/emoji ⚠ na web). Nomes de templates, IDs, eventos e funções conforme
+`docs/arquitetura.md` v1.1.
 
-## 1. Selo de situação — parcial único `produtos/partials/situacao.html` (002, estendido pela 004)
+## 1. Selo de situação — parcial único `produtos/partials/situacao.html` (002, reutilizado)
 
-A 002 já entrega `apps/produtos/templates/produtos/partials/situacao.html` (contexto `produto`),
-incluído na linha da lista e no resumo do detalhe, com "REPOSIÇÃO NECESSÁRIA" / "OK". A 004
-**estende o mesmo parcial** (não cria outro) com a variação SEM ESTOQUE e passa a incluí-lo no
-relatório e no painel — um único selo em todas as telas (FR-020).
+A 002 entrega `apps/produtos/templates/produtos/partials/situacao.html` (contexto `produto`),
+incluído na linha da lista e no resumo do detalhe, já com as **três** variações do contrato v1.1.
+A 004 **não altera** o parcial: apenas o inclui também no relatório e no painel — um único selo
+em todas as telas (FR-020).
 
-Ordem de decisão no parcial (espelha `regras.classificar`):
+Ordem de decisão no parcial (espelha `regras.classificar`), delegando o visual a
+`components/badge_estoque.html` (001):
 
-| Condição | Marcação | Visual |
-|----------|----------|--------|
-| `produto.quantidade_atual == 0` | `<span class="badge badge--perigo selo-situacao"><svg aria-hidden="true">…alerta…</svg>SEM ESTOQUE</span>` | cor de perigo, borda 2px (variação mais grave) |
-| `produto.em_alerta` | `<span class="badge badge--alerta selo-situacao"><svg aria-hidden="true">…alerta…</svg>REPOSIÇÃO NECESSÁRIA</span>` | cor de alerta, caixa alta com tracking |
-| senão | `<span class="badge badge--neutro selo-situacao">OK</span>` | texto atenuado, sem ícone e sem cor de alerta |
+| Condição | `situacao` do componente | Visual (design-system §4.4.1) |
+|----------|--------------------------|-------------------------------|
+| `produto.quantidade_atual == 0` | `sem_estoque` | selo **composto**: segmento "⚠ REPOSIÇÃO NECESSÁRIA" (ícone `triangle-alert`, fundo de alerta) + segmento "SEM ESTOQUE" (ícone `octagon-x`, cor de perigo); nome acessível "Situação: reposição necessária, sem estoque" |
+| `produto.em_alerta` | `reposicao` | ícone `triangle-alert` + "REPOSIÇÃO NECESSÁRIA" + cor de alerta |
+| senão | `ok` | "OK" discreto, sem cor de alerta |
 
-Funciona com qualquer `Produto` (anotado ou não); nenhuma consulta extra. Os nomes de classe do
-badge seguem o componente `badge` da 001; o contrato aqui é **texto + ícone + variante**.
+Funciona com qualquer `Produto` (anotado ou não); nenhuma consulta extra.
 
 ## 2. Contador no menu — `{% contador_alertas %}`
 
 - *Inclusion tag* em `apps/alertas/templatetags/alertas_tags.py` (`{% load alertas_tags %}`) que
   renderiza `alertas/partials/contador.html` com `total = selectors.total_em_alerta()` e
-  `intervalo = settings.ALERTAS_INTERVALO_SEGUNDOS`.
-- Uso em `templates/base.html` (001):
+  `intervalo = settings.ALERTAS_INTERVALO_SEGUNDOS`. Se a rota `alertas:contador` não existir no
+  urlconf corrente (ex.: testes da 001 com urlconf só do core), a tag não renderiza nada.
+- A 004 **estende** `templates/components/navegacao.html` (001): dentro do contêiner vazio que a
+  001 reserva no item Alertas (mecanismo único do contrato v1.1):
 
 ```text
-<nav …>
-  …
-  <a href="{% url 'alertas:relatorio' %}" class="menu__item">Alertas {% contador_alertas %}</a>
-</nav>
-…
-<div id="anuncio-alertas" class="visualmente-oculto" role="status" aria-live="polite"></div>
+<span id="badge-alertas" class="navegacao__badge">{% load alertas_tags %}{% contador_alertas %}</span>
 ```
 
+- A região viva `<div id="anuncio-alertas" class="visualmente-oculto" role="status"
+  aria-live="polite"></div>` já existe no `templates/base.html` da 001 — a 004 só troca o seu
+  conteúdo (OOB `innerHTML`).
 - Marcação, polling e respostas: [http-alertas.md](http-alertas.md#get-alertascontador--alertascontador).
+  O visual é a classe `.contador-alertas` da 001 (design-system §4.16); com total 0 o elemento
+  recebe o atributo `hidden`.
 
-## 3. Componentes novos do design system
+## 3. Componentes do design system reutilizados (001)
 
-### `templates/components/barra_cobertura.html` (estilo ProgressBar/CategoryBar do Tremor)
+### Cobertura — `components/barra_progresso.html`
 
-Parâmetros (`{% include … with … %}`): `percentual` (int ou `None`), `variante`
-(`perigo` | `alerta` | `sucesso`).
+`{% include "components/barra_progresso.html" with rotulo="Cobertura" valor=produto.cobertura_percentual maximo=100 sufixo="%" tom=produto.situacao_estoque.variante %}`
 
-```text
-{% if percentual is None %}<span class="texto-atenuado">—</span>{% else %}
-<span class="barra-cobertura barra-cobertura--{{ variante }}" aria-hidden="true">
-  <span class="barra-cobertura__preenchimento" style="--valor: {{ percentual_limitado }}%"></span>
-</span>
-<span class="numero">{{ percentual }}%</span>{% endif %}
-```
+- `cobertura_percentual is None` ("não se aplica") → no lugar do componente, `<span
+  class="texto-atenuado">—</span>`.
+- Acima de 100% o componente desenha a barra cheia e mostra o texto real ("150%") — a barra nunca
+  ultrapassa o trilho.
+- `tom` = `Situacao.variante` (`sem_estoque` → perigo, `reposicao` → alerta, `ok` → sucesso),
+  os mesmos tons do componente da 001.
+- `role="meter"` com `aria-valuenow`/`aria-valuetext` vem do componente.
 
-- `percentual_limitado = min(percentual, 100)` (filtro `limitar_100` em `alertas_tags`) — a barra
-  nunca ultrapassa o trilho.
-- `variante` vem de `produto.situacao_estoque.variante_barra` (SEM ESTOQUE → `perigo`,
-  REPOSIÇÃO NECESSÁRIA → `alerta`, OK → `sucesso`).
-- Trilho: borda 1px, raio 0–2px, altura e largura de token; a barra é decorativa
-  (`aria-hidden`) porque o percentual é texto visível.
+### Lista de cobertura do painel — `{% lista_cobertura resumo.cobertura %}`
 
-### `templates/components/bar_list.html` (estilo BarList do Tremor)
+*Inclusion tag* em `apps/alertas/templatetags/alertas_tags.py` que renderiza
+`alertas/partials/lista_cobertura.html`: `<ul class="pilha">` com um `<li>` por `Produto` anotado
+contendo o link `#0005 Cola branca 90 g` (`produto.get_absolute_url()`) e o
+`components/barra_progresso.html` acima. Sem itens elegíveis: "Sem produtos com estoque mínimo
+definido.".
 
-Parâmetros: `itens` — iterável de dicionários com `rotulo`, `valor_texto`, `percentual` (0–100),
-`variante`, `href` (opcional). Como templates Django não montam dicionários, o painel usa a
-*inclusion tag* `{% cobertura_bar_list resumo.cobertura %}` (`apps/alertas/templatetags/alertas_tags.py`),
-que converte cada `Produto` anotado em `{rotulo: "#0005 Cola branca 90 g", valor_texto: "0%",
-percentual: min(cobertura, 100), variante: situacao_estoque.variante_barra, href:
-produto.get_absolute_url()}` e renderiza o componente genérico.
+### Demais
 
-```text
-<ul class="bar-list">
-  <li class="bar-list__item">
-    <a class="bar-list__rotulo" href="…">#0005 Cola branca 90 g</a>
-    <span class="bar-list__trilho" aria-hidden="true"><span class="bar-list__barra bar-list__barra--perigo" style="--valor: 0%"></span></span>
-    <span class="bar-list__valor numero">0%</span>
-  </li>
-</ul>
-```
+`components/kpi.html` (KPIs do painel), `components/estado_vazio.html` (estados vazios),
+classes `.tabela`, `.num`, `.botao` (API de classes da 001).
 
 ## 4. Ação "+ Entrada" do relatório e do painel
 
 ```text
-<a href="/movimentacoes/nova/?produto=3&tipo=ENTRADA"
-   hx-get="/movimentacoes/nova/?produto=3&tipo=ENTRADA&origem=alertas"
+<a href="/movimentacoes/nova/?produto=3&tipo=ENTRADA&quantidade=140"
+   hx-get="/movimentacoes/nova/?produto=3&tipo=ENTRADA&quantidade=140&origem=alertas"
    hx-target="#dialogo"
-   class="botao botao--compacto"
+   class="botao botao--secundario botao--sm"
    aria-label="Registrar entrada de #0003 Parafuso sextavado M6 x 20">+ Entrada</a>
 ```
 
-- Sem JS: navega para a página de nova movimentação da 003 (produto e tipo pré-selecionados).
-- Com HTMX: diálogo da 003. A 004 acrescenta à 003 o valor `origem=alertas` (ver §6): no sucesso,
-  a resposta não traz fragmentos OOB de produto (o relatório/painel não têm linha
-  `#produto-<id>`), só `HX-Reswap: none` + `HX-Trigger` (`estoque-alterado`, `toast`,
-  `fechar-dialogo`). O relatório e o painel se atualizam pelo evento.
+- IDs e números em atributos com `|unlocalize` (contrato v1.1). `quantidade` =
+  `min(sugestao_reposicao, 1.000.000)` (máximo por movimentação da 003); omitida quando a
+  sugestão é 0 ou `None`.
+- Sem JS: navega para a página de nova movimentação da 003 (produto, tipo e quantidade
+  pré-preenchidos).
+- Com HTMX: diálogo da 003 com `origem=alertas` — valor e parâmetro `quantidade` **entregues
+  pela 003** (contrato v1.1): no sucesso, a resposta não traz fragmentos OOB de produto (o
+  relatório/painel não têm linha `#produto-<id>`), só `HX-Reswap: none` + `HX-Trigger`
+  (`estoque-alterado`, `toast`, `fechar-dialogo`). O relatório e o painel se atualizam pelo
+  evento.
 - As linhas do relatório usam `id="reposicao-<id>"` (nunca `produto-<id>`, reservado à lista da
   002/003, para não receber OOB alheio).
 
@@ -104,46 +98,50 @@ produto.get_absolute_url()}` e renderiza o componente genérico.
 
 | Evento | Emitido por | Ouvido por (004) | Reação |
 |--------|-------------|------------------|--------|
-| `estoque-alterado` `{produto_id, saldo_anterior, saldo_posterior}` | resposta HTMX de movimentação da 003; cadastro parcial da 002 | `#contador-alertas`, `#relatorio`, `#painel-conteudo` (`hx-trigger="… estoque-alterado from:body"`) | GET do respectivo fragmento (a carga útil é ignorada) |
-| `toast` `{nivel, texto}` | resposta da 003 (formato inalterado) | componente de toast da 001 | exibe a confirmação, agora composta por `confirmacao_com_alerta` |
+| `estoque-alterado` `{produto_id, saldo_anterior, saldo_posterior}` (carga opcional) | respostas de fragmento após qualquer operação que altere saldo ou situação: movimentação (003), cadastro e edição do estoque mínimo (002) — contrato v1.1 | `#contador-alertas`, `#relatorio`, `#painel-kpis` (`hx-trigger="… estoque-alterado from:body"`) | GET do respectivo fragmento (a carga útil é ignorada) |
+| `toast` `{nivel, texto}` (`nivel ∈ {sucesso, info, alerta, erro}`) | resposta da 003 (formato inalterado) | componente de toast da 001 | exibe a confirmação, agora composta por `confirmacao_com_alerta` |
 | `fechar-dialogo` | resposta da 003 | 001 | fecha o `<dialog>` |
 | (polling) `every Ns` | o próprio `#contador-alertas` | — | GET `/alertas/contador/?anterior=N` |
 
-A 004 **não emite** eventos novos.
+A 004 **não emite** eventos novos. Respostas de página inteira (comum/*boosted*) já trazem o
+contador re-renderizado com o total atual.
 
 ## 6. Integração com a feature 003 (aviso na confirmação — FR-019)
 
-Pontos alterados pela 004 (após a 003 estar em `develop`):
+Pontos **estendidos** pela 004 (após a 003 estar em `develop`):
 
-| Arquivo (003) | Alteração |
-|---------------|-----------|
-| `apps/movimentacoes/views.py` (`nova_movimentacao`) | onde hoje usa `mov.mensagem_confirmacao`, passa a usar `aviso = confirmacao_com_alerta(mov)`: HTMX → `toast` `{"nivel": aviso.nivel, "texto": aviso.texto}`; sem HTMX → `messages.add_message(request, messages.WARNING if aviso.nivel == "alerta" else messages.SUCCESS, aviso.texto)` |
-| `apps/movimentacoes/forms.py` | campo oculto `origem` aceita também `alertas` |
-| `apps/movimentacoes/templates/movimentacoes/partials/sucesso_dialogo.html` | `origem=alertas` → nenhum fragmento OOB (corpo vazio) |
+| Arquivo (003) | Extensão |
+|---------------|----------|
+| `apps/movimentacoes/views.py` (`nova_movimentacao`) | onde hoje usa `mov.mensagem_confirmacao`, passa a usar `aviso = confirmacao_com_alerta(mov)`: HTMX → `disparar_toast(response, aviso.nivel, aviso.texto)` (001); sem HTMX → `messages.add_message(request, messages.WARNING if aviso.nivel == "alerta" else messages.SUCCESS, aviso.texto)` |
 | `apps/movimentacoes/management/commands/movimentar.py` | após a linha de sucesso, imprime o aviso (estilo `WARNING`) quando `aviso.nivel == "alerta"` — paridade de terminal |
+
+`origem=alertas` (campo oculto e ramo sem OOB em `partials/sucesso_dialogo.html`) e o
+parâmetro `quantidade` já são da 003 — a 004 apenas os usa (ver §4).
 
 | Movimentação | `toast.nivel` | `toast.texto` |
 |--------------|---------------|---------------|
 | Saída 11 → 10, mínimo 10 | `alerta` | "Saída registrada: #0003 Parafuso M6 — saldo 11 → 10. REPOSIÇÃO NECESSÁRIA: #0003 Parafuso M6 ficou com 10 un. (mínimo 10)." |
-| Saída 3 → 0, mínimo 5 | `alerta` | "Saída registrada: #0003 Parafuso M6 — saldo 3 → 0. SEM ESTOQUE: #0003 Parafuso M6 zerou (mínimo 5)." |
+| Saída 3 → 0, mínimo 5 | `alerta` | "Saída registrada: #0003 Parafuso M6 — saldo 3 → 0. REPOSIÇÃO NECESSÁRIA · SEM ESTOQUE: #0003 Parafuso M6 zerou (mínimo 5)." |
 | Entrada 4 → 25, mínimo 10 | `sucesso` | "Entrada registrada: #0003 Parafuso M6 — saldo 4 → 25. #0003 Parafuso M6 saiu do alerta de reposição." |
 | Entrada 2 → 5, mínimo 10 | `sucesso` | "Entrada registrada: #0003 Parafuso M6 — saldo 2 → 5" (texto da 003 sem acréscimo) |
 
+O texto final tem no máximo 200 caracteres (limite de `disparar_toast` da 001): se a composição
+ultrapassar, o nome do produto é encurtado com "…" nas duas ocorrências (o `#ID` permanece).
+
 ## 7. Integração com a feature 002 (lista e detalhe — FR-018)
 
-| Arquivo (002) | Alteração |
-|---------------|-----------|
-| `apps/produtos/templates/produtos/partials/situacao.html` | acrescenta o ramo SEM ESTOQUE (§1) antes do ramo REPOSIÇÃO NECESSÁRIA |
-| `apps/produtos/models.py` | `ProdutoQuerySet.com_situacao()` acrescenta `deficit` e `cobertura_percentual` (mantém `alerta`) |
+| Arquivo (002) | Extensão |
+|---------------|----------|
+| `apps/produtos/models.py` | `ProdutoQuerySet.com_situacao()` acrescenta `deficit` e `cobertura_percentual` com `Cast(..., BigIntegerField())` (mantém `alerta`); nenhuma propriedade nova no modelo |
 
-Lista, detalhe e a linha re-renderizada pela 003 já incluem o parcial — passam a exibir SEM
-ESTOQUE sem outra mudança. O filtro `?situacao=alerta` da 002 continua usando `em_alerta()`
-(inclui os SEM ESTOQUE).
+`produtos/partials/situacao.html` é usado sem alteração (§1). Lista, detalhe e a linha
+re-renderizada pela 003 já incluem o parcial. O filtro `?situacao=alerta` da 002 continua usando
+`em_alerta()` (inclui os SEM ESTOQUE).
 
 ## 8. Acessibilidade (FR-017, FR-021)
 
 - Selos: ícone `aria-hidden` + texto visível; nunca só cor; contraste ≥ 4,5:1 (texto) e ≥ 3:1
-  (bordas/ícones) contra o fundo.
+  (bordas/ícones) contra o fundo (garantido pelo componente da 001).
 - Contador: texto acessível "N produto(s) em alerta de reposição"; anúncios só na mudança
   (região viva estável `#anuncio-alertas`, troca `innerHTML`).
 - Relatório: `<caption>`, `<th scope="col">`, botão "Executar varredura" com estado ocupado

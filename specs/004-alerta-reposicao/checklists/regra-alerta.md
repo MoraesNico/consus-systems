@@ -59,8 +59,8 @@ regra e concordância entre superfícies.
 ## Dependencies & Assumptions
 
 - [x] CHK031 As dependências das features 001, 002 e 003 (layout, selo da 002, diálogo e aviso da 003, evento de estoque alterado) estão documentadas? [Dependency, Assumptions, Plan §Structure Decision]
-- [ ] CHK032 O dono das anotações do conjunto de consultas de produtos (002 × 004) está definido no contrato compartilhado? [Dependency, Ambiguity, Research §Propostas 1] — pendente: proposta registrada no research; depende de decisão do coordenador sobre `docs/arquitetura.md`.
-- [ ] CHK033 O evento emitido pela 002 após cadastro/edição tem nome acordado com os ouvintes da 004? [Dependency, Ambiguity, Research §Propostas 2] — pendente: a 002 (FR-031) não nomeia o evento; proposta de reutilizar `estoque-alterado`.
+- [x] CHK032 O dono das anotações do conjunto de consultas de produtos (002 × 004) está definido no contrato compartilhado? [Dependency, Research §Propostas 1] — resolvido: `docs/arquitetura.md` v1.1 (`alerta` da 002; `deficit` e `cobertura_percentual` da 004, com cast para bigint).
+- [x] CHK033 O evento emitido pela 002 após cadastro/edição tem nome acordado com os ouvintes da 004? [Dependency, Research §Propostas 2] — resolvido: `estoque-alterado` (contrato v1.1; FR-031 da 002 e FR-015 da 004 atualizados na auditoria).
 
 ## Notes
 
@@ -71,4 +71,6 @@ regra e concordância entre superfícies.
 - Revisão (2026-10-20, a pedido do brief da feature): CHK014 só passou após incluir "falha ao
   consultar o estoque → código 2" no FR-029 nesta etapa. CHK032 e CHK033 dependem de decisão
   fora desta feature (contrato compartilhado) e permanecem abertos.
+- **Auditoria de especificações (2026-10-20)**: CHK032 e CHK033 fechados pelo contrato v1.1 e pelos
+  ajustes da auditoria nas specs 002/004. 33/33.
 - Items are numbered sequentially for easy reference

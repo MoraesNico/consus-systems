@@ -26,8 +26,9 @@ pelo comando `python manage.py movimentar`.
 
 **Language/Version**: Python 3.13
 
-**Primary Dependencies**: Django 5.2 LTS, django-htmx (detecção `request.htmx`, utilitários
-`trigger_client_event` / `reswap`), HTMX 2.x vendorizado em `static/vendor/htmx.min.js`
+**Primary Dependencies**: Django 5.2 LTS, django-htmx (detecção `request.htmx`, utilitário
+`reswap`), helpers da 001 em `apps/core/htmx.py` (`eh_fragmento`, `disparar_evento`,
+`disparar_toast` — contrato v1.1), HTMX 2.x vendorizado em `static/vendor/htmx.min.js`
 (feature 001). **Nenhuma dependência nova.**
 
 **Storage**: PostgreSQL 17 (Docker Compose) em execução e no teste de concorrência; SQLite no
@@ -35,7 +36,7 @@ desenvolvimento local e na suíte rápida. Nova tabela `movimentacoes_movimentac
 `produtos_produto` (feature 002) com bloqueio de linha.
 
 **Testing**: pytest + pytest-django + pytest-cov; testes de concorrência marcados
-`@pytest.mark.postgres` (pulados automaticamente fora do PostgreSQL); cliente de teste do Django
+`@pytest.mark.postgres` (marcador registrado pela 001 e pulado automaticamente fora do PostgreSQL); cliente de teste do Django
 com cabeçalhos `HX-Request` / `HX-Target` para as variantes HTMX.
 
 **Target Platform**: contêiner Linux (Gunicorn + WhiteNoise) servindo navegadores modernos
@@ -65,7 +66,7 @@ funciona sem HTMX; erros de validação com status 422; datas `dd/mm/aaaa HH:MM`
 | **II. Interface Dirigida pelo Servidor** | Templates Django + partials; `hx-swap-oob` para linha/resumo/histórico; `HX-Trigger` para `estoque-alterado`, `toast`, `fechar-dialogo`; prévia de saldo renderizada no servidor (sem JS novo); todo POST funciona sem HTMX (PRG); views escolhem template por `request.htmx`. | ✅ PASS — ver [contracts/rotas-movimentacoes.md](contracts/rotas-movimentacoes.md). |
 | **III. Testes Primeiro (NÃO-NEGOCIÁVEL)** | Cada FR tem teste que o cita no nome/docstring; testes de serviço/seletor/modelo antes das views; cobertura ≥ 90% em `services.py`, `models.py`, `selectors.py`; views testadas nas variantes comum e HTMX; teste de concorrência em PostgreSQL. | ✅ PASS — mapeamento FR → teste em `tasks.md`; comandos em [quickstart.md](quickstart.md). |
 | **IV. Design System** | Usa tokens e componentes da 001 (diálogo, toast, selo, tabela densa, campo, estado vazio); quantidades em mono tabular alinhadas à direita; tipo como selo com texto; sinal `+`/`−` (U+2212) + texto, nunca só cor; mensagens com `aria-live`/`role="alert"`; foco visível; datas e números em pt-BR. Nenhum valor mágico de CSS nesta feature. | ✅ PASS |
-| **V. Simplicidade, Containers, 12-Factor** | Sem dependências novas; migrações versionadas; teste de concorrência roda no PostgreSQL do Compose; nenhuma configuração nova além do registro do app/rotas e do marcador `postgres`. | ✅ PASS |
+| **V. Simplicidade, Containers, 12-Factor** | Sem dependências novas; migrações versionadas; teste de concorrência roda no PostgreSQL do Compose (serviço `testes` da 001); nenhuma configuração nova além do registro do app/rotas (o marcador `postgres` já vem da 001). | ✅ PASS |
 | **Restrições Técnicas** | App `apps/movimentacoes` com `models.py`, `services.py`, `selectors.py`, `forms.py`, `views.py`, `urls.py`, `templates/movimentacoes/{,partials/}`, `tests/`; domínio em português. | ✅ PASS |
 | **Fluxo de Desenvolvimento** | spec → plan → tasks; `/speckit-analyze` antes de implementar; quality gates (`ruff`, `pytest`, `makemigrations --check`, build Docker) listados no quickstart. | ✅ PASS |
 
@@ -148,25 +149,26 @@ apps/movimentacoes/                         # NOVO (feature 003)
     ├── test_desempenho.py                  # @pytest.mark.postgres (SC-007)
     └── test_comando_movimentar.py
 
-# Arquivos de outras features tocados na implementação (003 é implementada depois de 001 e 002)
-config/settings.py                          # INSTALLED_APPS += "apps.movimentacoes" (se ainda ausente)
-config/urls.py                              # path("movimentacoes/", include("apps.movimentacoes.urls"))
-pyproject.toml                              # [tool.pytest.ini_options] markers += "postgres: ..."
-templates/base.html                         # item "Movimentações" na navegação (se ainda ausente)
-apps/produtos/services.py                   # cadastrar_produto → cria com 0 + registrar_movimentacao(INICIAL)
-apps/produtos/templates/produtos/partials/linha_produto.html    # inclui {% acoes_rapidas produto "lista" %}
-apps/produtos/templates/produtos/partials/resumo_produto.html   # bloco #produto-<id>-resumo (alvo OOB)
-apps/produtos/templates/produtos/detalhe.html                   # ações rápidas + {% historico_produto produto %}
+# Arquivos de outras features ESTENDIDOS na implementação (003 é implementada depois de 001 e 002)
+config/settings.py                          # ESTENDE: INSTALLED_APPS += "apps.movimentacoes"
+config/urls.py                              # ESTENDE: path("movimentacoes/", include("apps.movimentacoes.urls"))
+apps/produtos/services.py                   # ESTENDE: cadastrar_produto → cria com 0 + registrar_movimentacao(INICIAL)
+apps/produtos/templates/produtos/partials/linha.html        # ESTENDE: célula {% acoes_rapidas produto "lista" %} (raiz #produto-<id> e oob já são da 002)
+apps/produtos/templates/produtos/partials/resultados.html   # ESTENDE: cabeçalho "Ações"
+apps/produtos/templates/produtos/detalhe.html               # ESTENDE: ações rápidas + {% historico_produto produto %} no lugar da seção #produto-<id>-historico reservada
+# Usados sem alteração: produtos/partials/resumo.html (#produto-<id>-resumo, oob — 002),
+# pyproject.toml (marcador postgres — 001), templates/base.html (item "Movimentações" vira link
+# sozinho ao registrar movimentacoes:lista — FR-013 da 001)
 ```
 
 **Structure Decision**: aplicação Django única, conforme `docs/arquitetura.md` — a feature cria o
 app `apps/movimentacoes/` com o conjunto padrão de módulos do contrato e estende pontos bem
 delimitados das features 001 (registro do app, rota, navegação, marcador de teste) e 002
 (serviço de cadastro e templates da lista/detalhe). A integração com as páginas de produto é
-feita por *inclusion tags* (`movimentacoes_tags`), sem alterar as views da 002. Se a 001 tiver
-dividido o settings em pacote (ex.: `config/settings/base.py`), a tarefa de registro do app
-aplica-se ao módulo base equivalente. Os nomes de partials/IDs da 002 usados como alvo OOB estão
-propostos em [research.md](research.md#propostas-de-ajuste-ao-contrato).
+feita por *inclusion tags* (`movimentacoes_tags`), sem alterar as views da 002. Os nomes de
+partials/IDs da 002 usados como alvo OOB são os do contrato `docs/arquitetura.md` v1.1
+(`produtos/partials/linha.html` → `#produto-<id>`, `produtos/partials/resumo.html` →
+`#produto-<id>-resumo`, região `#produto-<id>-historico`).
 
 ## Phase 0 — Research
 

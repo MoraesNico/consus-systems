@@ -32,10 +32,11 @@ Executa `registrar_movimentacao` — mesmas regras, mesma transação, mesmo his
 ## Exemplos
 
 ```bash
-docker compose exec web python manage.py movimentar 1 entrada 5 --obs "NF 4521"
-docker compose exec web python manage.py movimentar "#0001" saida 3 --obs "Venda balcão"
-docker compose exec web python manage.py movimentar 1 saida 999   # recusa, código 1
+docker compose exec app python manage.py movimentar 1 entrada 5 --obs "NF 4521"
+docker compose exec app python manage.py movimentar "#0001" saida 3 --obs "Venda balcão"
+docker compose exec app python manage.py movimentar 1 saida 999   # recusa, código 1
 ```
 
 O comando não emite eventos de interface; quem estiver com a página aberta vê o novo saldo ao
-recarregar (ou no próximo *polling* do badge da 004).
+recarregar (ou no próximo *polling* do `#contador-alertas` da 004, a cada 30 s). A partir da 004,
+o comando também imprime o aviso de reposição (`alertas.regras.confirmacao_com_alerta`).
