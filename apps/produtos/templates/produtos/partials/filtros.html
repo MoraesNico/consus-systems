@@ -1,0 +1,16 @@
+<form id="filtros-produtos" class="filtros" method="get" action="{% url 'produtos:lista' %}" role="search"{% if oob %} hx-swap-oob="true"{% endif %}>
+  <div class="campo campo--sm filtros__busca">
+    <label class="visualmente-oculto" for="busca-produtos">Buscar por ID ou nome</label>
+    <span class="campo__busca">{% icone "search" %}<input id="busca-produtos" type="search" name="q" value="{{ q }}" placeholder="Buscar por ID ou nome" autocomplete="off" hx-get="{% url 'produtos:lista' %}" hx-trigger="input changed delay:300ms, search" hx-target="#resultados" hx-swap="outerHTML" hx-include="#filtros-produtos, #ordem-atual" hx-sync="this:replace" hx-push-url="true" hx-indicator="#resultados" data-atalho="/"></span>
+    <span class="ajuda">Atalho <kbd>/</kbd></span>
+  </div>
+  <div class="campo campo--sm">
+    <label class="visualmente-oculto" for="situacao-produtos">Situação</label>
+    <span class="campo__select"><select id="situacao-produtos" name="situacao" hx-get="{% url 'produtos:lista' %}" hx-trigger="change" hx-target="#resultados" hx-swap="outerHTML" hx-include="#filtros-produtos, #ordem-atual" hx-push-url="true" hx-indicator="#resultados">
+      <option value=""{% if not situacao %} selected{% endif %}>Todos</option>
+      <option value="alerta"{% if situacao == "alerta" %} selected{% endif %}>Em alerta</option>
+      <option value="ok"{% if situacao == "ok" %} selected{% endif %}>OK</option>
+    </select>{% icone "chevron-down" %}</span>
+  </div>
+  <button class="botao botao--secundario botao--sm" type="submit">Buscar</button>
+</form>

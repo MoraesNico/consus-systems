@@ -7,7 +7,7 @@ from django.http import HttpResponse
 from django.test import RequestFactory
 from django_htmx.middleware import HtmxDetails
 
-from apps.core.htmx import disparar_evento, disparar_toast, eh_fragmento, fechar_dialogo
+from apps.core.htmx import disparar_evento, disparar_toast, eh_fragmento
 
 fabrica = RequestFactory()
 
@@ -35,14 +35,14 @@ def test_fr018_eh_fragmento():
 
 def test_fr015_disparar_toast_padrao_sucesso():
     """FR-015: disparar_toast grava o evento toast com nível e texto."""
-    resposta = disparar_toast(HttpResponse(), "Salvo.")
+    resposta = disparar_toast(HttpResponse(), "sucesso", "Salvo.")
     assert gatilhos(resposta) == {"toast": {"nivel": "sucesso", "texto": "Salvo."}}
 
 
 @pytest.mark.parametrize("nivel", ["sucesso", "info", "alerta", "erro"])
 def test_fr015_niveis_validos(nivel):
     """FR-015: os quatro níveis do contrato são aceitos."""
-    assert gatilhos(disparar_toast(HttpResponse(), "Ok.", nivel))["toast"]["nivel"] == nivel
+    assert gatilhos(disparar_toast(HttpResponse(), nivel, "Ok."))["toast"]["nivel"] == nivel
 
 
 @pytest.mark.parametrize(
@@ -52,14 +52,14 @@ def test_fr015_niveis_validos(nivel):
 def test_fr015_toast_invalido_levanta_erro(texto, nivel):
     """FR-015: nível fora do vocabulário ou texto vazio/longo demais ⇒ ValueError."""
     with pytest.raises(ValueError):
-        disparar_toast(HttpResponse(), texto, nivel)
+        disparar_toast(HttpResponse(), nivel, texto)
 
 
 def test_fr017_eventos_se_mesclam_no_mesmo_cabecalho():
     """FR-017: fechar-dialogo, toast e estoque-alterado convivem no mesmo HX-Trigger."""
     resposta = disparar_evento(HttpResponse(), "estoque-alterado", {"produto_id": 1})
-    fechar_dialogo(resposta)
-    disparar_toast(resposta, "Entrada registrada.")
+    disparar_evento(resposta, "fechar-dialogo")
+    disparar_toast(resposta, "sucesso", "Entrada registrada.")
     assert gatilhos(resposta) == {
         "estoque-alterado": {"produto_id": 1},
         "fechar-dialogo": {},

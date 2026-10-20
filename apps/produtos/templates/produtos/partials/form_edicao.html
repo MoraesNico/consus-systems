@@ -1,0 +1,13 @@
+<form id="form-edicao" class="formulario" method="post" action="{% url 'produtos:editar' produto.pk %}" novalidate>
+  {% csrf_token %}
+  {{ form }}
+  <div class="campo">
+    <span class="campo__rotulo">Quantidade atual</span>
+    <p class="campo__somente-leitura"><span class="mono">{{ produto.quantidade_atual }}</span> unidades</p>
+    <p class="campo__ajuda">Muda apenas por movimentação (entrada ou saída).</p>
+  </div>
+  <div class="formulario__acoes">
+    <a class="botao botao--secundario" href="{{ produto.get_absolute_url }}">Cancelar</a>
+    <button class="botao botao--primario" type="submit" hx-disabled-elt="this"><span class="botao__carregando">{% icone "loader-circle" %}</span>Salvar alterações</button>
+  </div>
+</form>

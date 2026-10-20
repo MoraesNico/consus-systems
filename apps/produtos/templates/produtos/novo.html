@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block titulo %}Novo produto{% endblock %}
+{% block sobretitulo %}Produtos{% endblock %}
+{% block titulo_pagina %}Novo produto{% endblock %}
+{% block descricao %}Informe nome, quantidade inicial e estoque mínimo de segurança. O ID é gerado automaticamente.{% endblock %}
+{% block conteudo %}
+<div class="cartao cartao--amplo cartao--formulario">
+  {% include "produtos/partials/form_produto.html" with contexto="pagina" %}
+</div>
+{% endblock %}
