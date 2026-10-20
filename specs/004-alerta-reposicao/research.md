@@ -6,14 +6,24 @@ O Technical Context não tinha itens `NEEDS CLARIFICATION`; esta pesquisa regist
 desenho que resolvem as incógnitas de integração e de comportamento, as boas práticas adotadas e
 as propostas de ajuste ao contrato compartilhado (`docs/arquitetura.md`).
 
+**Alinhamento com as features paralelas** (lidos em 2026-10-20, somente leitura): os contratos
+publicados pela 002 (`servicos-e-consultas.md`, `fragmentos-e-eventos.md`) e pela 003
+(`servico-movimentacao.md`, `rotas-movimentacoes.md`, `integracao-produtos.md`, `tasks.md`)
+fixaram nomes que esta feature adota: `Produto.em_alerta`/`situacao`/`codigo` (propriedades),
+anotação `alerta` em `com_situacao()`, `QUANTIDADE_MAXIMA`, `cadastrar_produto`,
+`produtos/partials/situacao.html`, `Movimentacao.mensagem_confirmacao`, `registrar_movimentacao`,
+`auditar_saldos`, campo `origem` (`pagina|lista|detalhe`), `sucesso_dialogo.html`, comando
+`movimentar` e a carga útil de `estoque-alterado` (`{produto_id, saldo_anterior, saldo_posterior}`).
+
 ---
 
 ## R1. Onde e como a regra de alerta é expressa
 
 - **Decision**: a regra fica em dois lugares, com teste de equivalência obrigatório:
-  1. **SQL** — `ProdutoQuerySet.em_alerta()` (filtro `quantidade_atual <= estoque_minimo`) e
-     `ProdutoQuerySet.com_situacao()` (anotações `em_alerta`, `deficit`, `cobertura_percentual`),
-     conforme o contrato.
+  1. **SQL** — `ProdutoQuerySet.em_alerta()` (filtro `quantidade_atual <= estoque_minimo`, da
+     002) e `ProdutoQuerySet.com_situacao()` (anotação `alerta` da 002 + `deficit` e
+     `cobertura_percentual` acrescentadas pela 004). O booleano não pode se chamar `em_alerta`
+     porque a 002 já define `Produto.em_alerta` como `@property` (colisão → `AttributeError`).
   2. **Python puro** — `apps/alertas/regras.py` (`classificar`, `deficit`,
      `cobertura_percentual`, `sugestao_reposicao`, `transicao`), sem acesso a ORM.
   `apps/alertas/tests/test_equivalencia_regra.py` cadastra uma grade de produtos
@@ -156,12 +166,19 @@ as propostas de ajuste ao contrato compartilhado (`docs/arquitetura.md`).
 
 - **Decision**: `alertas.regras.transicao(saldo_anterior, saldo_posterior, minimo)` devolve
   `PIOROU`, `SAIU_DO_ALERTA` ou `NENHUMA` (gravidade OK=0 < REPOSIÇÃO=1 < SEM ESTOQUE=2).
-  `aviso_movimentacao(mov)` produz `Aviso(nivel, texto)` e `mensagem_confirmacao(texto_base, mov)`
-  compõe o texto final da 003 (FR-016 da 003: "Saída registrada: #0001 Parafuso — saldo 11 → 10")
-  com o aviso ("REPOSIÇÃO NECESSÁRIA: #0001 Parafuso ficou com 10 un. (mínimo 10)."). Nível do
-  toast: `alerta` quando piora; `sucesso` nos demais. A view da 003 passa a usar
-  `mensagem_confirmacao` tanto no `HX-Trigger: {"toast": …}` quanto na mensagem do framework
-  `messages` (fluxo sem HTMX). `INICIAL` nunca gera aviso (cadastro é da 002).
+  `aviso_movimentacao(mov)` produz `Aviso(nivel, texto)` e `confirmacao_com_alerta(mov)` compõe
+  a propriedade `Movimentacao.mensagem_confirmacao` da 003 ("Saída registrada: #0001 Parafuso —
+  saldo 11 → 10") com o aviso ("REPOSIÇÃO NECESSÁRIA: #0001 Parafuso ficou com 10 un. (mínimo
+  10)."). Nível do toast: `alerta` quando piora; `sucesso` nos demais. A view `nova_movimentacao`
+  da 003 passa a usar `confirmacao_com_alerta` no `HX-Trigger: {"toast": …}` e no framework
+  `messages` (fluxo sem HTMX, com nível `WARNING` quando piora); o comando `movimentar` da 003
+  imprime o mesmo aviso. `INICIAL` nunca gera aviso (cadastro é da 002).
+- **"+ Entrada" a partir do relatório/painel**: o diálogo da 003 recebe `origem=alertas`
+  (valor novo acrescentado pela 004 ao campo `origem`), cuja resposta de sucesso não traz
+  fragmentos OOB de produto (`HX-Reswap: none` + `estoque-alterado`, `toast`, `fechar-dialogo`).
+  Com `origem=lista`, a 003 enviaria um `<tr id="produto-<id>" hx-swap-oob>` que, no relatório,
+  não teria alvo (erro `htmx:oobErrorNoTarget`) ou — pior — substituiria uma linha com colunas
+  diferentes se o id coincidisse; por isso as linhas do relatório usam `id="reposicao-<id>"`.
 - **Rationale**: a transição usa dados já presentes na movimentação (snapshot imutável), sem
   consulta extra; um só ponto de composição garante o mesmo texto com e sem HTMX.
 - **Alternatives considered**: sinal `post_save` (não alcança a resposta HTTP); segundo toast
@@ -188,9 +205,10 @@ as propostas de ajuste ao contrato compartilhado (`docs/arquitetura.md`).
   `barra_cobertura.html` (estilo ProgressBar/CategoryBar: trilho neutro + preenchimento na cor da
   situação, largura `min(cobertura, 100)%` via `--valor`, `aria-hidden="true"` com o percentual
   visível ao lado) e `bar_list.html` (estilo BarList: rótulo à esquerda, barra proporcional, valor
-  tabular à direita, link opcional). O selo de situação reutiliza o badge da 001 com variantes
-  `alerta` (REPOSIÇÃO NECESSÁRIA), `perigo` (SEM ESTOQUE) e neutra (OK), sempre com ícone SVG
-  `alerta` + texto.
+  tabular à direita, link opcional). O selo de situação é **o parcial da 002**
+  (`produtos/partials/situacao.html`, badge da 001), estendido pela 004 com a variante `perigo`
+  (SEM ESTOQUE) ao lado de `alerta` (REPOSIÇÃO NECESSÁRIA) e neutra (OK), sempre com ícone SVG
+  `alerta` + texto — um único selo para lista, detalhe, relatório e painel.
 - **Rationale**: constituição IV (tokens primeiro, alerta nunca só por cor); a barra é decorativa
   para leitores de tela porque o número já está no texto.
 - **Alternatives considered**: `<meter>` nativo (estilização inconsistente entre navegadores);
@@ -233,15 +251,16 @@ as propostas de ajuste ao contrato compartilhado (`docs/arquitetura.md`).
 
 > Não editei `docs/arquitetura.md` (regra do brief). Proponho ao coordenador:
 
-1. **Dono das anotações de `ProdutoQuerySet`** — explicitar que a 002 implementa `buscar(q)` e
-   `em_alerta()` (necessário ao filtro `?situacao=alerta|ok`) e que a 004 completa
-   `com_situacao()` com `em_alerta`, `deficit` e `cobertura_percentual` usando as fórmulas de
-   [data-model.md](data-model.md). **Proibir** propriedades do modelo `Produto` com esses três
-   nomes: anotar um nome que coincide com uma `@property` sem *setter* gera `AttributeError` ao
-   instanciar o resultado.
-2. **Evento após cadastro e edição** — a 002 (FR-031) avisa as regiões dependentes após
-   cadastrar/editar. Propor que use o **mesmo** evento `estoque-alterado` (a situação muda quando o
-   mínimo muda), para que contador, relatório e painel não precisem ouvir um segundo nome.
+1. **Nomes e dono das anotações de `ProdutoQuerySet`** — registrar no contrato que
+   `com_situacao()` anota `alerta` (002) e `deficit`/`cobertura_percentual` (004, fórmulas de
+   [data-model.md](data-model.md), com cast para `bigint`), e que o booleano **não** se chama
+   `em_alerta` porque `Produto.em_alerta` é propriedade (002) — anotar um nome igual a uma
+   `@property` sem *setter* gera `AttributeError`. Proibir propriedades chamadas `deficit` ou
+   `cobertura_percentual` no modelo.
+2. **Evento após cadastro e edição** — a 002 já emite `estoque-alterado` no cadastro parcial
+   (alinhado à proposta 10 da 003). Propor que a **edição** parcial do estoque mínimo também o
+   emita (a situação muda quando o mínimo muda); fluxos comuns/*boosted* já re-renderizam o
+   contador no `base.html`.
 3. **Parâmetro opcional `quantidade`** em `movimentacoes:nova`
    (`?produto=<id>&tipo=ENTRADA&quantidade=<n>`) para pré-preencher a sugestão de reposição no
    "+ Entrada" do relatório. Sem ele, a 004 funciona (a sugestão fica visível na linha).
@@ -252,19 +271,26 @@ as propostas de ajuste ao contrato compartilhado (`docs/arquitetura.md`).
 6. **Pontos fixos no `base.html` (001)** — reservar no menu o item "Alertas" com o slot
    `{% contador_alertas %}` e uma região viva `#anuncio-alertas` (`role="status"`,
    `aria-live="polite"`, visualmente oculta), além do `#dialogo` já previsto.
-7. **Selo de situação compartilhado** — a 002 exibe "OK"/"REPOSIÇÃO NECESSÁRIA" (FR-020 da 002);
-   propor que, a partir da 004, lista e detalhe usem `{% situacao_produto produto %}`, que
-   acrescenta a variação "SEM ESTOQUE" (contrato atual só cita REPOSIÇÃO NECESSÁRIA).
-8. **Ponto de extensão do toast da 003** — a 003 deve montar o texto de sucesso em uma única
-   função/ponto da view, para que a 004 o envolva com `alertas.regras.mensagem_confirmacao`.
+7. **Selo de situação único** — o contrato cita só "REPOSIÇÃO NECESSÁRIA"; registrar a variação
+   "SEM ESTOQUE" e que o selo de todo o sistema é `produtos/partials/situacao.html` (002),
+   estendido pela 004.
+8. **Ponto de extensão do toast da 003** — a 003 já centraliza o texto em
+   `Movimentacao.mensagem_confirmacao`; registrar no contrato que a view e o comando `movimentar`
+   o publicam via `alertas.regras.confirmacao_com_alerta(mov)` a partir da 004.
 9. **Helper de fragmento** — padronizar na 001 um helper `eh_fragmento(request)`
    (`request.htmx and not request.htmx.boosted`) para todas as features.
+10. **`origem=alertas` em `movimentacoes:nova`** — acrescentar ao contrato de rotas o valor
+    `alertas` do parâmetro `origem` (sucesso sem OOB de produto), usado pelo "+ Entrada" do
+    relatório e do painel.
+11. **Divergência 002 × 003 nos nomes de parciais** — a 002 planeja `produtos/partials/linha.html`
+    e `resumo.html`; a 003 referencia `linha_produto.html` e `resumo_produto.html`. Não afeta a
+    004 (que só toca `situacao.html`), mas precisa ser reconciliada pelo coordenador.
 
 ## Riscos e mitigação
 
 | Risco | Mitigação |
 |-------|-----------|
-| 002 implementar `com_situacao()` com fórmulas diferentes | Proposta 1 + `apps/produtos/tests/test_queryset_situacao.py` fixa os limites; a tarefa da 004 ajusta o queryset se necessário |
+| 002 implementar `com_situacao()` com fórmulas diferentes | Proposta 1 + `apps/produtos/tests/test_queryset_situacao.py` fixa os limites; a tarefa da 004 acrescenta `deficit`/`cobertura_percentual` sem alterar `alerta` |
 | Estouro de `integer` no PostgreSQL | R2 (cast para `bigint`) + teste com 2.147.483.647 rodando também no PostgreSQL |
-| Nomes reais dos templates da 002 divergirem dos usados nas tarefas | A tarefa de integração localiza os templates pelo `plan.md` da 002; o contrato é o *include*, não o caminho |
+| Nomes de templates da 002/003 mudarem até a implementação | A 004 só depende de `produtos/partials/situacao.html`, `sucesso_dialogo.html` e das funções citadas; a tarefa de integração confere os nomes nos `plan.md` vigentes |
 | Polling em muitas abas | 1 `COUNT` por ciclo + 204 quando nada muda; intervalo configurável |

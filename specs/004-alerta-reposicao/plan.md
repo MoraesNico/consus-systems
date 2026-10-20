@@ -17,9 +17,9 @@ lista/detalhe de produtos, aviso no toast da movimentação que piora a situaç�
 KPIs e o comando de terminal `varrer_estoque` (texto/csv/json, código de saída). Inclui o comando
 `popular_demo` (dados de demonstração idempotentes).
 
-Abordagem técnica: a regra é expressa **uma vez em SQL** (anotações de `ProdutoQuerySet.com_situacao()`
-— `em_alerta`, `deficit`, `cobertura_percentual` — com aritmética em `bigint` para não estourar o
-`integer` do PostgreSQL) e **uma vez em Python puro** (`apps/alertas/regras.py`, usado onde não há
+Abordagem técnica: a regra é expressa **uma vez em SQL** (`ProdutoQuerySet.em_alerta()` e as
+anotações de `com_situacao()` — `alerta` da 002, mais `deficit` e `cobertura_percentual` da 004 —
+com aritmética em `bigint` para não estourar o `integer` do PostgreSQL) e **uma vez em Python puro** (`apps/alertas/regras.py`, usado onde não há
 consulta — transição de situação do toast, exportação), e um teste de equivalência em grade
 garante que as duas nunca divirjam. `alertas.selectors` monta o resultado de varredura (ordenado
 por criticidade no banco) e o resumo do painel; `alertas.exportacao` serializa o mesmo resultado
@@ -105,16 +105,16 @@ apps/alertas/                                   # NOVO (feature 004)
 ├── apps.py                                     # AlertasConfig(name="apps.alertas")
 ├── regras.py                                   # Situacao, classificar, deficit, cobertura_percentual,
 │                                               # sugestao_reposicao, transicao, aviso_movimentacao,
-│                                               # mensagem_confirmacao (Python puro)
-├── selectors.py                                # varrer, total_em_alerta, itens_criticos, resumo_painel
-│                                               # + dataclasses ItemReposicao, ResultadoVarredura, ResumoPainel
+│                                               # confirmacao_com_alerta (sem consultas)
+├── selectors.py                                # produtos_por_criticidade, varrer, total_em_alerta,
+│                                               # resumo_painel + dataclasses ResultadoVarredura, ResumoPainel
 ├── exportacao.py                               # COLUNAS, para_csv, para_json, para_texto
 ├── views.py                                    # relatorio, contador
 ├── urls.py                                     # app_name="alertas": "" e "contador/"
 ├── demo.py                                     # PRODUTOS_DEMO + popular()
 ├── templatetags/
 │   ├── __init__.py
-│   └── alertas_tags.py                         # {% contador_alertas %}, {% situacao_produto p %}
+│   └── alertas_tags.py                         # {% contador_alertas %}, filtro limitar_100
 ├── management/commands/
 │   ├── __init__.py
 │   ├── varrer_estoque.py
@@ -125,8 +125,7 @@ apps/alertas/                                   # NOVO (feature 004)
 │       ├── relatorio.html                      # região #relatorio (resumo + tabela | estado vazio)
 │       ├── linha_reposicao.html
 │       ├── contador.html                       # #contador-alertas (polling e OOB)
-│       ├── anuncio.html                        # OOB para #anuncio-alertas (aria-live)
-│       └── situacao.html                       # selo OK | REPOSIÇÃO NECESSÁRIA | SEM ESTOQUE
+│       └── anuncio.html                        # OOB para #anuncio-alertas (aria-live)
 └── tests/
     ├── __init__.py
     ├── conftest.py                             # fábrica criar_produto(nome, quantidade, minimo)
@@ -144,10 +143,13 @@ apps/alertas/                                   # NOVO (feature 004)
     ├── test_comando_popular_demo.py
     └── test_desempenho.py
 
-apps/produtos/models.py                         # ALTERA (002): ProdutoQuerySet.em_alerta() / com_situacao()
+apps/produtos/models.py                         # ALTERA (002): com_situacao() + deficit, cobertura_percentual (bigint)
 apps/produtos/tests/test_queryset_situacao.py   # NOVO: limites da regra e anotações
-apps/produtos/templates/produtos/…              # ALTERA (002): lista e detalhe usam {% situacao_produto %}
-apps/movimentacoes/views.py                     # ALTERA (003): toast/mensagem via alertas.regras.mensagem_confirmacao
+apps/produtos/templates/produtos/partials/situacao.html  # ALTERA (002): ramo SEM ESTOQUE (selo único)
+apps/movimentacoes/views.py                     # ALTERA (003): toast/messages via alertas.regras.confirmacao_com_alerta
+apps/movimentacoes/forms.py                     # ALTERA (003): origem aceita "alertas"
+apps/movimentacoes/templates/movimentacoes/partials/sucesso_dialogo.html  # ALTERA (003): origem=alertas sem OOB
+apps/movimentacoes/management/commands/movimentar.py  # ALTERA (003): imprime o aviso de reposição
 apps/core/views.py                              # ALTERA (001): painel usa alertas.selectors.resumo_painel
 apps/core/templates/core/painel.html            # ALTERA (001): KPIs, listas, região #painel-conteudo
 apps/core/templates/core/partials/painel_conteudo.html   # NOVO
@@ -166,9 +168,11 @@ config/urls.py                                  # ALTERA (001): path("alertas/",
 **Structure Decision**: aplicação Django única do contrato (`config/` + `apps/`). Todo o código
 novo vive em `apps/alertas/`; as alterações fora dele são **pontos de integração** previstos pelo
 contrato (queryset da 002 "anotações para a 004", painel da 001 "placeholder → 004 (KPIs)",
-toast/evento da 003, menu do `base.html`). Os nomes exatos dos templates da 002 (lista/linha/
-detalhe) são resolvidos na implementação a partir do `plan.md` da 002; o contrato de integração
-é o *include* `{% situacao_produto produto %}` ([contracts/fragmentos-e-eventos.md](contracts/fragmentos-e-eventos.md)).
+toast/evento da 003, menu do `base.html`). Os nomes usados (`produtos/partials/situacao.html`,
+`Produto.em_alerta`/`codigo`, anotação `alerta`, `QUANTIDADE_MAXIMA`, `Movimentacao.mensagem_confirmacao`,
+`origem`, `sucesso_dialogo.html`, `movimentar`) vêm dos contratos já publicados pela 002 e pela
+003; o selo é **um único parcial**, o da 002, estendido com SEM ESTOQUE
+([contracts/fragmentos-e-eventos.md](contracts/fragmentos-e-eventos.md)).
 
 ## Complexity Tracking
 

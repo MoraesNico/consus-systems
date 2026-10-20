@@ -28,8 +28,8 @@ resumo + contador do menu + folga para o layout da 001).
      O KPI "EM ALERTA" usa ícone ⚠ (SVG) + cor de alerta quando > 0 e é link para alertas:relatorio.
 
   ── Coluna principal (8 col): "Reposição necessária"
-     ├ até 5 itens (selectors: ordem de criticidade): #ID, nome, {% situacao_produto %}, atual/mín.,
-     │ sugestão, ação "+ Entrada" (mesmo contrato do relatório)
+     ├ até 5 itens (selectors: ordem de criticidade): #ID, nome, selo (produtos/partials/situacao.html),
+     │ atual/mín., sugestão, ação "+ Entrada" (origem=alertas — mesmo contrato do relatório)
      ├ rodapé: link "Ver relatório completo (7)" → alertas:relatorio
      └ sem alertas: estado vazio positivo "Nenhum produto precisa de reposição."
 

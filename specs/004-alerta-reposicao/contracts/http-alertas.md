@@ -72,15 +72,18 @@ Relatório de Reposição; cada requisição **executa uma varredura** (`selecto
 
 ### Linha (`alertas/partials/linha_reposicao.html`)
 
+Raiz `<tr id="reposicao-<id>">` (nunca `produto-<id>`, ver fragmentos §4). Contexto: `produto`
+(Produto anotado de `ResultadoVarredura.itens`).
+
 | Coluna | Conteúdo | Alinhamento |
 |--------|----------|-------------|
-| ID | `#0003`, link para `produtos:detalhe` | esquerda, mono |
+| ID | `produto.codigo` (`#0003`), link para `produto.get_absolute_url` | esquerda, mono |
 | Produto | nome | esquerda |
-| Situação | `{% situacao_produto item %}` (ícone SVG + "REPOSIÇÃO NECESSÁRIA" / "SEM ESTOQUE") | esquerda |
+| Situação | `{% include "produtos/partials/situacao.html" %}` (ícone SVG + "REPOSIÇÃO NECESSÁRIA" / "SEM ESTOQUE") | esquerda |
 | Atual / Mínimo / Déficit | inteiros com separador de milhar | direita, mono tabular |
-| Cobertura | `components/barra_cobertura.html` + "40%" | direita |
+| Cobertura | `components/barra_cobertura.html` com `percentual=produto.cobertura_percentual`, `variante=produto.situacao_estoque.variante` + "40%" | direita |
 | Sugestão | `+16` (inteiro com separador) | direita, mono tabular |
-| Ações | `<a href="/movimentacoes/nova/?produto=3&tipo=ENTRADA" hx-get="(mesmo)" hx-target="#dialogo" class="botao botao--compacto">+ Entrada</a>` com `aria-label="Registrar entrada de Parafuso M6"` | direita |
+| Ações | "+ Entrada" conforme [fragmentos-e-eventos.md §4](fragmentos-e-eventos.md#4-ação--entrada-do-relatório-e-do-painel) (`origem=alertas`) | direita |
 
 Após a entrada confirmada pelo diálogo da 003, a resposta da 003 dispara `estoque-alterado`; a
 região `#relatorio` se recarrega sozinha (nova varredura) e o contador também.

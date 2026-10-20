@@ -11,10 +11,11 @@ Esta feature **não cria tabelas, colunas, índices nem migrações** (Clarifica
 
 | Campo | Uso nesta feature |
 |-------|-------------------|
-| `id` | identificação; exibido `#0001` (4 dígitos, zero à esquerda; acima de 9999 sem truncar); último critério de desempate |
+| `id` / `codigo` (propriedade da 002) | identificação; exibido `#0001`; último critério de desempate |
 | `nome` | exibição; chave natural do `popular_demo` (`nome__iexact`) |
 | `quantidade_atual` | entrada da regra (inteiro 0…2.147.483.647) |
 | `estoque_minimo` | entrada da regra (inteiro 0…2.147.483.647) |
+| `em_alerta`, `situacao` (propriedades da 002) | `em_alerta` = mesma regra; `situacao` binária (`"alerta"`/`"ok"`) usada pelo filtro da 002 — a 004 não a altera |
 
 ### `movimentacoes.Movimentacao` (feature 003)
 
@@ -28,12 +29,13 @@ Esta feature **não cria tabelas, colunas, índices nem migrações** (Clarifica
 ## 2. Anotações de `ProdutoQuerySet` (contrato)
 
 Definidas em `apps/produtos/models.py`. `q = Cast(quantidade_atual, bigint)`,
-`m = Cast(estoque_minimo, bigint)` — o cast é obrigatório (R2).
+`m = Cast(estoque_minimo, bigint)` — o cast é obrigatório (R2). A anotação booleana chama-se
+`alerta` (nome já adotado pela 002), porque `Produto.em_alerta` é uma propriedade.
 
 | Método / anotação | Tipo | Definição |
 |-------------------|------|-----------|
 | `em_alerta()` | QuerySet | `filter(quantidade_atual__lte=F("estoque_minimo"))` |
-| `com_situacao()` → `em_alerta` | bool | `quantidade_atual <= estoque_minimo` |
+| `com_situacao()` → `alerta` (002) | bool | `quantidade_atual <= estoque_minimo` |
 | `com_situacao()` → `deficit` | bigint ≥ 0 | `Greatest(m − q, 0)` |
 | `com_situacao()` → `cobertura_percentual` | bigint ≥ 0 ou `NULL` | `0` se `q = 0`; `NULL` se `m = 0` (e `q > 0`); senão `(q × 100) / m` (divisão inteira = arredondamento para baixo) |
 
@@ -41,8 +43,8 @@ Anotações adicionais de uso interno, aplicadas em `apps/alertas/selectors.py`:
 
 | Anotação | Tipo | Definição |
 |----------|------|-----------|
-| `gravidade` | int | `2` se `q = 0`; `1` se `em_alerta`; senão `0` |
-| `sugestao_reposicao` | bigint ou `NULL` | se `em_alerta`: `Least(Greatest(2·m − q, 1), 2.147.483.647 − q)`; senão `NULL` |
+| `gravidade` | int | `2` se `q = 0`; `1` se `alerta`; senão `0` |
+| `sugestao_reposicao` | bigint ou `NULL` | se `alerta`: `Least(Greatest(2·m − q, 1), QUANTIDADE_MAXIMA − q)`; senão `NULL` |
 
 **Ordem de criticidade** (FR-006): `gravidade DESC, deficit DESC, cobertura_percentual ASC NULLS LAST, id ASC`.
 
@@ -84,23 +86,27 @@ Espelham as anotações para uso sem consulta. Tabela-verdade de referência (us
 | mesma situação | `NENHUMA` | sem aviso extra |
 | tipo `INICIAL` | `NENHUMA` | sem aviso (cadastro é da 002) |
 
-O texto final é `"<texto da 003> <aviso>"`, ex.: "Saída registrada: #0003 Parafuso M6 — saldo 11 → 10.
-REPOSIÇÃO NECESSÁRIA: #0003 Parafuso M6 ficou com 10 un. (mínimo 10)."
+O texto final é `"<Movimentacao.mensagem_confirmacao da 003>. <aviso>"`, ex.: "Saída registrada:
+#0003 Parafuso M6 — saldo 11 → 10. REPOSIÇÃO NECESSÁRIA: #0003 Parafuso M6 ficou com 10 un.
+(mínimo 10)."
 
 ## 4. Objetos derivados (não persistidos)
 
-### `ItemReposicao` (dataclass imutável)
+### Item de reposição = `Produto` anotado
 
-| Campo | Tipo | Observação |
-|-------|------|------------|
-| `id` | int | |
-| `codigo` | str | `#0001` |
-| `nome` | str | |
-| `quantidade_atual`, `estoque_minimo` | int | |
-| `deficit` | int | ≥ 0 |
-| `cobertura_percentual` | int \| None | `None` = "não se aplica" |
-| `sugestao_reposicao` | int \| None | `None` quando OK |
-| `situacao` | `Situacao` | |
+Os itens da varredura e do painel são instâncias reais de `Produto` (para reutilizar
+`produto.codigo`, `get_absolute_url()` e o parcial de situação da 002), vindas de
+`produtos_por_criticidade()`:
+
+| Atributo | Tipo | Origem |
+|----------|------|--------|
+| `id`, `codigo`, `nome`, `quantidade_atual`, `estoque_minimo` | — | modelo (002) |
+| `alerta` | bool | anotação (002) |
+| `deficit` | int ≥ 0 | anotação (004) |
+| `cobertura_percentual` | int \| None | anotação (004); `None` = "não se aplica" |
+| `gravidade` | 0 \| 1 \| 2 | anotação (selectors) |
+| `sugestao_reposicao` | int \| None | anotação (selectors); `None` quando OK |
+| `situacao_estoque` | `Situacao` | atribuído em Python por `regras.classificar` após a consulta |
 
 ### `ResultadoVarredura` (dataclass imutável)
 
@@ -110,7 +116,7 @@ REPOSIÇÃO NECESSÁRIA: #0003 Parafuso M6 ficou com 10 un. (mínimo 10)."
 | `total_analisado` | int | `COUNT` de produtos |
 | `total_em_alerta` | int | `len` dos itens em alerta |
 | `total_sem_estoque` | int | itens com `situacao = SEM_ESTOQUE` |
-| `itens` | tuple[ItemReposicao, …] | só em alerta (ou todos com `incluir_ok=True`), ordem de criticidade |
+| `itens` | tuple[Produto, …] | Produtos anotados; só em alerta (ou todos com `incluir_ok=True`), ordem de criticidade |
 | `sem_produtos` (prop.) | bool | `total_analisado == 0` |
 | `sem_alertas` (prop.) | bool | `total_em_alerta == 0` |
 
@@ -123,8 +129,8 @@ REPOSIÇÃO NECESSÁRIA: #0003 Parafuso M6 ficou com 10 un. (mínimo 10)."
 | `total_em_alerta` | int | `Count("id", filter=Q(quantidade_atual__lte=F("estoque_minimo")))` |
 | `total_sem_estoque` | int | `Count("id", filter=Q(quantidade_atual=0))` |
 | `movimentacoes_24h` | int | `ENTRADA`+`SAIDA` com `criado_em >= agora − 24 h` |
-| `criticos` | tuple[ItemReposicao, …] | 5 primeiros da ordem de criticidade |
-| `cobertura` | tuple[ItemReposicao, …] | 8 menores `cobertura_percentual` não nulas (empate: menor ID) |
+| `criticos` | tuple[Produto, …] | 5 primeiros da ordem de criticidade (anotados) |
+| `cobertura` | tuple[Produto, …] | 8 menores `cobertura_percentual` não nulas (empate: menor ID; anotados) |
 | `ultimas_movimentacoes` | tuple[Movimentacao, …] | 5 mais recentes, com produto |
 
 ### `Aviso` (dataclass imutável)
@@ -138,7 +144,7 @@ REPOSIÇÃO NECESSÁRIA: #0003 Parafuso M6 ficou com 10 un. (mínimo 10)."
 - **I-2** Para todo produto, `anotações SQL == funções de regras.py` (teste de equivalência).
 - **I-3** Para todo produto em alerta com `estoque_minimo < 1.073.741.824` (2 × mínimo cabe no
   teto de saldo): `classificar(atual + sugestao, minimo) == OK` (SC-008).
-- **I-4** `ResultadoVarredura.total_em_alerta == len([i for i in itens if i.situacao != OK])` e é
+- **I-4** `ResultadoVarredura.total_em_alerta == len([i for i in itens if i.situacao_estoque != OK])` e é
   igual a `Produto.objects.em_alerta().count()` no mesmo estado.
 
 ## 6. Dados de demonstração
