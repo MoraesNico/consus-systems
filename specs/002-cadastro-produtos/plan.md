@@ -84,7 +84,8 @@ specs/002-cadastro-produtos/
 │   └── fragmentos-e-eventos.md  # templates, IDs, atributos HTMX, eventos, integração 001/003/004
 ├── checklists/
 │   ├── requirements.md  # qualidade da spec (/speckit-specify)
-│   └── ux.md            # checklist de domínio (/speckit-checklist)
+│   ├── ux.md            # checklist de domínio: UX e acessibilidade (/speckit-checklist)
+│   └── integridade.md   # checklist de domínio: integridade de dados (/speckit-checklist)
 └── tasks.md             # Fase 2 (/speckit-tasks)
 ```
 
