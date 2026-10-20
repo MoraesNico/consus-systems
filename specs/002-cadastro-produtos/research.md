@@ -150,11 +150,15 @@ propostas de ajuste ao contrato.
 
 ## R9. Estado na URL da lista
 
-- **Decision**: formulário GET `#filtros-produtos` (`role="search"`) com `q`, `situacao` e
-  `ordem` (oculto). O campo `q` usa `hx-get` para `produtos:lista`,
-  `hx-trigger="input changed delay:300ms, search"`, `hx-target="#resultados"`,
-  `hx-include="#filtros-produtos"` e `hx-push-url="true"`; o filtro de situação dispara em
-  `change`. A resposta parcial envia `HX-Push-Url` com a **URL canônica** (sem parâmetros vazios
+- **Decision**: formulário GET `#filtros-produtos` (`role="search"`) com `q` e `situacao`; a
+  ordem corrente fica em `<input type="hidden" id="ordem-atual" name="ordem"
+  form="filtros-produtos">` dentro de `#resultados` (atualizada a cada troca do fragmento e
+  enviada também sem scripts, pelo atributo `form`). O campo `q` usa `hx-get` para
+  `produtos:lista`, `hx-trigger="input changed delay:300ms, search"`, `hx-target="#resultados"`,
+  `hx-include="#filtros-produtos, #ordem-atual"`, `hx-sync="this:replace"` (descarta respostas
+  antigas), `hx-indicator="#resultados"` (indicação de atualização) e `hx-push-url="true"`; o
+  filtro de situação dispara em `change`. `#contagem-produtos` (`role="status"`) anuncia o
+  número de resultados. A resposta parcial envia `HX-Push-Url` com a **URL canônica** (sem parâmetros vazios
   ou padrão), montada pela view. Links de ordenação e paginação usam `{% querystring %}` (Django
   5.1+) e também funcionam sem HTMX.
 - **Rationale**: cumpre FR-014/FR-018 e a convenção HTMX do contrato; URL canônica evita

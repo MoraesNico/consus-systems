@@ -12,8 +12,8 @@
 
 - [x] CHK001 As colunas da lista, sua ordem e o alinhamento dos números estão especificados explicitamente? [Completude, Spec §FR-012]
 - [x] CHK002 Os dois estados vazios (sem produtos × busca/filtro sem resultado) têm mensagem e ação definidas? [Completude, Spec §FR-019]
-- [ ] CHK003 Há requisitos de estado "em andamento" para a busca instantânea e para o envio do formulário (indicação de atualização, botão indisponível durante o envio)? [Gap]
-- [ ] CHK004 Estão definidos os requisitos de foco ao abrir e fechar o diálogo de cadastro (foco no primeiro campo; retorno ao controle que o abriu)? [Gap, Acessibilidade, Spec §FR-009]
+- [x] CHK003 Há requisitos de estado "em andamento" para a busca instantânea e para o envio do formulário (indicação de atualização, botão indisponível durante o envio)? [Gap]
+- [x] CHK004 Estão definidos os requisitos de foco ao abrir e fechar o diálogo de cadastro (foco no primeiro campo; retorno ao controle que o abriu)? [Gap, Acessibilidade, Spec §FR-009]
 - [x] CHK005 O conteúdo da página de detalhe (campos, formato de datas, ações) está enumerado? [Completude, Spec §FR-021]
 - [x] CHK006 Todas as mensagens de erro de validação estão definidas textualmente em pt-BR? [Completude, Spec §FR-007]
 - [x] CHK007 Os textos das notificações de cadastro e de edição estão especificados? [Completude, Spec §FR-010, §FR-027]
@@ -26,7 +26,7 @@
 - [x] CHK011 A interpretação de cada formato de termo de busca (`12`, `#12`, `#0012`, texto) é inequívoca? [Clareza, Spec §FR-013, Clarifications]
 - [x] CHK012 A ordenação padrão e a regra de desempate estão definidas? [Clareza, Spec §FR-016]
 - [x] CHK013 O indicador de situação é definido por comportamento (ícone + texto + cor), e não por estilo? [Clareza, Spec §FR-020]
-- [ ] CHK014 "Indicados discretamente" (dica dos atalhos) tem critério objetivo de onde e como a dica aparece? [Ambiguidade, Spec §FR-028]
+- [x] CHK014 "Indicados discretamente" (dica dos atalhos) tem critério objetivo de onde e como a dica aparece? [Ambiguidade, Spec §FR-028]
 
 ## Consistência dos requisitos
 
@@ -46,8 +46,8 @@
 - [x] CHK022 Recarregar, Voltar/Avançar e abrir a URL em outra aba estão cobertos para a lista filtrada? [Cobertura, Spec §FR-018, §SC-008]
 - [x] CHK023 O fechamento do diálogo sem salvar está coberto? [Cobertura, Spec US1 cenário 7]
 - [x] CHK024 O cadastro pelo diálogo com busca/filtro ativos que excluiriam o novo produto está tratado? [Cobertura, Spec §FR-010, Edge Cases]
-- [ ] CHK025 Há requisito de anunciar a leitores de tela a mudança no número de resultados da busca/filtro? [Gap, Acessibilidade, Spec §FR-014]
-- [ ] CHK026 Estão definidos requisitos para telas estreitas (ex.: comportamento da tabela densa em celular)? [Gap]
+- [x] CHK025 Há requisito de anunciar a leitores de tela a mudança no número de resultados da busca/filtro? [Gap, Acessibilidade, Spec §FR-014]
+- [x] CHK026 Estão definidos requisitos para telas estreitas (ex.: comportamento da tabela densa em celular)? [Gap]
 
 ## Requisitos não funcionais (acessibilidade e localização)
 
@@ -58,7 +58,7 @@
 
 ## Casos de borda e dependências
 
-- [ ] CHK031 O comportamento dos atalhos está totalmente especificado para conflitos (teclas modificadoras, campo editável, diálogo já aberto)? [Caso de borda, Spec §FR-028]
+- [x] CHK031 O comportamento dos atalhos está totalmente especificado para conflitos (teclas modificadoras, campo editável, diálogo já aberto)? [Caso de borda, Spec §FR-028]
 - [x] CHK032 Parâmetros inválidos na URL (situação, ordenação, página) têm comportamento definido? [Caso de borda, Spec Edge Cases]
 - [x] CHK033 Os componentes do design system dos quais a feature depende estão listados como dependência da 001? [Dependência, Spec §Assumptions]
 - [x] CHK034 A região reservada no detalhe para a 003 tem comportamento definido enquanto a 003 não existe? [Dependência, Spec §FR-022]
@@ -74,3 +74,8 @@
   "diálogo aberto"), CHK025 (anúncio do número de resultados), CHK026 (telas estreitas). O plano
   já prevê `hx-disabled-elt`, `autofocus` e `#contagem-produtos` com `role="status"`, mas a spec
   ainda não os exige — encaminhado para a autoanálise.
+- **Após a autoanálise (2026-10-20)**: 34/34. A spec passou a exigir: indicação de atualização
+  e anúncio do número de resultados (FR-014 → CHK003, CHK025); foco ao abrir/fechar o diálogo e
+  "Salvar" indisponível durante o envio (FR-009 → CHK003, CHK004); dica visível da tecla junto à
+  busca e a "Novo produto" e bloqueio com diálogo aberto (FR-028, US5 cenário 4 → CHK014,
+  CHK031); premissa de telas estreitas (Assumptions → CHK026).

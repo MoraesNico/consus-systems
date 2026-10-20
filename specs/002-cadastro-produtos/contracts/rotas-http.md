@@ -77,7 +77,7 @@ do serviço é anexada aos campos do formulário.
 |----------|-----------|--------|-------|----------------------|
 | Comum / boosted | válido | **302** → `/produtos/` | — | `messages.success("Produto #0007 cadastrado")`; `session["produtos_destaque"] = 7` |
 | Comum / boosted | inválido | **422** | `produtos/novo.html` com erros e valores preservados | — |
-| Parcial (`HX-Target: dialogo`) | válido | **200** | `produtos/partials/resultados.html` na visão padrão (página 1, `-id`, `destaque_id=7`) + `produtos/partials/filtros.html` com `hx-swap-oob="true"` (campos limpos) | `HX-Retarget: #resultados`; `HX-Reswap: outerHTML`; `HX-Push-Url: /produtos/`; `HX-Trigger: {"toast": {"nivel": "sucesso", "texto": "Produto #0007 cadastrado"}, "estoque-alterado": {}, "dialogo-fechar": {}}` |
+| Parcial (`HX-Target: dialogo`) | válido | **200** | `produtos/partials/resultados.html` na visão padrão (página 1, `-id`, `destaque_id=7`) + `produtos/partials/filtros.html` (campos limpos) e `produtos/partials/contagem.html`, ambos com `hx-swap-oob="true"` | `HX-Retarget: #resultados`; `HX-Reswap: outerHTML`; `HX-Push-Url: /produtos/`; `HX-Trigger: {"toast": {"nivel": "sucesso", "texto": "Produto #0007 cadastrado"}, "estoque-alterado": {}, "dialogo-fechar": {}}` |
 | Parcial (`HX-Target: dialogo`) | inválido | **422** | `produtos/partials/dialogo_novo.html` com erros; primeiro campo inválido com `autofocus` | — |
 
 ## `GET /produtos/<int:produto_id>/` — `produtos:detalhe`

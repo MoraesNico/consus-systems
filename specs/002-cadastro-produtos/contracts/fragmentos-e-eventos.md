@@ -34,7 +34,8 @@ abaixo os compõem sem estilos próprios fora dos tokens.
 - **Busca** (`filtros.html`): `<input type="search" name="q" hx-get="{% url 'produtos:lista' %}"
   hx-trigger="input changed delay:300ms, search" hx-target="#resultados" hx-swap="outerHTML"
   hx-include="#filtros-produtos, #ordem-atual" hx-sync="this:replace" hx-push-url="true"
-  data-atalho="/">` com dica `<kbd>/</kbd>`; o `<select name="situacao">` (Todos / Em alerta /
+  hx-indicator="#resultados" data-atalho="/">` com dica `<kbd>/</kbd>` (o HTMX marca
+  `#resultados` com a classe de requisição em andamento, estilizada pela 001); o `<select name="situacao">` (Todos / Em alerta /
   OK) dispara em `change` com os mesmos alvo/inclusão. Sem scripts, o botão "Buscar" envia o
   formulário GET.
 - **Ordem corrente**: `resultados.html` contém
@@ -54,7 +55,8 @@ abaixo os compõem sem estilos próprios fora dos tokens.
   `aria-describedby` apontando a mensagem; primeiro campo inválido com `autofocus`; botão
   "Salvar" com `hx-disabled-elt="this"` (evita envio duplo). Campos numéricos:
   `type="text" inputmode="numeric" pattern="[0-9]*"`, sem valor inicial no cadastro.
-- **Diálogo**: link "Novo produto" e ação do estado vazio:
+- **Diálogo**: ao abrir, o campo Nome tem `autofocus`; ao fechar, o `<dialog>` nativo devolve
+  o foco ao controle que o abriu. Link "Novo produto" e ação do estado vazio:
   `<a href="{% url 'produtos:novo' %}" hx-get="{% url 'produtos:novo' %}" hx-target="#dialogo"
   hx-swap="innerHTML">`; formulário do diálogo com `hx-post` e `hx-target="#dialogo"`; "Cancelar"
   é `<button formmethod="dialog" formnovalidate>`.

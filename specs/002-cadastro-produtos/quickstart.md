@@ -64,7 +64,7 @@ curl -s -o /dev/null -w "%{http_code}\n" -X DELETE http://localhost:8000/produto
 | # | História | Passos | Resultado esperado |
 |---|----------|--------|--------------------|
 | M1 | US1 | Base vazia → `/produtos/` | Estado vazio "Nenhum produto cadastrado" com "Cadastrar produto" |
-| M2 | US1 | "Novo produto" → diálogo → "Caneta Azul", 50, 10 → Salvar | Diálogo fecha; `#0001` no topo com selo "NOVO"; toast "Produto #0001 cadastrado"; URL `/produtos/` |
+| M2 | US1 | "Novo produto" → diálogo → "Caneta Azul", 50, 10 → Salvar (cronometrar) | Foco no Nome ao abrir; diálogo fecha; `#0001` no topo com selo "NOVO"; toast "Produto #0001 cadastrado"; URL `/produtos/`; tudo em ≤ 30 s (SC-001) |
 | M3 | US1 | Diálogo → "  caneta   AZUL ", vazio, "2,5" → Salvar | Diálogo permanece; mensagens junto aos campos; nome preservado; foco no primeiro campo inválido |
 | M4 | US1 | Diálogo aberto → Esc | Fecha; nada criado |
 | M5 | US1 | Desativar JavaScript → "Novo produto" → salvar válido | Página `/produtos/novo/`; após salvar, lista com destaque e notificação; recarregar remove o destaque |
@@ -95,18 +95,11 @@ descartável — os dados de carga não devem ir para a demonstração.
 ## 6. Integridade no banco (SC-006)
 
 ```bash
-docker compose exec web python manage.py shell -c "
-from django.db import IntegrityError, transaction
-from apps.produtos.models import Produto
-p = Produto.objects.first()
-try:
-    with transaction.atomic():
-        Produto.objects.filter(pk=p.pk).update(quantidade_atual=-1)
-except IntegrityError as e:
-    print('OK, recusado pelo banco:', e)
-"
+docker compose exec web pytest apps/produtos/tests/test_models.py -k "constraint or unique" -v
 ```
 
-Esperado: `OK, recusado pelo banco: ... produto_quantidade_atual_nao_negativa ...` (ou a
-restrição implícita do tipo, conforme o banco). Este é o único uso permitido de `update()` direto
-em quantidade — um teste de que a camada do banco recusa o valor.
+Esperado: os testes das restrições `produto_quantidade_atual_nao_negativa`,
+`produto_estoque_minimo_nao_negativo`, `produto_nome_nao_vazio` e `produto_nome_unico_ci` passam
+no PostgreSQL — o banco recusa quantidade negativa e nome duplicado mesmo sem as camadas de
+formulário e serviço. A verificação fica nos testes automatizados (banco de teste descartável),
+nunca no shell sobre dados reais (constituição, princípio I).

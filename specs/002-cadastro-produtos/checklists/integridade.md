@@ -23,8 +23,8 @@
 
 ## Clareza dos requisitos
 
-- [ ] CHK011 "Sem diferenciar maiúsculas/minúsculas" está claro para letras acentuadas (ex.: "ÁGUA" × "água")? [Ambiguidade, Spec §FR-005]
-- [ ] CHK012 A lista de formatos numéricos aceitos/recusados é inequívoca para sinal "+", zeros à esquerda e espaços nas extremidades? [Clareza, Spec §FR-006, Edge Cases]
+- [x] CHK011 "Sem diferenciar maiúsculas/minúsculas" está claro para letras acentuadas (ex.: "ÁGUA" × "água")? [Ambiguidade, Spec §FR-005]
+- [x] CHK012 A lista de formatos numéricos aceitos/recusados é inequívoca para sinal "+", zeros à esquerda e espaços nas extremidades? [Clareza, Spec §FR-006, Edge Cases]
 - [x] CHK013 O limite da regra de situação (igualdade conta como alerta) está explícito e exemplificado? [Clareza, Spec §FR-015, Edge Cases]
 - [x] CHK014 Está exigido que a mensagem de nome duplicado identifique o produto existente? [Clareza, Spec §FR-005, §FR-007]
 
@@ -61,3 +61,6 @@
   minúsculos na unicidade — relevante pela limitação do SQLite em research R3) e CHK012 ("+5",
   "007", " 12 " não especificados; o plano aceita "007" e " 12 " e recusa "+5") — encaminhadas
   para a autoanálise.
+- **Após a autoanálise (2026-10-20)**: 25/25. FR-005 ganhou o exemplo "ÁGUA" = "água" (CHK011);
+  FR-006 e Edge Cases passaram a definir espaços nas extremidades, zeros à esquerda e sinal "+"
+  (CHK012), alinhados às tarefas T009/T013.

@@ -97,7 +97,7 @@ para outra aba e obter exatamente o mesmo resultado; com a base vazia, ver o est
 4. **Dado** produtos em alerta e produtos ok, **Quando** o operador filtra "Em alerta",
    **Então** apenas produtos com quantidade atual menor ou igual ao estoque mínimo são listados,
    cada um com o indicador "REPOSIÇÃO NECESSÁRIA"; o filtro pode ser combinado com a busca.
-5. **Dado** a lista, **Quando** o operador aciona o cabeçalho "Quantidade", **Então** a lista é
+5. **Dado** a lista, **Quando** o operador aciona o cabeçalho "Quantidade atual", **Então** a lista é
    ordenada por quantidade crescente; ao acionar de novo, decrescente; a coluna e o sentido
    ativos ficam indicados visualmente e para leitores de tela.
 6. **Dado** 60 produtos, **Quando** o operador abre a lista, **Então** vê os 25 cadastrados mais
@@ -193,7 +193,7 @@ digitação acontece; desativar os scripts do navegador e verificar que a lista 
 3. **Dado** o foco em um campo de texto, **Quando** o operador digita "n" ou "/", **Então** o
    caractere é digitado normalmente e nenhum atalho é acionado.
 4. **Dado** a lista, **Quando** o operador observa a busca e o botão "Novo produto", **Então**
-   vê a indicação discreta das teclas de atalho correspondentes.
+   vê, junto a cada um, a tecla do atalho correspondente (`/` e `n`) como dica visível.
 
 ---
 
@@ -210,7 +210,8 @@ digitação acontece; desativar os scripts do navegador e verificar que a lista 
 - Quantidades com sinal negativo (`-3`), casas decimais (`2,5`, `2.5`), separador de milhar
   (`1.000`), notação científica (`1e3`) ou texto (`dez`) são recusadas com mensagem junto ao
   campo; campos vazios são recusados como obrigatórios; 2.147.483.647 é aceito e 2.147.483.648 é
-  recusado.
+  recusado. Espaços nas extremidades são ignorados (" 12 " = 12), zeros à esquerda são aceitos
+  ("007" = 7) e o sinal "+" é recusado ("+5").
 - Quantidade Inicial 0 é válida: o produto nasce zerado. Com quantidade 0 e mínimo 0 ele já nasce
   "em alerta", pois a regra é "menor ou igual".
 - Clique duplo em "Salvar" ou reenvio do formulário: no máximo um produto é criado; a segunda
@@ -254,13 +255,14 @@ digitação acontece; desativar os scripts do navegador e verificar que a lista 
   caracteres após a normalização; nome formado só por espaços é vazio. Maiúsculas, minúsculas e
   acentos digitados são preservados como informados.
 - **FR-005**: O Nome normalizado DEVE ser único sem diferenciar maiúsculas de minúsculas
-  ("Caneta Azul" e "caneta azul" são o mesmo nome), inclusive sob cadastros simultâneos; acentos
-  são significativos ("Café" e "Cafe" são nomes distintos); a recusa DEVE informar o código do
-  produto já existente.
+  ("Caneta Azul" e "caneta azul" são o mesmo nome; "ÁGUA" e "água" também), inclusive sob
+  cadastros simultâneos; acentos são significativos ("Café" e "Cafe" são nomes distintos); a
+  recusa DEVE informar o código do produto já existente.
 - **FR-006**: Quantidade Inicial e Estoque Mínimo DEVEM ser obrigatórios (sem valor
-  pré-preenchido) e números inteiros de 0 a 2.147.483.647; valores vazios, negativos, com casas
-  decimais ou separador de milhar, em notação científica, não numéricos ou acima do limite DEVEM
-  ser recusados. Não há teto de negócio além desse limite técnico.
+  pré-preenchido) e números inteiros de 0 a 2.147.483.647, escritos só com algarismos de 0 a 9
+  (espaços nas extremidades ignorados; zeros à esquerda aceitos); valores vazios, com sinal
+  (`-`/`+`), com casas decimais ou separador de milhar, em notação científica, não numéricos ou
+  acima do limite DEVEM ser recusados. Não há teto de negócio além desse limite técnico.
 - **FR-007**: Erros de validação DEVEM ser exibidos em português, junto ao campo correspondente,
   preservando os valores já digitados; cada mensagem DEVE estar associada ao seu campo de forma
   perceptível a leitores de tela, e nenhum dado DEVE ser gravado enquanto houver erro. Mensagens
@@ -271,7 +273,10 @@ digitação acontece; desativar os scripts do navegador e verificar que a lista 
 - **FR-008**: Um produto recém-cadastrado DEVE ter quantidade atual igual à Quantidade Inicial
   informada.
 - **FR-009**: O cadastro DEVE estar disponível em página própria e em diálogo aberto a partir da
-  lista, com os mesmos campos, regras e mensagens nas duas formas.
+  lista, com os mesmos campos, regras e mensagens nas duas formas. Ao abrir o diálogo, o foco
+  DEVE ir para o campo Nome; ao fechá-lo, DEVE voltar ao controle que o abriu. Durante o envio,
+  a ação "Salvar" DEVE ficar indisponível, evitando envio duplicado (sem scripts, um reenvio é
+  recusado como nome duplicado — ver Edge Cases).
 - **FR-010**: Após um cadastro bem-sucedido, o sistema DEVE exibir a lista na visão padrão (sem
   busca nem filtro, primeira página) com o novo produto no topo, com a linha marcada como
   recém-cadastrada (destaque do design system perceptível não apenas por cor) somente nessa
@@ -295,8 +300,9 @@ digitação acontece; desativar os scripts do navegador e verificar que a lista 
   caracteres especiais literalmente.
 - **FR-014**: A busca DEVE ser instantânea: os resultados são atualizados automaticamente,
   sem que o operador precise confirmar e sem recarregar a página, em até 1 segundo depois que ele
-  para de digitar (SC-003); com scripts do navegador desativados, a busca funciona por envio do
-  formulário.
+  para de digitar (SC-003); enquanto a atualização está em andamento, a lista DEVE indicar que
+  está sendo atualizada, e o número de resultados DEVE ser anunciado a leitores de tela ao
+  terminar; com scripts do navegador desativados, a busca funciona por envio do formulário.
 - **FR-015**: A lista DEVE permitir filtrar por situação — Todos, Em alerta, OK — combinável com
   a busca, em que "em alerta" significa quantidade atual menor ou igual ao estoque mínimo (regra
   fixada no contrato de arquitetura a partir do item 3 da atividade, cuja varredura e relatório
@@ -314,7 +320,8 @@ digitação acontece; desativar os scripts do navegador e verificar que a lista 
   resultado.
 - **FR-019**: A lista DEVE ter estados vazios projetados: sem nenhum produto, "Nenhum produto
   cadastrado" com a ação primária "Cadastrar produto"; com busca ou filtro sem resultado,
-  "Nenhum produto encontrado" citando o termo e oferecendo "Limpar busca".
+  "Nenhum produto encontrado" citando o termo buscado (quando houver) e oferecendo "Limpar busca",
+  que remove busca e filtro.
 - **FR-020**: A situação DEVE ser exibida com o indicador visual padronizado do design system
   (feature 001): em alerta, ícone de aviso + texto "REPOSIÇÃO NECESSÁRIA" + cor de alerta; ok,
   texto "OK" com aparência neutra; a situação NUNCA DEVE ser comunicada apenas por cor.
@@ -347,8 +354,9 @@ digitação acontece; desativar os scripts do navegador e verificar que a lista 
 
 - **FR-028**: Na lista de produtos, a tecla `/` DEVE levar o foco à busca e a tecla `n` DEVE
   abrir o cadastro de novo produto; os atalhos NÃO DEVEM agir quando o foco estiver em um campo
-  editável ou com teclas modificadoras pressionadas, DEVEM ser indicados discretamente na
-  interface e são aprimoramento opcional (sem eles nada deixa de funcionar).
+  editável, com teclas modificadoras (Ctrl, Alt, Meta) pressionadas ou com um diálogo aberto; a
+  tecla de cada atalho DEVE aparecer como dica visível junto ao campo de busca e à ação "Novo
+  produto"; os atalhos são aprimoramento opcional (sem eles nada deixa de funcionar).
 
 **Integração com outras features**
 
@@ -412,6 +420,9 @@ digitação acontece; desativar os scripts do navegador e verificar que a lista 
 - **Fora de escopo**: exclusão de produtos; edição direta da quantidade; categorias, unidades de
   medida, preço, código de barras e fornecedor; importação/exportação; busca que ignore acentos.
 - **Volume de referência**: até 10.000 produtos.
+- **Telas estreitas**: uso principal em computador; em telas estreitas a lista segue o
+  comportamento responsivo do componente de tabela da feature 001 (rolagem horizontal), sem
+  layout específico nesta feature.
 - **Localização**: interface em português do Brasil; números com separador de milhar "." e datas
   `dd/mm/aaaa HH:MM` no horário de Brasília.
 - **Situação**: derivada e não armazenada, pela regra "quantidade atual ≤ estoque mínimo" do
