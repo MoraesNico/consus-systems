@@ -52,7 +52,7 @@ selo de situação — usados por todas as histórias.
 ### Testes da fundação (escrever primeiro e ver falhar)
 
 - [ ] T006 [P] Testes da regra pura em apps/alertas/tests/test_regras.py: `classificar` — 10/10 → `REPOSICAO_NECESSARIA`, 11/10 → `OK`, 0/0 e 0/8 → `SEM_ESTOQUE`, 9/10 → `REPOSICAO_NECESSARIA` (FR-002, FR-003); `deficit` e `cobertura_percentual` com a tabela-verdade de data-model.md §3, incluindo 999/1.000 → 99, 3/0 → `None`, 0/0 → 0 (FR-004); `sugestao_reposicao` — 4/10 → 16, 10/10 → 10, 0/0 → 1, 11/10 → `None`, 2.147.483.647/2.147.483.647 → 0 (FR-005); propriedade "atual + sugestão ⇒ `OK`" para todo mínimo < 1.073.741.824 numa grade de valores (FR-005, SC-008); `Situacao.rotulo` ("OK", "REPOSIÇÃO NECESSÁRIA", "SEM ESTOQUE"), `.gravidade` (0, 1, 2) e `.variante` ("ok", "reposicao", "sem_estoque" — vocabulário de `badge_estoque`/`barra_progresso` da 001) (FR-003, FR-024)
-- [ ] T007 [P] Testes do queryset em apps/produtos/tests/test_queryset_situacao.py: `em_alerta()` inclui quantidade = mínimo e 0/0 e exclui mínimo + 1 (FR-002); `com_situacao()` anota `alerta`, `deficit` e `cobertura_percentual` sem filtrar nem reordenar (FR-001, FR-004); quantidade e mínimo 2.147.483.647 e quantidade 30.000.000 com mínimo 1 não levantam `integer out of range` (research R2 — roda também no PostgreSQL); a situação muda após `registrar_movimentacao` e após `editar_produto` alterar o mínimo, sem nenhum campo de situação persistido (FR-001)
+- [ ] T007 [P] Testes do queryset em apps/produtos/tests/test_queryset_situacao.py: `em_alerta()` inclui quantidade = mínimo e 0/0 e exclui mínimo + 1 (FR-002); `com_situacao()` anota `alerta`, `deficit` e `cobertura_percentual` sem filtrar nem reordenar (FR-001, FR-004); quantidade e mínimo 2.147.483.647 e quantidade 30.000.000 com mínimo 1 não levantam `integer out of range` (research R2 — roda também no PostgreSQL); a situação muda após `registrar_movimentacao` e após `editar_produto` alterar o mínimo, sem nenhum campo de situação persistido (FR-001); `Produto` não define atributos `alerta`, `deficit` nem `cobertura_percentual` (proibidos pelo contrato v1.1 por colidirem com as anotações)
 - [ ] T008 [P] Teste de equivalência em apps/alertas/tests/test_equivalencia_regra.py: para a grade quantidade 0…6 × mínimo 0…6 mais os extremos de T007, as anotações (`alerta`, `deficit`, `cobertura_percentual`, `gravidade`, `sugestao_reposicao`) de `selectors.produtos_por_criticidade(incluir_ok=True)` são iguais às funções de `regras.py` produto a produto (FR-001…FR-005, invariante I-2)
 - [ ] T009 [P] Testes da varredura em apps/alertas/tests/test_selectors_varredura.py: ordem `gravidade DESC, deficit DESC, cobertura_percentual ASC NULLS LAST, id ASC` com empates resolvidos pelo menor ID e duas varreduras idênticas (FR-006); `varrer(agora=…)` devolve só itens em alerta como `Produto` com `situacao_estoque`, `executada_em == agora`, `total_analisado`, `total_em_alerta`, `total_sem_estoque` coerentes com os itens e com `em_alerta().count()` (FR-008, I-4); `incluir_ok=True` põe os OK no fim por cobertura (FR-030); `sem_produtos`/`sem_alertas` (FR-010); nada gravado — contagens de `Produto`/`Movimentacao` inalteradas (FR-008, FR-037); `total_em_alerta()` inclui SEM ESTOQUE (FR-003); orçamentos `django_assert_max_num_queries(2)` para `varrer` e `(1)` para `total_em_alerta`
 - [ ] T010 [P] Testes do CSV em apps/alertas/tests/test_exportacao.py: cabeçalho exatamente `ID;Produto;Quantidade atual;Estoque mínimo;Déficit;Cobertura (%);Sugestão de reposição;Situação`, separador `;`, fim de linha `\r\n`, BOM `﻿` só com `bom=True`, ID `#0001`, inteiros sem separador de milhar (`1500`), cobertura e sugestão vazias quando `None`, situação pelo rótulo, nome com `;`, aspas e acentos íntegro em uma célula (FR-032); nomes iniciados por `=`, `+`, `-`, `@`, TAB ou CR recebem `'` inicial (FR-033); resultado sem alertas → só o cabeçalho; `nome_arquivo_csv` → `reposicao-20261020-1432.csv` no fuso local (FR-032)
@@ -230,6 +230,7 @@ conferir que nada mudou.
 - [ ] T061 Garantir cobertura ≥ 90% em apps/alertas/selectors.py, apps/alertas/regras.py, apps/alertas/exportacao.py e apps/produtos/models.py com `pytest --cov=apps.alertas --cov=apps.produtos.models --cov-fail-under=90` (constituição III)
 - [ ] T062 Rodar os quality gates: `ruff check .`, `ruff format --check .`, `python manage.py makemigrations --check --dry-run` (nenhuma migração na 004), `pytest` em SQLite e em PostgreSQL e `docker compose up --build` — corrigir o que falhar
 - [ ] T063 Executar a validação manual de specs/004-alerta-reposicao/quickstart.md (seções 1–7), incluindo teclado, leitor de tela e scripts desativados, e registrar o resultado na descrição do PR
+- [ ] T064 [P] Teste ponta a ponta da atividade (SENAI-SP, itens 1–3) em apps/alertas/tests/test_fluxo_atividade.py, só por HTTP e pelos comandos, nas variantes comum e HTMX: (item 1) `POST /produtos/novo/` "Caneta Azul", quantidade inicial 10, mínimo 5 → `#0001` com quantidade 10, encontrado por `?q=1`, `?q=%231` e `?q=%230001`; (item 2) Entrada de 5 → saldo 15; Saída de 10 → saldo 5; Saída de 6 → 422 com "Saldo insuficiente: disponível 5, solicitado 6", saldo 5 e nenhuma movimentação nova; (item 3) com 5 ≤ 5 a lista e o detalhe mostram "REPOSIÇÃO NECESSÁRIA", `/alertas/` lista o produto, `/alertas/contador/` mostra 1 e `varrer_estoque` imprime a linha "⚠ REPOSIÇÃO NECESSÁRIA"; Saída de 5 → selo composto "REPOSIÇÃO NECESSÁRIA │ SEM ESTOQUE"; "+ Entrada" do relatório (`origem=alertas`, `quantidade` = sugestão 10) → produto sai do relatório, contador 0; ao fim `auditar_saldos() == []` (rastreabilidade: docs/rastreabilidade.md)
 
 ---
 
@@ -278,7 +279,7 @@ conferir que nada mudou.
 | FR-016 | T029 | FR-035 | T054 |
 | FR-017 | T029, T058 | FR-036 | T017, T018, T042 |
 | FR-018 | T011, T033 | FR-037 | T009, T017, T054 |
-| FR-019 | T031, T032 | | |
+| FR-019 | T031, T032 | Atividade (itens 1–3, ponta a ponta) | T064 |
 
 Critérios de sucesso: SC-001 (T057), SC-002 (T018), SC-003 (T020, T029, T042 — gatilhos
 `estoque-alterado`), SC-004 (T029 — `every 30s`), SC-005 (T020, T029, T059), SC-006 (T048, T051,
@@ -292,7 +293,7 @@ T057), SC-007 (T058), SC-008 (T006, T021), SC-009 (T054).
 - US2: testes T029–T034 juntos (arquivos distintos); T035 e T036 juntos; depois T037, T038 e T039 em sequência (mesmos arquivos) e T040.
 - US3: T041 e T042 juntos; T043 e T044 juntos.
 - US4: T047 e T048 juntos.
-- Polish: T057–T060 juntos.
+- Polish: T057–T060 e T064 juntos.
 - Após a Fundação, US3, US4 e US6 podem ser feitas em paralelo por pessoas diferentes.
 
 ---
