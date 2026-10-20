@@ -51,6 +51,8 @@ Em alerta: 4 (1 sem estoque)
 - Com `--todos`, os OK aparecem depois como `OK                                    #0006  Grampeador …  atual 6 / mín. 5`.
 - Sem alertas: `Nenhum produto precisa de reposição.`; sem produtos: `Nenhum produto cadastrado.`
 - Números com separador de milhar "." (saída para humanos).
+- Nomes com mais de 40 caracteres são encurtados para 39 + "…" (somente no formato texto; csv e
+  json trazem o nome completo).
 - Se a codificação do stdout não representar "⚠" (ex.: cp1252), o marcador vira `(!)`.
 
 ### Formato `csv`

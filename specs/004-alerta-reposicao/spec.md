@@ -246,6 +246,9 @@ nas telas; executar de novo e conferir que nada mudou.
   equivalente e mantém o texto "REPOSIÇÃO NECESSÁRIA".
 - **Nome de produto iniciado por `=`, `+`, `-` ou `@`** no CSV: exportado de forma que a planilha
   não o interprete como fórmula.
+- **Nome longo** (até 120 caracteres): exibido por inteiro, com quebra de linha, no relatório e
+  no painel; no formato texto do terminal o nome é encurtado com "…" para manter as colunas
+  alinhadas, enquanto csv e json trazem o nome completo.
 - **Quantidades grandes** (ex.: 1.000.000): exibidas com separador de milhar na interface; a
   barra de cobertura nunca ultrapassa o limite visual.
 - **Sugestão acima do limite por movimentação** (1.000.000 unidades na feature 003): a sugestão é
@@ -289,15 +292,19 @@ nas telas; executar de novo e conferir que nada mudou.
 - **FR-007** *(Atividade, item 3 — "opção de relatório ou varredura")*: O sistema MUST oferecer
   a página "Relatório de Reposição", acessível pelo menu principal, que executa a varredura ao ser
   aberta e novamente sempre que o usuário acionar "Executar varredura", sem sair da página.
+  Enquanto a varredura está em andamento, o botão MUST indicar o estado "em andamento" e não
+  aceitar um segundo acionamento.
 - **FR-008**: Cada varredura MUST exibir a data e a hora em que foi executada (dd/mm/aaaa HH:MM),
   o total de produtos analisados, o total em alerta e quantos destes estão sem estoque. A
   varredura é calculada no momento em que é executada e não é registrada em histórico; a data/hora
-  exibida é a do cálculo.
+  exibida é a do cálculo. O resultado de cada varredura acionada pelo usuário MUST ser anunciado a
+  tecnologias assistivas (ex.: "Varredura concluída: 5 produtos em alerta (1 sem estoque) de 42
+  analisados").
 - **FR-009** *(Atividade, item 3 — "exibir um alerta visual destacado para aquele produto")*: O
-  relatório MUST listar somente os produtos em alerta, na ordem de FR-006, com as colunas: ID no
-  formato `#0001`, nome, quantidade atual, estoque mínimo, déficit, cobertura (barra horizontal +
-  percentual), sugestão de reposição e selo de situação ("⚠ REPOSIÇÃO NECESSÁRIA" ou
-  "SEM ESTOQUE").
+  relatório MUST listar somente os produtos em alerta, na ordem de FR-006, com as colunas, nesta
+  ordem: ID no formato `#0001`, nome, selo de situação ("⚠ REPOSIÇÃO NECESSÁRIA" ou
+  "SEM ESTOQUE"), quantidade atual, estoque mínimo, déficit, cobertura (barra horizontal +
+  percentual), sugestão de reposição e ações.
 - **FR-010**: Quando houver produtos e nenhum em alerta, o relatório MUST exibir um estado vazio
   positivo ("Nenhum produto precisa de reposição") com o total analisado; quando não houver
   produtos cadastrados, MUST exibir um estado vazio que oriente a cadastrar o primeiro produto.
@@ -312,7 +319,8 @@ nas telas; executar de novo e conferir que nada mudou.
 
 - **FR-014** *(Atividade, item 3 — "varredura automática")*: O menu principal MUST exibir, em
   todas as páginas, um contador de produtos em alerta, recalculado automaticamente a cada 30
-  segundos sem ação do usuário.
+  segundos sem ação do usuário. Com os scripts do navegador desativados, o contador exibe o valor
+  do momento em que a página foi carregada.
 - **FR-015**: O contador MUST ser atualizado imediatamente após qualquer movimentação confirmada
   na mesma janela, sem recarregar a página, e MUST exibir o mesmo total da varredura mais recente
   executada no relatório.
@@ -333,9 +341,12 @@ nas telas; executar de novo e conferir que nada mudou.
   NECESSÁRIA), MUST NOT haver aviso extra. O aviso vale tanto para a confirmação com a página
   atualizada parcialmente quanto para a confirmação após recarregamento.
 - **FR-020**: O selo de situação MUST ser idêntico (texto, ícone, cor) em todas as telas onde
-  aparece: relatório, lista e detalhe de produtos, painel.
+  aparece: relatório, lista e detalhe de produtos, painel. "SEM ESTOQUE" MUST ter destaque mais
+  forte que "REPOSIÇÃO NECESSÁRIA" (cor de perigo em vez de cor de alerta), mantendo ícone e texto.
 - **FR-021**: Nenhum alerta pode depender apenas de cor: todo selo ou contador de alerta MUST
-  combinar ícone, texto e cor, com contraste mínimo WCAG 2.1 AA.
+  combinar ícone, texto e cor, com contraste mínimo WCAG 2.1 AA. Todas as ações desta feature
+  ("Executar varredura", "Exportar CSV", "+ Entrada", atalhos do painel) MUST ser operáveis só
+  pelo teclado, com foco visível.
 
 **Painel (História 3)**
 
@@ -348,9 +359,10 @@ nas telas; executar de novo e conferir que nada mudou.
 - **FR-024**: O painel MUST exibir a lista de cobertura com até 8 produtos de menor cobertura, do
   menor para o maior percentual (empates pelo menor ID), cada um com barra horizontal
   proporcional (limitada visualmente a 100%) e o percentual; produtos com cobertura "não se
-  aplica" ficam fora da lista.
+  aplica" ficam fora da lista; sem nenhum produto elegível, a lista exibe "Sem produtos com
+  estoque mínimo definido".
 - **FR-025**: O painel MUST exibir as 5 movimentações mais recentes (tipo, produto, quantidade,
-  saldo resultante, data/hora).
+  saldo resultante, data/hora); sem movimentações, exibe "Nenhuma movimentação registrada".
 - **FR-026**: Indicadores e listas do painel MUST se atualizar sozinhos após qualquer
   movimentação confirmada na mesma janela, sem recarregar a página.
 
@@ -364,7 +376,8 @@ nas telas; executar de novo e conferir que nada mudou.
   os mesmos produtos, valores e totais do relatório web.
 - **FR-029**: Com a opção "falhar se houver alerta", o comando MUST terminar com código 1 quando
   existir ao menos um produto em alerta e 0 caso contrário; sem a opção, MUST terminar com 0;
-  uso inválido MUST terminar com 2.
+  uso inválido (opção ou formato desconhecido) ou falha ao consultar o estoque MUST terminar com 2,
+  sem imprimir relatório parcial.
 - **FR-030**: O comando MUST oferecer uma opção para listar também os produtos fora de alerta,
   marcados "OK", após os produtos em alerta.
 - **FR-031**: O comando MUST ser somente leitura: não altera saldos nem cria registros.
@@ -447,6 +460,8 @@ nas telas; executar de novo e conferir que nada mudou.
 - Não há autenticação nem perfis nesta versão (como nas demais features): todos que acessam o
   sistema veem os mesmos alertas.
 - Volume esperado de até cerca de 1.000 produtos; o relatório não é paginado.
+- Uso principal em telas de computador; em telas estreitas a tabela do relatório rola
+  horizontalmente dentro do próprio contêiner, sem rolagem horizontal da página.
 - O intervalo de 30 segundos da verificação automática é um padrão ajustável por configuração do
   ambiente.
 - O fuso horário do sistema é o de São Paulo (America/Sao_Paulo), configurado pela fundação.
