@@ -131,9 +131,11 @@ quando a saída deixaria o saldo negativo.
 - Busca com `hx-get` + `hx-trigger="input changed delay:300ms, search"`, alvo `#resultados`.
 - Formulários: `hx-post`; sucesso → fragmento atualizado + `HX-Trigger`; erro de validação →
   formulário re-renderizado com status **422** (HTMX configurado para trocar 422).
-- Eventos: `estoque-alterado` (após qualquer movimentação; badge e painel escutam com
-  `hx-trigger="estoque-alterado from:body"`), `toast` (mensagem `{nivel, texto}`).
-- `hx-swap-oob` para atualizar a linha do produto e o badge de alertas na mesma resposta.
+- Eventos: `estoque-alterado` (após qualquer operação que altere saldo ou situação; o contador
+  de alertas e o painel escutam com `hx-trigger="estoque-alterado from:body"`), `toast`
+  (mensagem `{nivel, texto}`) e `fechar-dialogo`.
+- `hx-swap-oob` para atualizar a linha e o resumo do produto na mesma resposta; o contador de
+  alertas se atualiza sozinho ao ouvir `estoque-alterado`.
 - Diálogos usam `<dialog>` nativo; conteúdo carregado por `hx-get` em `#dialogo`.
 - CSRF via `hx-headers` no `<body>`.
 
@@ -147,7 +149,7 @@ exatamente estes nomes.
 
 | Tema | Decisão |
 |------|---------|
-| Exibição do ID | `Produto.codigo` → `"#0001"` (`f"#{pk:04d}"`, não trunca ≥ 10000); `str(produto)` → `"#0001 — Nome"`. Em atributos HTML usar `|unlocalize` (evita `1.234`). |
+| Exibição do ID | `Produto.codigo` → `"#0001"` (`f"#{pk:04d}"`, não trunca ≥ 10000); `str(produto)` → `"#0001 — Nome"`. Em atributos HTML usar `\|unlocalize` (evita `1.234`). |
 | Nome | `normalizar_nome()`: apara extremidades e colapsa espaços internos; unicidade por `UniqueConstraint(Lower("nome"))`; acentos diferenciam ("Café" ≠ "Cafe"). |
 | Limites | `produtos.models.QUANTIDADE_MAXIMA = 2_147_483_647` (teto de saldo, quantidade inicial e estoque mínimo). Quantidade por Entrada/Saída: 1 a 1.000.000. Campos aceitam só dígitos (`"1.000"`, `"2,5"`, `"+5"` são recusados). |
 | Serviços de produto | `cadastrar_produto(*, nome, quantidade_inicial, estoque_minimo) -> Produto`; `editar_produto(*, produto_id, nome, estoque_minimo) -> Produto` (salva com `update_fields`, nunca sobrescreve `quantidade_atual`). |
