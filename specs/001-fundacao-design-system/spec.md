@@ -112,7 +112,8 @@ razão de contraste e que os botões de demonstração abrem o diálogo e dispar
    REPOSIÇÃO NECESSÁRIA e SEM ESTOQUE, este último mantendo o texto "REPOSIÇÃO NECESSÁRIA".
 4. **Given** a seção de diálogo, **When** o usuário aciona "Abrir diálogo de exemplo", **Then**
    o conteúdo é buscado no servidor, o diálogo abre com foco no primeiro campo, fecha com Esc e
-   o foco volta ao botão que o abriu.
+   o foco volta ao botão que o abriu; enviar o formulário vazio mostra os erros dentro do
+   diálogo, e enviá-lo preenchido fecha o diálogo e mostra um toast de sucesso.
 5. **Given** a seção de toasts, **When** o usuário dispara um toast de cada nível, **Then** os
    de sucesso e info somem após 5 s e os de alerta e erro permanecem até serem fechados.
 
@@ -354,10 +355,12 @@ terminam com sucesso e que a cobertura é reportada.
   bordas e raios; sombras; camadas; movimento) e cada componente de FR-027 em todos os estados
   aplicáveis (padrão, hover/foco ilustrados, ativo, desabilitado, erro, carregando), cada um com
   o trecho de uso do template.
-- **FR-032**: `/design/` MUST oferecer demonstrações vivas: abrir um diálogo de exemplo com
-  conteúdo vindo do servidor e disparar um toast de cada nível, usando o mesmo mecanismo que as
-  features usarão; sem JavaScript, as demonstrações MUST degradar para navegação de página
-  inteira (diálogo como página; toast como mensagem após redirecionamento).
+- **FR-032**: `/design/` MUST oferecer demonstrações vivas, usando o mesmo mecanismo que as
+  features usarão: (a) abrir um diálogo de exemplo com conteúdo vindo do servidor contendo um
+  formulário fictício validado no servidor — dados inválidos re-exibem o formulário com os erros
+  no próprio diálogo (status 422), dados válidos fecham o diálogo e exibem um toast de sucesso —
+  e (b) disparar um toast de cada nível; sem JavaScript, as demonstrações MUST degradar para
+  navegação de página inteira (diálogo como página; toast como mensagem após redirecionamento).
 - **FR-033**: `/design/` MUST usar apenas dados fictícios rotulados como exemplo, MUST estar
   disponível em qualquer ambiente (inclusive com depuração desligada), MUST NOT aparecer na
   navegação principal (acesso pelo rodapé) e MUST pedir a mecanismos de busca que não a indexem.
@@ -384,8 +387,10 @@ terminam com sucesso e que a cobertura é reportada.
   não depende do banco, da sessão nem de dados de contexto, sem detalhes técnicos e com ação
   "Voltar ao Painel".
 - **FR-039**: Requisições malformadas (400) e acessos negados (403, inclusive falha da proteção
-  contra falsificação de requisição) MUST receber páginas no mesmo padrão da 404, com mensagem
-  própria (a de 403 por falha de proteção orienta a recarregar a página).
+  contra falsificação de requisição) MUST receber páginas no mesmo visual das páginas de erro
+  (marca, código, mensagem em português e ação "Voltar ao Painel"), com mensagem própria (a de
+  403 por falha de proteção orienta a recarregar a página); as que o framework gera sem contexto
+  de requisição (400 e falha de proteção) MAY omitir a navegação, como a 500.
 
 #### Qualidade e segurança
 
