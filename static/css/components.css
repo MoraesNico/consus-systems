@@ -57,6 +57,11 @@
     box-shadow: var(--shadow-none);
   }
 
+  .botao--secundario {
+    background-color: var(--color-surface);
+    color: var(--color-ink);
+  }
+
   .botao--primario {
     background-color: var(--color-accent);
     color: var(--color-on-accent);

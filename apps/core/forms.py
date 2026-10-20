@@ -9,6 +9,7 @@ class FormularioExemplo(forms.Form):
         max_length=120,
         help_text="Dado fictício — nada é salvo.",
         error_messages={"required": "Informe o nome."},
+        widget=forms.TextInput(attrs={"autofocus": True}),
     )
     quantidade = forms.IntegerField(
         label="Quantidade",

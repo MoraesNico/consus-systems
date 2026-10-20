@@ -41,7 +41,11 @@ DJANGO_SETTINGS_MODULE = "config.settings"
 testpaths = ["apps"]
 python_files = ["test_*.py"]
 addopts = '-m "not docker" --cov --cov-report=term-missing:skip-covered'
-filterwarnings = ["ignore:No directory at:UserWarning"]
+filterwarnings = [
+    "ignore:No directory at:UserWarning",
+    # SQLite em memória (testes) ignora close() de propósito; no PostgreSQL a conexão fecha.
+    "ignore:unclosed database:ResourceWarning",
+]
 markers = [
     "docker: integração com Docker Compose (opt-in, `pytest -m docker`)",
     "postgres: exige PostgreSQL (pulado automaticamente no SQLite)",

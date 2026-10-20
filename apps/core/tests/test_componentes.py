@@ -14,8 +14,8 @@ COMPONENTES = RAIZ / "templates" / "components"
 EMOJI = re.compile("[\U0001f300-\U0001faff☀-➿]")
 
 
-def render(nome: str, **contexto) -> str:
-    return render_to_string(f"components/{nome}.html", contexto)
+def render(componente: str, **contexto) -> str:
+    return render_to_string(f"components/{componente}.html", contexto)
 
 
 def test_fr027_templates_renderizam():
