@@ -40,7 +40,7 @@ def test_fr011_estrutura_da_casca(resposta_painel):
     assert "Consus" in conteudo
     assert '<main id="conteudo"' in conteudo
     rodape = conteudo.split('class="rodape-app"', 1)[1]
-    assert "v0.1.0" in rodape
+    assert "v1.0.0" in rodape
     assert 'href="/design/"' in rodape
     assert 'href="/saude/"' in rodape
 

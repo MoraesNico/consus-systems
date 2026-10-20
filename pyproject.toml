@@ -1,6 +1,6 @@
 [project]
 name = "consus"
-version = "0.1.0"
+version = "1.0.0"
 description = "Consus — Controle de Estoque Simples (Django + HTMX)"
 readme = "README.md"
 requires-python = ">=3.13,<3.14"

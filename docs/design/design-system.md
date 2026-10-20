@@ -873,7 +873,7 @@ Ver §2.13. Parâmetros: `nome`, `tamanho` (`sm`|`md`), `rotulo` (se informado, 
 │   cabeçalho de página                                                                  │
 │   conteúdo em .grade (12 colunas)                                                      │
 ├───────────────────────────────────────────────────────────────────────────────────────┤
-│ rodapé: "Consus v0.1.0 · Catálogo de design · Saúde do sistema"  (12 px ink-subtle)    │
+│ rodapé: "Consus v1.0.0 · Catálogo de design · Saúde do sistema"  (12 px ink-subtle)    │
 └───────────────────────────────────────────────────────────────────────────────────────┘
 #toasts (fixo, canto superior direito)      <dialog id="dialogo">
 ```

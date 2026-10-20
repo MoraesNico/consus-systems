@@ -15,7 +15,7 @@ def test_fr034_contrato_json(htmx):
     resposta = cliente.get("/saude/", **extra)
     assert resposta.status_code == 200
     assert resposta["Content-Type"] == "application/json"
-    assert resposta.json() == {"status": "ok", "banco": "ok", "versao": "0.1.0"}
+    assert resposta.json() == {"status": "ok", "banco": "ok", "versao": "1.0.0"}
     assert "no-store" in resposta["Cache-Control"]
     assert not resposta.cookies
 
@@ -39,7 +39,7 @@ def test_fr035_banco_indisponivel_503_sem_vazar_detalhes(client, monkeypatch):
     monkeypatch.setattr(connections, "create_connection", falhar)
     resposta = client.get("/saude/")
     assert resposta.status_code == 503
-    assert resposta.json() == {"status": "erro", "banco": "indisponivel", "versao": "0.1.0"}
+    assert resposta.json() == {"status": "erro", "banco": "indisponivel", "versao": "1.0.0"}
     assert b"segredo" not in resposta.content
 
 
