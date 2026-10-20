@@ -35,6 +35,7 @@ select = ["E", "F", "W", "I", "UP", "B", "DJ", "SIM"]
 [tool.ruff.lint.per-file-ignores]
 # Tabela espelho do design system: uma linha por par facilita a revisão.
 "apps/core/design_tokens.py" = ["E501"]
+"apps/alertas/demo.py" = ["E501"]
 
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "config.settings"

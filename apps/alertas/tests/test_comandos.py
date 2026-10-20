@@ -26,8 +26,8 @@ def test_fr027_texto(cenario, agora):
     saida = rodar("varrer_estoque")
     assert "CONSUS — VARREDURA DE ESTOQUE" in saida and "Em alerta: 4 (2 sem estoque)" in saida
     linhas = [linha for linha in saida.splitlines() if "REPOSIÇÃO NECESSÁRIA" in linha]
-    assert [next(c for c in ("E", "D", "A", "B") if cenario[c].codigo in linha) for linha in linhas] == [
-        "E", "D", "A", "B"]  # fmt: skip
+    ordem = [next(c for c in "EDAB" if cenario[c].codigo in linha) for linha in linhas]
+    assert ordem == ["E", "D", "A", "B"]
 
 
 def test_fr028_csv_e_json(cenario, agora):

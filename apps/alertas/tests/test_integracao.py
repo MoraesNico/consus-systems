@@ -95,8 +95,8 @@ def test_fr019_toast_da_movimentacao(client, criar_produto, inicial, minimo, tip
 def test_fr019_sem_htmx_mensagem_de_alerta(client, criar_produto):
     """FR-019: sem HTMX a mensagem vem como aviso de alerta na página seguinte."""
     p = criar_produto("Sem JS", 11, 10)
-    resposta = client.post("/movimentacoes/nova/",
-                           {"produto": p.pk, "tipo": "SAIDA", "quantidade": "1"}, follow=True)  # fmt: skip
+    dados = {"produto": p.pk, "tipo": "SAIDA", "quantidade": "1"}
+    resposta = client.post("/movimentacoes/nova/", dados, follow=True)
     assert re.search(r"aviso--alerta[^>]*>.*REPOSIÇÃO NECESSÁRIA", html(resposta), re.S)
 
 

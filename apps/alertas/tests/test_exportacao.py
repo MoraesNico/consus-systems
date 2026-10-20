@@ -33,7 +33,7 @@ def test_fr032_csv_sem_alertas_so_cabecalho(criar_produto):
 
 @pytest.mark.parametrize("prefixo", ["=", "+", "-", "@"])
 def test_fr033_protecao_contra_formula(criar_produto, prefixo):
-    """FR-033: nomes que começam como fórmula recebem apóstrofo (TAB/CR são aparados no cadastro)."""
+    """FR-033: nomes com cara de fórmula recebem apóstrofo (TAB/CR são aparados no cadastro)."""
     criar_produto(f"{prefixo}1+1 produto", 0, 5)
     linha = para_csv(varrer(), bom=False).split("\r\n")[1]
     assert f";'{prefixo}1+1 produto;" in linha

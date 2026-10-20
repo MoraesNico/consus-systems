@@ -1,0 +1,58 @@
+<section id="painel-kpis" class="painel pilha pilha--ampla" aria-labelledby="painel-kpis-titulo" hx-get="{% url 'core:painel' %}" hx-trigger="estoque-alterado from:body" hx-swap="outerHTML">
+  <h2 id="painel-kpis-titulo" class="visualmente-oculto">Indicadores do estoque</h2>
+  <div class="grade">
+    <div class="col-md-4 col-lg-3">{% include "components/kpi.html" with rotulo="Produtos cadastrados" valor=resumo.total_produtos meta="com ID automático" icone="package" href=url_lista_produtos %}</div>
+    <div class="col-md-4 col-lg-3">{% include "components/kpi.html" with rotulo="Unidades em estoque" valor=resumo.total_unidades meta="soma dos saldos atuais" icone="layout-dashboard" %}</div>
+    <div class="col-md-4 col-lg-3">{% if resumo.total_em_alerta %}{% include "components/kpi.html" with rotulo="Em alerta" valor=resumo.total_em_alerta meta=meta_alerta destaque="alerta" href=url_relatorio %}{% else %}{% include "components/kpi.html" with rotulo="Em alerta" valor=0 meta="nenhum produto precisa de reposição" icone="circle-check" href=url_relatorio %}{% endif %}</div>
+    <div class="col-md-4 col-lg-3">{% include "components/kpi.html" with rotulo="Movimentações · 24 h" valor=resumo.movimentacoes_24h meta="entradas + saídas" icone="arrow-left-right" href=url_movimentacoes %}</div>
+  </div>
+
+  {% if not resumo.total_produtos %}
+    {% include "components/estado_vazio.html" with icone="package" titulo="Cadastre o primeiro produto" descricao="Informe nome, quantidade inicial e estoque mínimo de segurança. O Painel passa a mostrar alertas, cobertura e movimentações." acao_rotulo="Cadastrar produto" acao_url=url_cadastro_produto acao_alvo="#dialogo" %}
+  {% else %}
+    <div class="grade">
+      <section class="cartao col-md-8 col-lg-8 painel__secao" aria-labelledby="titulo-criticos">
+        <div class="cartao__cabecalho"><h3 id="titulo-criticos" class="cartao__titulo">Reposição necessária</h3>{% if resumo.total_em_alerta and url_relatorio %}<a class="botao botao--fantasma botao--sm" href="{{ url_relatorio }}">Ver relatório completo ({{ resumo.total_em_alerta }}){% icone "arrow-right" %}</a>{% endif %}</div>
+        {% if resumo.criticos %}
+          <div class="tabela-contenedor tabela-contenedor--sem-borda">
+            <table class="tabela tabela--compacta">
+              <caption class="visualmente-oculto">Os produtos mais críticos</caption>
+              <thead><tr><th scope="col">Produto</th><th scope="col">Situação</th><th scope="col" class="num">Atual / mín.</th><th scope="col" class="num">Sugestão</th><th scope="col" class="tabela__acoes"><span class="visualmente-oculto">Ações</span></th></tr></thead>
+              <tbody>
+                {% for produto in resumo.criticos %}
+                  <tr class="linha-critica {% if produto.situacao_estoque.variante == 'sem_estoque' %}tabela__linha--sem-estoque{% else %}tabela__linha--alerta{% endif %}">
+                    <td><a class="tabela__link" href="{{ produto.get_absolute_url }}"><span class="tabela__id">{{ produto.codigo }}</span> {{ produto.nome }}</a></td>
+                    <td>{% include "produtos/partials/situacao.html" %}</td>
+                    <td class="num">{{ produto.quantidade_atual }} / {{ produto.estoque_minimo }}</td>
+                    <td class="num">{% if produto.sugestao_reposicao %}+{{ produto.sugestao_reposicao }}{% else %}—{% endif %}</td>
+                    <td class="tabela__acoes">{% load alertas_tags %}{% with qtd=produto.sugestao_reposicao|limitar_movimentacao %}<a class="botao botao--secundario botao--sm" href="{% url 'movimentacoes:nova' %}?produto={{ produto.pk|unlocalize }}&amp;tipo=ENTRADA{% if qtd %}&amp;quantidade={{ qtd|unlocalize }}{% endif %}" hx-get="{% url 'movimentacoes:nova' %}?produto={{ produto.pk|unlocalize }}&amp;tipo=ENTRADA{% if qtd %}&amp;quantidade={{ qtd|unlocalize }}{% endif %}&amp;origem=alertas" hx-target="#dialogo" hx-swap="innerHTML" aria-label="Registrar entrada de {{ produto.codigo }} {{ produto.nome }}">+ Entrada</a>{% endwith %}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="estado-vazio estado-vazio--compacto estado-vazio--positivo"><span class="estado-vazio__icone">{% icone "circle-check" tamanho="md" %}</span><p class="estado-vazio__titulo">Nenhum produto precisa de reposição.</p></div>
+        {% endif %}
+      </section>
+      <section class="cartao col-md-8 col-lg-4 painel__secao" aria-labelledby="titulo-cobertura">
+        <div class="cartao__cabecalho"><h3 id="titulo-cobertura" class="cartao__titulo">Cobertura do mínimo</h3></div>
+        {% load alertas_tags %}{% lista_cobertura resumo.cobertura %}
+      </section>
+    </div>
+    <section class="cartao painel__secao" aria-labelledby="titulo-movimentacoes">
+      <div class="cartao__cabecalho"><h3 id="titulo-movimentacoes" class="cartao__titulo">Últimas movimentações</h3>{% if url_movimentacoes %}<a class="botao botao--fantasma botao--sm" href="{{ url_movimentacoes }}">Ver livro-razão{% icone "arrow-right" %}</a>{% endif %}</div>
+      {% if resumo.ultimas_movimentacoes %}
+        <div class="tabela-contenedor tabela-contenedor--sem-borda">
+          <table class="tabela tabela--compacta">
+            <caption class="visualmente-oculto">As cinco movimentações mais recentes</caption>
+            <thead><tr><th scope="col">Data/hora</th><th scope="col">Produto</th><th scope="col">Tipo</th><th scope="col" class="num">Quantidade</th><th scope="col" class="num">Saldo</th><th scope="col">Observação</th></tr></thead>
+            <tbody>{% for mov in resumo.ultimas_movimentacoes %}{% include "movimentacoes/partials/linha_movimentacao.html" %}{% endfor %}</tbody>
+          </table>
+        </div>
+      {% else %}
+        <p class="texto-atenuado">Nenhuma movimentação registrada.</p>
+      {% endif %}
+    </section>
+  {% endif %}
+</section>

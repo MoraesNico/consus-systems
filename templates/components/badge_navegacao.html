@@ -1,1 +1,1 @@
-<span id="badge-alertas" class="navegacao__badge">{% if badge_alertas_url %}<span id="contador-alertas" data-silencioso hx-get="{{ badge_alertas_url }}" hx-trigger="load, every 30s, estoque-alterado from:body" hx-swap="outerHTML"></span>{% endif %}</span>
+{% load alertas_tags %}<span id="badge-alertas" class="navegacao__badge">{% contador_alertas %}</span>

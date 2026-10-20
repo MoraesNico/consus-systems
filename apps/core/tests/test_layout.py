@@ -18,12 +18,13 @@ def html(resposta) -> str:
 
 
 @pytest.fixture(params=["normal", "htmx", "boost"])
-def resposta_painel(request, client):
+def resposta_painel(request, client, db):
     if request.param in ("htmx", "boost"):
         client.defaults["HTTP_HX_REQUEST"] = "true"
     if request.param == "boost":
         client.defaults["HTTP_HX_BOOSTED"] = "true"
-    return client.get("/")
+    # /design/ devolve a página completa nas três variantes (o Painel ganhou fragmento na 004).
+    return client.get("/design/")
 
 
 def test_fr011_estrutura_da_casca(resposta_painel):

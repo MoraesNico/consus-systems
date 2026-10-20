@@ -55,7 +55,7 @@ def test_fr003_sem_estoque_e_forma_mais_grave():
 def test_fr005_sugestao_sempre_tira_do_alerta():
     """FR-005/SC-008: atual + sugestão sai do alerta (mínimo abaixo da metade do teto)."""
     for minimo in (0, 1, 2, 7, 10, 100, 1_000_000, 1_073_741_823):
-        for atual in {0, 1, minimo // 2, minimo}:
+        for atual in {0, min(1, minimo), minimo // 2, minimo}:
             sugestao = sugestao_reposicao(atual, minimo)
             assert sugestao is not None and sugestao >= 1
             assert classificar(atual + sugestao, minimo) is Situacao.OK

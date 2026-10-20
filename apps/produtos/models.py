@@ -3,8 +3,17 @@
 import re
 
 from django.db import models
-from django.db.models import BooleanField, ExpressionWrapper, F, Q
-from django.db.models.functions import Lower
+from django.db.models import (
+    BigIntegerField,
+    BooleanField,
+    Case,
+    ExpressionWrapper,
+    F,
+    Q,
+    Value,
+    When,
+)
+from django.db.models.functions import Cast, Greatest, Lower
 from django.urls import reverse
 
 # Teto do `integer` do PostgreSQL: limite de saldo, quantidade inicial e estoque mínimo.
@@ -41,11 +50,23 @@ class ProdutoQuerySet(models.QuerySet):
         return self.filter(quantidade_atual__gt=F("estoque_minimo"))
 
     def com_situacao(self) -> "ProdutoQuerySet":
-        """Anota `alerta` (bool). A 004 acrescenta `deficit` e `cobertura_percentual`."""
+        """Anota `alerta` (002), `deficit` e `cobertura_percentual` (004).
+
+        A aritmética usa bigint: `quantidade × 100` estouraria o `integer` do PostgreSQL.
+        """
+        q = Cast("quantidade_atual", BigIntegerField())
+        m = Cast("estoque_minimo", BigIntegerField())
         return self.annotate(
             alerta=ExpressionWrapper(
                 Q(quantidade_atual__lte=F("estoque_minimo")), output_field=BooleanField()
-            )
+            ),
+            deficit=Greatest(m - q, Value(0), output_field=BigIntegerField()),
+            cobertura_percentual=Case(
+                When(quantidade_atual=0, then=Value(0)),
+                When(estoque_minimo=0, then=Value(None)),
+                default=(q * Value(100)) / m,
+                output_field=BigIntegerField(),
+            ),
         )
 
 
@@ -94,8 +115,11 @@ class Produto(models.Model):
         return "alerta" if self.em_alerta else "ok"
 
     @property
-    def situacao_estoque(self) -> str:
-        """Variação do selo único: `ok`, `reposicao` ou `sem_estoque` (quantidade 0)."""
+    def variante_situacao(self) -> str:
+        """Variação do selo único: `ok`, `reposicao` ou `sem_estoque` (quantidade 0).
+
+        Mesmo vocabulário de `alertas.regras.Situacao.variante` (004).
+        """
         if self.quantidade_atual == 0:
             return "sem_estoque"
         return "reposicao" if self.em_alerta else "ok"
