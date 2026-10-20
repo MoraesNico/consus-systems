@@ -88,7 +88,8 @@ specs/003-movimentacao-estoque/
 │   └── comando-movimentar.md     # python manage.py movimentar
 ├── checklists/
 │   ├── requirements.md
-│   └── integridade.md
+│   ├── integridade.md
+│   └── ux.md
 └── tasks.md             # Fase 2 (/speckit-tasks)
 ```
 
