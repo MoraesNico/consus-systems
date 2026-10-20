@@ -8,6 +8,16 @@
 
 **Input**: User description: "Cadastro de Novos Produtos (item 1 da atividade). O operador registra um produto informando Nome, Quantidade Inicial e Estoque Mínimo de Segurança; o sistema atribui um ID numérico automático (exibido como `#0001`) que facilita a busca. Inclui: formulário de cadastro (página própria e diálogo aberto a partir da lista) com validação inline — nome obrigatório, aparado, até 120 caracteres, único sem diferenciar maiúsculas/minúsculas; quantidade inicial e estoque mínimo inteiros ≥ 0; mensagens em pt-BR junto ao campo; após salvar, o novo produto aparece no topo da lista com destaque e um toast 'Produto #0007 cadastrado'; listagem densa (ID, nome, quantidade atual, estoque mínimo, situação) com busca instantânea por ID (`12`, `#12`, `#0012`) ou parte do nome, filtro por situação (todos / em alerta / ok), ordenação por colunas, paginação de 25, URL refletindo busca/filtro e estado vazio projetado; página de detalhe com espaço reservado para Entrada/Saída e histórico (feature 003); edição de nome e estoque mínimo (quantidade não editável; exclusão fora de escopo); atalhos `/` (focar busca) e `n` (novo produto). Contrato `produtos.services.cadastrar_produto(*, nome, quantidade_inicial, estoque_minimo) -> Produto`, que nesta feature apenas define a quantidade atual."
 
+## Clarifications
+
+### Session 2026-10-20
+
+- Q: Quando o termo de busca é formado só por algarismos (ex.: `12`), a busca deve trazer apenas o produto com esse ID ou também produtos cujo nome contém esse número? → A: Ambos — o produto de ID exato 12 e os produtos cujo nome contém "12"; com o prefixo `#` (`#12`, `#0012`) a busca considera somente o ID.
+- Q: Qual deve ser a ordenação padrão da lista de produtos? → A: ID decrescente (cadastrados mais recentemente primeiro); em qualquer ordenação, empates são desfeitos pelo ID decrescente.
+- Q: Existe um valor máximo para Quantidade Inicial e Estoque Mínimo? → A: Não há teto de negócio; vale o limite técnico de 2.147.483.647, e valores acima dele são recusados com mensagem em português.
+- Q: Na comparação de nomes, espaços internos repetidos e acentos contam como diferença? → A: Espaços internos consecutivos são reduzidos a um só ao gravar ("Caneta  Azul" vira "Caneta Azul"); acentos contam como diferença ("Café" ≠ "Cafe"); maiúsculas/minúsculas não.
+- Q: Quantidade Inicial e Estoque Mínimo podem ficar em branco e assumir zero? → A: Não — ambos são obrigatórios e começam vazios no formulário; o operador digita 0 explicitamente quando for o caso.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Cadastrar um novo produto (Priority: P1)
@@ -36,21 +46,24 @@ campo, sem gravar nada.
 2. **Dado** que o último produto cadastrado é o `#0006`, **Quando** um novo produto válido é
    salvo, **Então** ele recebe o ID `#0007`, sem que o operador informe ou possa alterar o ID.
 3. **Dado** que existe o produto `#0001` "Caneta Azul", **Quando** o operador tenta cadastrar
-   "  caneta azul  ", **Então** o cadastro é recusado com a mensagem "Já existe um produto com
+   "  caneta   AZUL  ", **Então** o cadastro é recusado com a mensagem "Já existe um produto com
    este nome (#0001)." junto ao campo Nome, e os valores digitados nos demais campos são
    preservados.
 4. **Dado** o formulário de cadastro, **Quando** o operador deixa o Nome vazio, informa
    Quantidade Inicial "-5" e Estoque Mínimo "2,5" e salva, **Então** nada é gravado e cada campo
-   exibe sua própria mensagem de erro em português.
-5. **Dado** que o operador está na lista, **Quando** abre o cadastro em diálogo e salva dados
+   exibe sua própria mensagem de erro em português (FR-007).
+5. **Dado** o formulário de cadastro recém-aberto, **Quando** o operador observa os campos
+   numéricos, **Então** eles estão vazios; **e quando** salva sem preenchê-los, **Então** recebe
+   "Informe a quantidade inicial." e "Informe o estoque mínimo." junto aos campos.
+6. **Dado** que o operador está na lista, **Quando** abre o cadastro em diálogo e salva dados
    válidos, **Então** o diálogo fecha, a lista é atualizada sem recarregar a página inteira e o
    novo produto aparece no topo, com destaque e notificação.
-6. **Dado** que o diálogo de cadastro está aberto, **Quando** o operador o fecha (tecla Esc ou
+7. **Dado** que o diálogo de cadastro está aberto, **Quando** o operador o fecha (tecla Esc ou
    ação "Cancelar") sem salvar, **Então** nenhum produto é criado e a lista permanece como estava.
-7. **Dado** um navegador com scripts desativados, **Quando** o operador aciona "Novo produto",
+8. **Dado** um navegador com scripts desativados, **Quando** o operador aciona "Novo produto",
    preenche e salva, **Então** é levado à página de cadastro, o envio aplica as mesmas
    validações e, em caso de sucesso, retorna à lista com o produto destacado e a notificação.
-8. **Dado** que outra região da tela depende da situação dos produtos (ex.: contador de alertas
+9. **Dado** que outra região da tela depende da situação dos produtos (ex.: contador de alertas
    da feature 004), **Quando** um produto é cadastrado pelo diálogo, **Então** essa região é
    avisada para se atualizar, sem recarregar a página.
 
@@ -75,8 +88,9 @@ para outra aba e obter exatamente o mesmo resultado; com a base vazia, ver o est
 
 1. **Dado** o produto `#0012` "Parafuso Sextavado", **Quando** o operador busca `#12` ou
    `#0012`, **Então** apenas esse produto é listado.
-2. **Dado** o produto `#0012`, **Quando** o operador busca `12`, **Então** o produto `#0012`
-   aparece nos resultados.
+2. **Dado** o produto `#0012` "Parafuso Sextavado" e o produto `#0040` "Bucha 12 mm",
+   **Quando** o operador busca `12`, **Então** ambos aparecem (o primeiro pelo ID, o segundo pelo
+   nome); **e quando** busca `#12`, **Então** apenas o `#0012` aparece.
 3. **Dado** os produtos "Caneta Azul", "Caneta Preta" e "Lápis", **Quando** o operador digita
    "cAnEtA", **Então** a lista passa a mostrar apenas as duas canetas, atualizada enquanto ele
    digita, sem recarregar a página.
@@ -86,9 +100,9 @@ para outra aba e obter exatamente o mesmo resultado; com a base vazia, ver o est
 5. **Dado** a lista, **Quando** o operador aciona o cabeçalho "Quantidade", **Então** a lista é
    ordenada por quantidade crescente; ao acionar de novo, decrescente; a coluna e o sentido
    ativos ficam indicados visualmente e para leitores de tela.
-6. **Dado** 60 produtos, **Quando** o operador abre a lista, **Então** vê 25 produtos, a
-   indicação "1–25 de 60" e controles de página; ao avançar, busca, filtro e ordenação são
-   mantidos.
+6. **Dado** 60 produtos, **Quando** o operador abre a lista, **Então** vê os 25 cadastrados mais
+   recentemente (ordenação padrão: ID decrescente), a indicação "1–25 de 60" e controles de
+   página; ao avançar, busca, filtro e ordenação são mantidos.
 7. **Dado** uma lista com busca, filtro, ordenação e página aplicados, **Quando** o operador
    recarrega a página, usa Voltar/Avançar do navegador ou abre o endereço em outra aba,
    **Então** vê exatamente o mesmo resultado.
@@ -188,13 +202,15 @@ digitação acontece; desativar os scripts do navegador e verificar que a lista 
 - Nome com exatamente 120 caracteres (após remover espaços das extremidades) é aceito; com 121,
   é recusado com "O nome deve ter no máximo 120 caracteres."
 - Nome formado só por espaços é tratado como vazio ("Informe o nome do produto.").
-- Nome que difere de um existente apenas por maiúsculas/minúsculas ou por espaços nas
-  extremidades é duplicado; a mensagem identifica o código do produto já existente.
+- Nome que difere de um existente apenas por maiúsculas/minúsculas, por espaços nas
+  extremidades ou pela quantidade de espaços entre as palavras é duplicado; a mensagem identifica
+  o código do produto já existente. Nomes que diferem por acento ("Café" e "Cafe") são distintos.
 - Dois operadores cadastram o mesmo nome quase ao mesmo tempo: apenas um cadastro é gravado; o
   outro recebe a mesma mensagem de nome duplicado, nunca um erro genérico.
 - Quantidades com sinal negativo (`-3`), casas decimais (`2,5`, `2.5`), separador de milhar
-  (`1.000`), notação científica (`1e3`), espaços ou texto (`dez`) são recusadas com mensagem
-  junto ao campo; campos vazios são recusados como obrigatórios.
+  (`1.000`), notação científica (`1e3`) ou texto (`dez`) são recusadas com mensagem junto ao
+  campo; campos vazios são recusados como obrigatórios; 2.147.483.647 é aceito e 2.147.483.648 é
+  recusado.
 - Quantidade Inicial 0 é válida: o produto nasce zerado. Com quantidade 0 e mínimo 0 ele já nasce
   "em alerta", pois a regra é "menor ou igual".
 - Clique duplo em "Salvar" ou reenvio do formulário: no máximo um produto é criado; a segunda
@@ -203,7 +219,10 @@ digitação acontece; desativar os scripts do navegador e verificar que a lista 
   exemplo, após um cadastro que falhou) e um ID nunca é reutilizado.
 - Busca vazia ou só com espaços mostra a lista sem filtro de texto.
 - Busca `#0`, `#0000` ou por um ID inexistente não encontra nada e mostra o estado "Nenhum
-  produto encontrado"; um número grande demais para ser ID (ex.: 25 dígitos) não causa erro.
+  produto encontrado"; um número grande demais para ser ID (ex.: 25 dígitos) não causa erro — sem
+  `#`, ele ainda é procurado no nome.
+- Busca `12` traz o produto `#0012` e também produtos com "12" no nome; para ver só o ID, o
+  operador usa `#12`.
 - Busca com caracteres especiais (`%`, `_`, `'`, `"`) os trata literalmente, como parte do nome.
 - Parâmetros inválidos no endereço (situação, ordenação ou página desconhecidas, página fora do
   intervalo) não causam erro: são ignorados ou ajustados para o valor válido mais próximo.
@@ -229,18 +248,25 @@ digitação acontece; desativar os scripts do navegador e verificar que a lista 
   reutilizado; lacunas na sequência são aceitáveis.
 - **FR-003**: O ID DEVE ser exibido em toda a interface no formato `#` seguido do número com no
   mínimo 4 dígitos, completado com zeros à esquerda (`#0001`, `#0042`, `#12345`).
-- **FR-004**: O Nome DEVE ser obrigatório, ter os espaços das extremidades removidos antes de
-  validar e gravar, e ter no máximo 120 caracteres; nome formado só por espaços é vazio.
-- **FR-005**: O Nome DEVE ser único sem diferenciar maiúsculas de minúsculas ("Caneta Azul" e
-  "caneta azul" são o mesmo nome), inclusive sob cadastros simultâneos; a recusa DEVE informar o
-  código do produto já existente.
-- **FR-006**: Quantidade Inicial e Estoque Mínimo DEVEM ser números inteiros maiores ou iguais a
-  zero; valores negativos, com casas decimais, em notação científica ou não numéricos DEVEM ser
-  recusados. [NEEDS CLARIFICATION: existe um valor máximo de negócio para essas quantidades, ou
-  vale apenas o limite técnico de armazenamento?]
+- **FR-004**: O Nome DEVE ser obrigatório e normalizado antes de validar e gravar — espaços das
+  extremidades removidos e espaços internos consecutivos reduzidos a um só —, com no máximo 120
+  caracteres após a normalização; nome formado só por espaços é vazio. Maiúsculas, minúsculas e
+  acentos digitados são preservados como informados.
+- **FR-005**: O Nome normalizado DEVE ser único sem diferenciar maiúsculas de minúsculas
+  ("Caneta Azul" e "caneta azul" são o mesmo nome), inclusive sob cadastros simultâneos; acentos
+  são significativos ("Café" e "Cafe" são nomes distintos); a recusa DEVE informar o código do
+  produto já existente.
+- **FR-006**: Quantidade Inicial e Estoque Mínimo DEVEM ser obrigatórios (sem valor
+  pré-preenchido) e números inteiros de 0 a 2.147.483.647; valores vazios, negativos, com casas
+  decimais ou separador de milhar, em notação científica, não numéricos ou acima do limite DEVEM
+  ser recusados. Não há teto de negócio além desse limite técnico.
 - **FR-007**: Erros de validação DEVEM ser exibidos em português, junto ao campo correspondente,
   preservando os valores já digitados; cada mensagem DEVE estar associada ao seu campo de forma
-  perceptível a leitores de tela, e nenhum dado DEVE ser gravado enquanto houver erro.
+  perceptível a leitores de tela, e nenhum dado DEVE ser gravado enquanto houver erro. Mensagens
+  padronizadas: "Informe o nome do produto."; "O nome deve ter no máximo 120 caracteres.";
+  "Já existe um produto com este nome (#NNNN)."; "Informe a quantidade inicial." / "Informe o
+  estoque mínimo."; "Informe um número inteiro igual ou maior que zero."; "Informe um valor de
+  no máximo 2.147.483.647."
 - **FR-008**: Um produto recém-cadastrado DEVE ter quantidade atual igual à Quantidade Inicial
   informada.
 - **FR-009**: O cadastro DEVE estar disponível em página própria e em diálogo aberto a partir da
@@ -262,9 +288,10 @@ digitação acontece; desativar os scripts do navegador e verificar que a lista 
   milhar "."; ID e nome levam ao detalhe do produto.
 - **FR-013** *(Atividade, item 1 — "facilitar a busca")*: A busca DEVE localizar produtos pelo
   ID em qualquer dos formatos `12`, `#12` e `#0012`, e por parte do nome sem diferenciar
-  maiúsculas de minúsculas. Um termo formado apenas por algarismos (ex.: `12`) DEVE
-  [NEEDS CLARIFICATION: localizar somente o produto de ID 12, ou também produtos cujo nome
-  contenha "12" (ex.: "Parafuso 12 mm")?]
+  maiúsculas de minúsculas. Um termo `#` + algarismos (`#12`, `#0012`) DEVE buscar somente pelo
+  ID; um termo formado apenas por algarismos (`12`) DEVE trazer o produto de ID 12 e também os
+  produtos cujo nome contenha "12"; qualquer outro termo busca por parte do nome, tratando
+  caracteres especiais literalmente.
 - **FR-014**: A busca DEVE ser instantânea: os resultados são atualizados automaticamente,
   sem que o operador precise confirmar e sem recarregar a página, em até 1 segundo depois que ele
   para de digitar (SC-003); com scripts do navegador desativados, a busca funciona por envio do
@@ -275,9 +302,10 @@ digitação acontece; desativar os scripts do navegador e verificar que a lista 
   pertencem à feature 004).
 - **FR-016**: A lista DEVE permitir ordenar por qualquer coluna, em sentido crescente ou
   decrescente, alternando ao acionar o cabeçalho; a coluna e o sentido ativos DEVEM ser
-  indicados visualmente e para tecnologias assistivas. A ordenação padrão DEVE ser
-  [NEEDS CLARIFICATION: ID decrescente (cadastrados mais recentemente primeiro) ou Nome em ordem
-  alfabética?]
+  indicados visualmente e para tecnologias assistivas. A ordenação padrão DEVE ser por ID
+  decrescente (cadastrados mais recentemente primeiro); a ordenação por nome NÃO DEVE diferenciar
+  maiúsculas de minúsculas; empates DEVEM ser desfeitos pelo ID decrescente, para que a ordem
+  seja estável entre páginas.
 - **FR-017**: A lista DEVE ser paginada com 25 produtos por página, informando o intervalo
   exibido e o total ("1–25 de 60") e preservando busca, filtro e ordenação ao trocar de página.
 - **FR-018**: O endereço (URL) da lista DEVE refletir busca, filtro, ordenação e página, de modo
@@ -304,8 +332,8 @@ digitação acontece; desativar os scripts do navegador e verificar que a lista 
 **Edição**
 
 - **FR-024**: O sistema DEVE permitir editar o Nome e o Estoque Mínimo de um produto, com as
-  mesmas regras do cadastro (FR-004 a FR-007); a verificação de unicidade desconsidera o próprio
-  produto.
+  mesmas regras do cadastro (FR-004 a FR-007), com o formulário já preenchido com os valores
+  atuais; a verificação de unicidade desconsidera o próprio produto.
 - **FR-025** *(Constituição, princípio I)*: A quantidade atual NÃO DEVE ser editável
   diretamente em nenhuma tela ou formulário; na edição ela aparece apenas para leitura e
   qualquer valor de quantidade enviado DEVE ser ignorado.
@@ -339,10 +367,10 @@ digitação acontece; desativar os scripts do navegador e verificar que a lista 
 ### Key Entities *(include if feature involves data)*
 
 - **Produto**: item controlado no estoque. Atributos: ID numérico automático (exibido como
-  `#0001`), nome (único sem diferenciar maiúsculas/minúsculas, até 120 caracteres), quantidade
-  atual (inteiro ≥ 0; definida no cadastro e, depois, alterada só por movimentação), estoque
-  mínimo de segurança (inteiro ≥ 0, editável), data/hora de cadastro e de última alteração. Não é
-  excluído.
+  `#0001`), nome (normalizado, único sem diferenciar maiúsculas/minúsculas, até 120 caracteres),
+  quantidade atual (inteiro de 0 a 2.147.483.647; definida no cadastro e, depois, alterada só por
+  movimentação), estoque mínimo de segurança (inteiro de 0 a 2.147.483.647, editável), data/hora
+  de cadastro e de última alteração. Não é excluído.
 - **Situação do produto** (derivada, não armazenada): "em alerta" quando quantidade atual ≤
   estoque mínimo; "ok" caso contrário. Recalculada sempre a partir dos valores atuais.
 - **Movimentação** (feature 003, referência): registro imutável de alteração de saldo. A
