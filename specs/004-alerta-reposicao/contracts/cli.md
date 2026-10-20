@@ -1,7 +1,8 @@
 # Contrato de linha de comando
 
 Ambos os comandos ficam em `apps/alertas/management/commands/` e rodam com
-`python manage.py <comando>` (no Docker: `docker compose exec web python manage.py <comando>`).
+`python manage.py <comando>` (no Docker: `docker compose exec app python manage.py <comando>` —
+serviço `app` da 001).
 
 ---
 

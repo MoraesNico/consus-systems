@@ -24,8 +24,8 @@ produtos.Produto (feature 002)                movimentacoes.Movimentacao (featur
 
 | Nome | Valor | Uso |
 |------|-------|-----|
-| `QUANTIDADE_MAXIMA` | `1_000_000` | Máximo por Entrada/Saída (FR-005, esclarecimento Q4) |
-| `SALDO_MAXIMO` | `2_147_483_647` | Teto de saldo; limite de `PositiveIntegerField` no PostgreSQL |
+| `QUANTIDADE_MAXIMA_MOVIMENTACAO` | `1_000_000` | Máximo por Entrada/Saída (FR-005, esclarecimento Q4). Nome distinto de `produtos.models.QUANTIDADE_MAXIMA` para não colidir (contrato v1.1) |
+| `SALDO_MAXIMO` | `= apps.produtos.models.QUANTIDADE_MAXIMA` (2.147.483.647) | Teto de saldo; importado da 002, nunca redefinido como literal (contrato v1.1, "Limites") |
 | `OBSERVACAO_MAX` | `200` | Tamanho máximo da observação (FR-006) |
 | `HISTORICO_DETALHE` | `10` | Movimentações no detalhe do produto (FR-025, esclarecimento Q3) |
 | `ITENS_POR_PAGINA` | `25` | Paginação da página Movimentações (FR-024) |
@@ -34,9 +34,9 @@ produtos.Produto (feature 002)                movimentacoes.Movimentacao (featur
 
 | Valor | Rótulo | Efeito no saldo | Quem gera | Selo |
 |-------|--------|-----------------|-----------|------|
-| `INICIAL` | "Saldo inicial" | `0 + quantidade` (aceita 0) | só `cadastrar_produto` e a migração 0002 | neutro |
-| `ENTRADA` | "Entrada" | `+ quantidade` | operador (web/terminal) | sucesso |
-| `SAIDA` | "Saída/Venda" | `− quantidade` (nunca abaixo de 0) | operador (web/terminal) | neutro forte |
+| `INICIAL` | "Saldo inicial" | `0 + quantidade` (aceita 0) | só `cadastrar_produto` e a migração 0002 | `.badge--neutro` |
+| `ENTRADA` | "Entrada" | `+ quantidade` | operador (web/terminal) | `.badge--info` + ícone `arrow-down-to-line` |
+| `SAIDA` | "Saída/Venda" | `− quantidade` (nunca abaixo de 0) | operador (web/terminal) | `.badge--neutro` + ícone `arrow-up-from-line` |
 
 `max_length=7` (maior valor: `ENTRADA`).
 
@@ -47,7 +47,7 @@ produtos.Produto (feature 002)                movimentacoes.Movimentacao (featur
 | `id` | `BigAutoField` | automático |
 | `produto` | `ForeignKey("produtos.Produto", on_delete=PROTECT, related_name="movimentacoes")` | obrigatório |
 | `tipo` | `CharField(max_length=7, choices=TipoMovimentacao.choices)` | obrigatório |
-| `quantidade` | `PositiveIntegerField` | `ENTRADA`/`SAIDA`: `1..QUANTIDADE_MAXIMA`; `INICIAL`: `0..SALDO_MAXIMO` |
+| `quantidade` | `PositiveIntegerField` | `ENTRADA`/`SAIDA`: `1..QUANTIDADE_MAXIMA_MOVIMENTACAO`; `INICIAL`: `0..SALDO_MAXIMO` |
 | `saldo_anterior` | `PositiveIntegerField` | snapshot do saldo antes, lido sob bloqueio |
 | `saldo_posterior` | `PositiveIntegerField` | snapshot do saldo depois; `<= SALDO_MAXIMO` |
 | `observacao` | `CharField(max_length=200, blank=True, default="")` | aparada; opcional |
@@ -57,10 +57,13 @@ produtos.Produto (feature 002)                movimentacoes.Movimentacao (featur
 `verbose_name_plural = "movimentações"`.
 
 **Propriedades de apresentação** (somente leitura): `eh_saida` (bool), `sinal` (`"+"` ou `"−"`
-U+2212), `quantidade_assinada` (`-quantidade` em `SAIDA`), `variante_selo`
-(`"neutro" | "sucesso" | "neutro-forte"`), `mensagem_confirmacao` → por exemplo
-`"Saída registrada: #0001 Parafuso — saldo 10 → 7"` (`"Entrada registrada"`,
-`"Saldo inicial registrado"`).
+U+2212), `quantidade_assinada` (`-quantidade` em `SAIDA`), `variante_selo` e `icone_selo`
+(design-system §4.4.2: `ENTRADA` → `"info"` + `arrow-down-to-line`; `SAIDA` → `"neutro"` +
+`arrow-up-from-line`; `INICIAL` → `"neutro"`, sem ícone — classes `.badge--<variante>` da 001),
+`mensagem_confirmacao` → por exemplo `"Saída registrada: #0001 Parafuso — saldo 10 → 7"`
+(`"Entrada registrada"`, `"Saldo inicial registrado"`). `mensagem_confirmacao` tem no máximo
+200 caracteres (limite do toast da 001): com nome de 120 caracteres e saldos de 10 dígitos o
+texto chega a ~182; acima de 200, o nome é encurtado com "…" (o `#ID` permanece).
 
 ### Restrições de banco
 

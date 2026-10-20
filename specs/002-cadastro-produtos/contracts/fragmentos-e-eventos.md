@@ -11,7 +11,7 @@ abaixo os compõem sem estilos próprios fora dos tokens.
 |----------|------|----------|
 | `produtos/lista.html` | `produtos:lista` | título "Produtos", ação primária "Novo produto" (`data-atalho="n"`), `filtros.html`, `#contagem-produtos`, `resultados.html` |
 | `produtos/novo.html` | `produtos:novo` | `form_produto.html` (contexto `pagina`) |
-| `produtos/detalhe.html` | `produtos:detalhe` | `resumo.html`, ação "Editar", região `#produto-movimentacoes` (vazia nesta feature) |
+| `produtos/detalhe.html` | `produtos:detalhe` | `resumo.html`, ação "Editar", região `<section id="produto-<id>-historico">` (vazia nesta feature; a 003 a substitui por `{% historico_produto produto %}`) |
 | `produtos/editar.html` | `produtos:editar` | `form_edicao.html` |
 | `produtos/nao_encontrado.html` | detalhe/editar (404) | "Produto não encontrado" + link para a lista |
 
@@ -20,13 +20,13 @@ abaixo os compõem sem estilos próprios fora dos tokens.
 | Partial | Elemento raiz / ID | Contexto | Usado por |
 |---------|--------------------|----------|-----------|
 | `partials/filtros.html` | `<form id="filtros-produtos" method="get" role="search">` | `q`, `situacao`, `oob` | lista; OOB no sucesso do diálogo |
-| `partials/resultados.html` | `<div id="resultados">` | `page_obj`, `q`, `situacao`, `ordem`, `total_geral`, `destaque_id` | lista (completa e parcial); sucesso do diálogo |
+| `partials/resultados.html` | `<div id="resultados">` | `page_obj`, `q`, `situacao`, `ordem`, `total_geral`, `destaque_id` | lista (completa e parcial); sucesso do diálogo; **003** acrescenta o cabeçalho "Ações" |
 | `partials/contagem.html` | `<p id="contagem-produtos" role="status">` ("1–25 de 60") | `page_obj`, `oob` | lista; OOB nas respostas parciais |
-| `partials/linha.html` | `<tr id="produto-<id>">` | `produto`, `destaque` | resultados; **003** (OOB após movimentação) |
-| `partials/situacao.html` | badge de situação | `produto` | linha, resumo; **004** |
+| `partials/linha.html` | `<tr id="produto-<id>">` | `produto`, `destaque`, `oob` | resultados; **003** (OOB após movimentação; acrescenta a célula de ações) |
+| `partials/situacao.html` | selo único de situação (inclui `components/badge_estoque.html`) | `produto` | linha, resumo; **004** (relatório e painel) |
 | `partials/form_produto.html` | `<form id="form-produto" novalidate>` | `form`, `contexto` (`pagina`/`dialogo`) | novo.html, dialogo_novo.html |
 | `partials/dialogo_novo.html` | conteúdo de `#dialogo` (título, form, "Cancelar") | `form` | GET/POST parcial de `produtos:novo` |
-| `partials/resumo.html` | `<div id="produto-resumo">` | `produto` | detalhe; **003** (OOB após movimentação) |
+| `partials/resumo.html` | `<section id="produto-<id>-resumo">` | `produto`, `oob` | detalhe; **003** (OOB após movimentação) |
 | `partials/form_edicao.html` | `<form id="form-edicao" novalidate>` | `form`, `produto` | editar.html |
 
 ### Regras de marcação relevantes
@@ -44,13 +44,23 @@ abaixo os compõem sem estilos próprios fora dos tokens.
 - **Cabeçalhos ordenáveis**: `<th aria-sort="ascending|descending|none">` com link
   `{% url 'produtos:lista' %}{% querystring ordem=<nova> pagina=None %}` + `hx-get` igual,
   `hx-target="#resultados"`, `hx-push-url="true"`.
-- **Paginação**: `<nav aria-label="Paginação">` com links `{% querystring pagina=<n> %}`
-  (mesmos atributos HTMX).
-- **Linha**: ID (`produto.codigo`) e nome são links para o detalhe; números com `|intcomma`,
+- **Paginação**: componente `components/paginacao.html` da 001 (`pagina=page_obj`,
+  `rotulo_itens="produtos"`, `alvo="#resultados"`) → `<nav aria-label="Paginação">` com links
+  `{% querystring pagina=<n> %}`, `hx-get`, `hx-target="#resultados"`, `hx-swap="outerHTML"` e
+  `hx-push-url="true"`.
+- **Linha**: raiz `<tr id="produto-{{ produto.pk|unlocalize }}"{% if oob %} hx-swap-oob="true"{% endif %}>`
+  com `.tabela__linha--alerta` / `.tabela__linha--sem-estoque` conforme a situação (design-system
+  §4.3); ID (`produto.codigo`) e nome são links para o detalhe; números com `|intcomma`,
   alinhados à direita em fonte tabular; linha destacada recebe o estado de destaque do
   componente de tabela + selo "NOVO" (não só cor).
-- **Situação** (`situacao.html`): em alerta → badge variante alerta com ícone SVG de aviso +
-  texto "REPOSIÇÃO NECESSÁRIA"; ok → badge neutro "OK" (FR-020).
+- **Resumo**: raiz `<section id="produto-{{ produto.pk|unlocalize }}-resumo"{% if oob %} hx-swap-oob="true"{% endif %}>`
+  (contrato v1.1) — a 003 o re-renderiza fora de banda sem alterar este template.
+- **Situação** (`situacao.html`, selo único do sistema — contrato v1.1): inclui
+  `components/badge_estoque.html` (001) com `situacao="sem_estoque"` se
+  `produto.quantidade_atual == 0`, `"reposicao"` se `produto.em_alerta`, senão `"ok"` →
+  respectivamente o selo composto "⚠ REPOSIÇÃO NECESSÁRIA │ SEM ESTOQUE", "⚠ REPOSIÇÃO
+  NECESSÁRIA" (ícone SVG `triangle-alert` + texto + cor de alerta) e "OK" discreto (FR-020).
+  Funciona com produto anotado ou não, sem consulta extra; a 004 o reutiliza sem alterá-lo.
 - **Formulários**: `novalidate`; erros por campo com `aria-invalid="true"` e
   `aria-describedby` apontando a mensagem; primeiro campo inválido com `autofocus`; botão
   "Salvar" com `hx-disabled-elt="this"` (evita envio duplo). Campos numéricos:
@@ -66,17 +76,19 @@ abaixo os compõem sem estilos próprios fora dos tokens.
 
 | Evento | Payload | Emitido por | Escutado por |
 |--------|---------|-------------|--------------|
-| `toast` | `{"nivel": "sucesso", "texto": "Produto #0007 cadastrado"}` | `POST produtos:novo` parcial válido | layout da 001 (região `aria-live`) |
-| `estoque-alterado` | `{}` | `POST produtos:novo` parcial válido (o produto pode nascer em alerta) | contador e painel da 004 (`hx-trigger="estoque-alterado from:body"`) |
-| `dialogo-fechar` | `{}` | `POST produtos:novo` parcial válido | 001 (fecha o `<dialog>`) — nome proposto (research P5) |
+| `toast` | `{"nivel": "sucesso", "texto": "Produto #0007 cadastrado"}` | `POST produtos:novo` parcial válido (`disparar_toast(resp, "sucesso", …)`) | layout da 001 (região `aria-live`) |
+| `estoque-alterado` | `{"produto_id": 7, "saldo_anterior": 0, "saldo_posterior": <quantidade inicial>}` | `POST produtos:novo` parcial válido (o produto pode nascer em alerta); qualquer resposta parcial de edição bem-sucedida (contrato v1.1) | `#contador-alertas`, `#relatorio` e `#painel-kpis` da 004 (`hx-trigger="… estoque-alterado from:body"`) |
+| `fechar-dialogo` | `{}` | `POST produtos:novo` parcial válido (`disparar_evento(resp, "fechar-dialogo")`) | `consus.js` da 001 (fecha o `<dialog>`) |
 
 Fluxos comuns/*boosted* não emitem eventos: o servidor re-renderiza o `<body>` (inclusive o
-contador da 004) e as notificações vêm de `django.contrib.messages`.
+contador da 004) e as notificações vêm de `django.contrib.messages`. A edição (página própria)
+só tem variantes comum/*boosted* nesta feature; se ganhar variante parcial, ela DEVE emitir
+`estoque-alterado` (FR-031).
 
 ## Pontos de integração
 
 | Para | O que a 002 garante |
 |------|---------------------|
-| 001 | Usa `#dialogo`, `components/*`, configuração de troca do status 422, toasts de `messages`; consome o manipulador `data-atalho` de `static/js/consus.js` (ou o adiciona — ver tasks) |
-| 003 | `#produto-movimentacoes` no detalhe; `partials/linha.html` e `partials/resumo.html` re-renderizáveis com `hx-swap-oob="true"` a partir de um `produto`; `cadastrar_produto` como ponto de extensão (FR-030) |
-| 004 | `ProdutoQuerySet.em_alerta()/sem_alerta()/com_situacao()`, `Produto.em_alerta/situacao`, `partials/situacao.html`, filtro `?situacao=alerta`, evento `estoque-alterado` no cadastro parcial |
+| 001 | Usa `#dialogo`, `components/*` (inclusive `badge_estoque.html` e `paginacao.html`), helpers `apps.core.htmx`, configuração de troca do status 422, toasts de `messages`; consome o manipulador `data-atalho` de `static/js/consus.js` (fornecido pela 001, FR-045) |
+| 003 | `<section id="produto-<id>-historico">` reservada no detalhe; `partials/linha.html` (`#produto-<id>`) e `partials/resumo.html` (`#produto-<id>-resumo`) re-renderizáveis com `oob=True` a partir de um `produto`; `cadastrar_produto` como ponto de extensão (FR-030) |
+| 004 | `ProdutoQuerySet.em_alerta()/sem_alerta()/com_situacao()` (anotação `alerta`; a 004 acrescenta `deficit` e `cobertura_percentual`), `Produto.em_alerta/situacao`, selo único `partials/situacao.html` (já com SEM ESTOQUE), filtro `?situacao=alerta`, evento `estoque-alterado` no cadastro parcial |

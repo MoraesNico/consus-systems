@@ -19,7 +19,7 @@ def registrar_movimentacao(
 | Entrada | Regra | Falha |
 |---------|-------|-------|
 | `tipo` | um de `TipoMovimentacao` (`"INICIAL"`, `"ENTRADA"`, `"SAIDA"`) | `MovimentacaoInvalidaError("Tipo de movimentação inválido.")` |
-| `quantidade` | `int` (não `bool`); `ENTRADA`/`SAIDA`: `1..1_000_000`; `INICIAL`: `0..2_147_483_647` | `MovimentacaoInvalidaError("Informe uma quantidade maior que zero." / "Informe no máximo 1.000.000.")` |
+| `quantidade` | `int` (não `bool`); `ENTRADA`/`SAIDA`: `1..QUANTIDADE_MAXIMA_MOVIMENTACAO` (1.000.000); `INICIAL`: `0..SALDO_MAXIMO` (= `produtos.models.QUANTIDADE_MAXIMA`) | `MovimentacaoInvalidaError("Informe uma quantidade maior que zero." / "Informe no máximo 1.000.000.")` |
 | `observacao` | `str`, aparada, `len <= 200` | `MovimentacaoInvalidaError("Use no máximo 200 caracteres.")` |
 | `produto_id` | produto existente | `MovimentacaoInvalidaError("Produto #0099 não encontrado.")` |
 | `INICIAL` | produto sem nenhuma movimentação e com saldo 0 | `MovimentacaoInvalidaError("Saldo inicial já registrado para #0001.")` |
@@ -32,7 +32,8 @@ def registrar_movimentacao(
 3. `saldo_anterior = produto.quantidade_atual`
 4. `SAIDA` e `quantidade > saldo_anterior` → `EstoqueInsuficienteError(disponivel=saldo_anterior,
    solicitado=quantidade)`.
-5. `ENTRADA`/`INICIAL` e `saldo_anterior + quantidade > SALDO_MAXIMO` →
+5. `ENTRADA`/`INICIAL` e `saldo_anterior + quantidade > SALDO_MAXIMO` (=
+   `produtos.models.QUANTIDADE_MAXIMA`) →
    `SaldoMaximoExcedidoError(atual=saldo_anterior, entrada=quantidade)`.
 6. `produto.quantidade_atual = saldo_posterior`;
    `produto.save(update_fields=["quantidade_atual", "atualizado_em"])`.
@@ -78,7 +79,7 @@ Números nas mensagens usam separador de milhar `.` (`formatar_numero`), ex.:
 def cadastrar_produto(*, nome: str, quantidade_inicial: int, estoque_minimo: int) -> Produto
 ```
 
-(assinatura proposta ao contrato; se a 002 usar outra, mantém-se a dela.) Com a 003:
+(assinatura fixada pelo contrato v1.1 e entregue pela 002.) Com a 003:
 
 1. `with transaction.atomic():`
 2. cria o `Produto` com `quantidade_atual=0` (validações de nome/mínimo da 002 inalteradas);

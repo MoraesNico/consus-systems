@@ -26,7 +26,7 @@ item 3) e as garantias de qualidade. Sem ela, nenhuma das outras pode ser demons
 
 | Atividade | Como esta feature atende | Requisitos |
 |-----------|--------------------------|------------|
-| Passo 1 — "altamente funcional e eficaz" | Sistema sobe com um comando em qualquer máquina; qualidade verificada por gates automáticos | FR-001…FR-010, FR-040…FR-044 |
+| Passo 1 — "altamente funcional e eficaz" | Sistema sobe com um comando em qualquer máquina; qualidade verificada por gates automáticos | FR-001…FR-010, FR-040…FR-045 |
 | Passo 2, item 1 — cadastro de produtos | Ponto de entrada "Produtos" na navegação; componentes de formulário, tabela e paginação | FR-012, FR-027 |
 | Passo 2, item 2 — entradas e saídas | Ponto de entrada "Movimentações"; diálogo de formulário; toasts de confirmação/erro | FR-012, FR-015…FR-017 |
 | Passo 2, item 3 — alerta visual destacado "⚠ REPOSIÇÃO NECESSÁRIA" | Ponto de entrada "Alertas" com espaço para o contador; componente de alerta visual destacado (ícone + texto + cor) | FR-012, FR-014, FR-028 |
@@ -278,10 +278,12 @@ terminam com sucesso e que a cobertura é reportada.
   tecnologias assistivas, com o texto "(em breve)"); assim que a rota existir, o item MUST virar
   link automaticamente, sem alteração no layout. A mesma regra vale para ações que apontem para
   essas seções (ex.: a ação do estado vazio do Painel).
-- **FR-014** *(Atividade, Passo 2, item 3 — preparação)*: O item "Alertas" MUST reservar um
-  espaço para o indicador numérico de produtos em alerta, que sem dados não exibe nada nem é
-  anunciado; quando a fonte do contador existir (feature 004), o espaço MUST atualizá-lo ao abrir
-  a página, sempre que ocorrer o evento de estoque alterado e periodicamente a cada 60 segundos.
+- **FR-014** *(Atividade, Passo 2, item 3 — preparação)*: O item "Alertas" MUST conter um
+  contêiner estável e sem comportamento próprio para o indicador numérico de produtos em alerta,
+  que sem a feature 004 fica vazio (não exibe nada nem é anunciado). A feature 004 renderiza
+  dentro dele o contador, que se atualiza sozinho periodicamente (a cada 30 segundos) e sempre que
+  ocorrer o evento de estoque alterado (contrato `docs/arquitetura.md` v1.1). O layout MUST conter
+  também uma região de anúncio visualmente oculta, reservada aos anúncios de mudança de alertas.
 - **FR-015**: O layout MUST incluir uma região de notificações temporárias (toasts) anunciada por
   tecnologias assistivas, com quatro níveis — sucesso, info, alerta, erro — cada um com ícone,
   texto e cor próprios; toasts MUST poder ser disparados tanto por respostas parciais (evento
@@ -306,6 +308,11 @@ terminam com sucesso e que a cobertura é reportada.
   de erro 4xx/5xx de requisições parciais MUST gerar toast de erro em vez de substituir conteúdo.
 - **FR-019**: O título de cada aba do navegador MUST seguir o formato "<Título da página> —
   Consus".
+- **FR-045** *(Constituição II — aprimoramento progressivo)*: O layout MUST oferecer um mecanismo
+  genérico de atalhos de teclado declarados na própria marcação (tecla → elemento a focar ou
+  acionar), que as features usam sem escrever script próprio; o atalho MUST NOT agir quando o foco
+  estiver em campo editável, com teclas modificadoras (Ctrl, Alt, Meta) pressionadas ou com um
+  diálogo aberto; sem scripts, nada deixa de funcionar.
 - **FR-020** *(Constituição IV — Idioma)*: A interface MUST estar em português do Brasil
   (idioma declarado no documento), com datas no formato `dd/mm/aaaa HH:MM` no fuso de São Paulo
   e números inteiros com separador de milhar ".".
@@ -476,8 +483,10 @@ e contratos de interface), detalhadas em `data-model.md`:
   para diálogo nativo e seletores modernos de CSS).
 - O Painel desta feature é provisório: os indicadores (KPIs, BarList, CategoryBar) são
   preenchidos pela feature 004; a feature 001 garante a região, o estado vazio e os componentes.
-- A situação de estoque (OK / reposição / sem estoque) é calculada pela feature 004 a partir de
-  `quantidade_atual` e `estoque_minimo`; esta feature só fornece o componente visual.
+- A situação de estoque (OK / reposição / sem estoque) é derivada pela regra única da feature 002
+  (`quantidade_atual ≤ estoque_minimo`; quantidade 0 = SEM ESTOQUE) e mapeada para o componente
+  pelo selo único `produtos/partials/situacao.html` (002), reutilizado pela 004 (contrato v1.1);
+  esta feature só fornece o componente visual.
 - Rotas, nomes, eventos e convenções HTMX seguem `docs/arquitetura.md`; o detalhamento do que esta
   feature acrescenta está em `contracts/`.
 - Não há modelos de negócio nesta feature; as migrações aplicadas na subida são as dos

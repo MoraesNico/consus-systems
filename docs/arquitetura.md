@@ -53,7 +53,7 @@ apps/
   alertas/              # varredura, relatório, contador, comando varrer_estoque
 templates/
   base.html
-  components/           # botões, badges, kpi, tabela, campo, diálogo, estado vazio, toast
+  components/           # badges, kpi, campo, diálogo, estado vazio, toast… (botões e tabelas são classes CSS)
 static/
   css/tokens.css        # ÚNICA fonte de cores/espaços/tipos/bordas/sombras
   css/base.css  css/components.css  css/utilities.css

@@ -266,9 +266,11 @@ código de saída de erro.
   saldo. *(Atividade, item 2 — regra de validação: "não pode permitir que o estoque de um produto
   fique negativo".)*
 - **FR-005**: A quantidade de uma Entrada ou Saída MUST ser um número inteiro entre 1 e
-  1.000.000, digitado apenas com algarismos (sem separador de milhar nem casas decimais); valores
-  zero, negativos, fracionários, com separadores (ex.: "1.000"), não numéricos, vazios ou acima de
-  1.000.000 são recusados com mensagem específica no campo e nada é gravado. Nenhum saldo pode ultrapassar
+  1.000.000, digitado apenas com algarismos (sem sinal, separador de milhar nem casas decimais;
+  espaços nas pontas ignorados); valores zero, negativos, com sinal "+" (ex.: "+5"), fracionários,
+  com separadores (ex.: "1.000"), não numéricos, vazios ou acima de 1.000.000 são recusados com
+  mensagem específica no campo e nada é gravado (mesma regra de entrada numérica da feature 002,
+  contrato v1.1). Nenhum saldo pode ultrapassar
   2.147.483.647 unidades: uma Entrada que levaria o saldo acima desse teto é recusada com
   "Saldo máximo excedido: atual X, entrada Y, máximo 2.147.483.647" e nada é gravado.
 - **FR-006**: A observação MUST ser opcional, com no máximo 200 caracteres (ex.: nº da nota
@@ -294,14 +296,17 @@ código de saída de erro.
 
 - **FR-012**: O sistema MUST oferecer a página **Nova movimentação**, com seleção do produto
   (lista ordenada por nome, cada opção exibida como "#0001 — Nome"), do tipo, da quantidade e da observação, que pode ser aberta já com
-  produto e/ou tipo pré-selecionados. Após um registro bem-sucedido nessa página, ela é
+  produto, tipo e/ou quantidade pré-preenchidos (a quantidade sugerida pelo relatório de
+  reposição da feature 004, quando válida de 1 a 1.000.000; inválida é ignorada). Após um registro bem-sucedido nessa página, ela é
   reapresentada pronta para o próximo registro — mesmo produto e tipo pré-selecionados,
   quantidade e observação vazias e saldo atual atualizado —, com e sem o aprimoramento
   interativo.
 - **FR-013**: Cada linha da lista de produtos e a página de detalhe do produto MUST oferecer as
   ações rápidas **"+ Entrada"** e **"− Saída"**, que abrem um diálogo com produto e tipo
   preenchidos; sem o aprimoramento interativo, as mesmas ações levam à página Nova movimentação
-  com produto e tipo pré-selecionados.
+  com produto e tipo pré-selecionados. O mesmo diálogo MUST poder ser aberto a partir de outras
+  telas (relatório de reposição e painel da feature 004), informando a origem para que a resposta
+  de sucesso atualize apenas o que existe naquela tela.
 - **FR-014**: O formulário (página e diálogo) MUST exibir o saldo atual do produto selecionado e
   uma prévia do saldo resultante conforme a quantidade digitada, avisando antes da confirmação
   quando a saída excederia o saldo ou a entrada ultrapassaria o saldo máximo (com o mesmo texto da
@@ -310,7 +315,9 @@ código de saída de erro.
   informativa e a decisão final é sempre feita no momento da confirmação.
 - **FR-015**: Após uma movimentação bem-sucedida pelo diálogo, o sistema MUST fechar o diálogo e
   atualizar imediatamente, sem recarregar a página, o saldo exibido na linha da lista ou no
-  detalhe do produto (e o histórico exibido no detalhe).
+  detalhe do produto (e o histórico exibido no detalhe); quando o diálogo foi aberto por outra
+  tela (origem "alertas"), a resposta não traz fragmentos de produto e a tela de origem se
+  atualiza pelo aviso de estoque alterado (FR-017).
 - **FR-016**: Após toda Entrada ou Saída bem-sucedida, o sistema MUST exibir um aviso de sucesso
   com o tipo, o produto (#ID e nome) e o saldo anterior → novo (ex.: "Saída registrada: #0001 Parafuso —
   saldo 10 → 7").

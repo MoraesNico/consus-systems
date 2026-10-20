@@ -15,7 +15,7 @@ Legenda de variantes: **Normal** = requisição sem `HX-Request`; **Boost** = `H
 |----------|--------|----------|-------|
 | Normal | 200 | `core/painel.html` (estende `base.html`) | página completa |
 | Boost | 200 | `core/painel.html` | página completa (o HTMX troca o `<body>` e o `<title>`) |
-| Parcial | 200 | `core/painel.html` | página completa (o Painel não tem fragmento na 001; a 004 pode acrescentar `core/partials/painel_kpis.html`) |
+| Parcial | 200 | `core/painel.html` | página completa (o Painel não tem fragmento na 001; a 004 acrescenta `core/partials/painel_kpis.html`, com raiz `#painel-kpis`) |
 
 Conteúdo garantido: `<title>Painel — Consus</title>`; `<h1>Painel</h1>`; região
 `<section id="painel-kpis" aria-labelledby="painel-kpis-titulo">` contendo o componente
@@ -39,7 +39,8 @@ Contexto do catálogo: `tokens` (por categoria, valores lidos de `tokens.css`), 
 (com `razao` calculada e `aprovado`), `componentes` (lista `COMPONENTES_CATALOGO` — 18 itens com
 âncoras do [data-model](../data-model.md#7-componente-do-catálogo)), dados fictícios rotulados
 "Exemplo" para tabela, KPIs, BarList, CategoryBar, Tracker, ProgressBar e paginação.
-Disponível com `DEBUG` verdadeiro ou falso (FR-033). Link de acesso: rodapé.
+Disponível com `DEBUG` verdadeiro ou falso (FR-033). Link de acesso: rodapé. Como `?exemplo=dialogo`
+tem variantes página × fragmento, a view declara `Vary: HX-Request, HX-Target` (contrato v1.1).
 
 ## `POST /design/` — `core:design` (demonstrações)
 

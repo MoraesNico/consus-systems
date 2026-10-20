@@ -56,7 +56,7 @@ copiada para `quantidade_atual` e, com a 003, vira a `Movimentacao` `INICIAL`.
 | `buscar(q)` | `#`+dígitos → só ID; só dígitos → ID exato **ou** nome contém; outro texto → nome contém (sem diferenciar maiúsculas/minúsculas, literal); vazio → sem filtro; número acima do máximo de `BigAutoField` nunca filtra por ID. | Lista (002) |
 | `em_alerta()` | `quantidade_atual <= estoque_minimo` | Filtro "Em alerta" (002); varredura/relatório/contador (004) |
 | `sem_alerta()` | `quantidade_atual > estoque_minimo` | Filtro "OK" (002) |
-| `com_situacao()` | anota `alerta: bool` | Ordenação por situação (002); 004 |
+| `com_situacao()` | anota `alerta: bool` (a 004 acrescenta `deficit` e `cobertura_percentual`, com `Cast(..., BigIntegerField())` — contrato v1.1) | Ordenação por situação (002); 004 |
 
 ## Entidade derivada: Situação
 
@@ -72,6 +72,12 @@ Não persistida. Calculada sempre a partir dos valores atuais:
 
 Gatilhos de transição: cadastro (estado inicial), edição de `estoque_minimo` (002), movimentação
 de Entrada/Saída (003). Exemplo de borda: quantidade 0 e mínimo 0 → **ALERTA**.
+
+Exibição (selo único `produtos/partials/situacao.html`, contrato v1.1): ALERTA com quantidade 0 →
+selo composto "⚠ REPOSIÇÃO NECESSÁRIA │ SEM ESTOQUE"; demais ALERTA → "⚠ REPOSIÇÃO NECESSÁRIA";
+OK → "OK". `Produto.situacao` continua binária (`"alerta"`/`"ok"`, valores do filtro
+`?situacao=`); é proibido criar no modelo propriedades `alerta`, `deficit` ou
+`cobertura_percentual` (colidem com anotações).
 
 ## Ciclo de vida do `Produto`
 

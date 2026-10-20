@@ -32,7 +32,7 @@
 
 - [x] CHK015 As regras e mensagens do cadastro são as mesmas na página própria e no diálogo? [Consistência, Spec §FR-009]
 - [x] CHK016 O destino após o cadastro é o mesmo com e sem scripts no navegador? [Consistência, Spec §FR-010, §FR-011, US1 cenário 8]
-- [x] CHK017 Os termos "Em alerta", "REPOSIÇÃO NECESSÁRIA" e "OK" são usados de forma consistente no filtro, no indicador e no detalhe? [Consistência, Spec §FR-015, §FR-020, US3]
+- [x] CHK017 Os termos "Em alerta", "REPOSIÇÃO NECESSÁRIA", "SEM ESTOQUE" e "OK" são usados de forma consistente no filtro, no indicador e no detalhe, com SEM ESTOQUE como variação composta do mesmo selo (nunca substituindo "REPOSIÇÃO NECESSÁRIA")? [Consistência, Spec §FR-015, §FR-020, US3, contrato v1.1]
 - [x] CHK018 As regras de edição reutilizam as do cadastro sem contradição (campos vazios no cadastro × preenchidos na edição)? [Consistência, Spec §FR-006, §FR-024]
 
 ## Qualidade dos critérios de aceitação
@@ -79,3 +79,5 @@
   "Salvar" indisponível durante o envio (FR-009 → CHK003, CHK004); dica visível da tecla junto à
   busca e a "Novo produto" e bloqueio com diálogo aberto (FR-028, US5 cenário 4 → CHK014,
   CHK031); premissa de telas estreitas (Assumptions → CHK026).
+- **Auditoria de especificações (2026-10-20)**: CHK017 ampliado para a variação SEM ESTOQUE do
+  selo único (FR-020 alinhado ao contrato v1.1). Continua 34/34.

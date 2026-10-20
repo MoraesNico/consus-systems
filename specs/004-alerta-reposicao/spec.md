@@ -42,8 +42,9 @@ valores calculados e com qual selo.
    mínimo 10), **When** executo a varredura, **Then** A e B aparecem com o selo
    "⚠ REPOSIÇÃO NECESSÁRIA" e C não aparece.
 2. **Given** os produtos D (atual 0, mínimo 0) e E (atual 0, mínimo 8) além de A e B,
-   **When** executo a varredura, **Then** D e E aparecem com o selo "SEM ESTOQUE" antes de
-   todos os demais, e E vem antes de D (maior déficit).
+   **When** executo a varredura, **Then** D e E aparecem com o selo composto
+   "⚠ REPOSIÇÃO NECESSÁRIA │ SEM ESTOQUE" antes de todos os demais, e E vem antes de D (maior
+   déficit).
 3. **Given** vários produtos em alerta, **When** o relatório é exibido, **Then** a ordem é:
    sem estoque primeiro; depois maior déficit; depois menor cobertura; depois menor ID.
 4. **Given** qualquer varredura executada, **When** o resultado aparece, **Then** vejo a data
@@ -84,7 +85,7 @@ produto ao mínimo e verificar contador, selo e aviso; depois alterar o estoque 
    recarregar a página, e a confirmação da movimentação inclui o aviso "REPOSIÇÃO NECESSÁRIA"
    para aquele produto.
 2. **Given** um produto com 3 unidades e mínimo 5, **When** registro uma saída de 3 unidades,
-   **Then** a confirmação traz o aviso "SEM ESTOQUE" para aquele produto.
+   **Then** a confirmação traz o aviso "REPOSIÇÃO NECESSÁRIA · SEM ESTOQUE" para aquele produto.
 3. **Given** um produto em alerta, **When** registro uma entrada que o leva acima do mínimo,
    **Then** a confirmação informa que o produto saiu do alerta e o contador diminui.
 4. **Given** um produto em alerta com 2 unidades e mínimo 10, **When** registro uma entrada de 3
@@ -93,8 +94,9 @@ produto ao mínimo e verificar contador, selo e aviso; depois alterar o estoque 
 5. **Given** uma página aberta e nenhuma interação, **When** o estoque é alterado em outra
    janela ou pelo terminal, **Then** o contador reflete a nova contagem em até 30 segundos.
 6. **Given** a lista de produtos, **When** ela é exibida, **Then** cada produto em alerta mostra
-   o selo "⚠ REPOSIÇÃO NECESSÁRIA", cada produto zerado mostra "SEM ESTOQUE" e os demais mostram
-   a situação "OK" de forma discreta; o detalhe do produto mostra o mesmo selo.
+   o selo "⚠ REPOSIÇÃO NECESSÁRIA", cada produto zerado mostra o selo composto
+   "⚠ REPOSIÇÃO NECESSÁRIA │ SEM ESTOQUE" e os demais mostram a situação "OK" de forma discreta;
+   o detalhe do produto mostra o mesmo selo.
 7. **Given** um usuário de leitor de tela, **When** o contador muda de valor, **Then** a nova
    contagem é anunciada uma única vez; **When** uma verificação automática não muda o valor,
    **Then** nada é anunciado.
@@ -233,7 +235,8 @@ nas telas; executar de novo e conferir que nada mudou.
   em até 30 s; o relatório aberto mantém a data/hora da última varredura até ser re-executado ou
   até ocorrer uma movimentação na própria janela.
 - **Alteração do estoque mínimo** (edição do produto): muda a situação imediatamente para toda
-  nova varredura ou exibição; o contador reflete a mudança na próxima verificação automática.
+  nova varredura ou exibição; o contador reflete a mudança assim que a edição é salva (a página
+  inteira é re-renderizada; uma resposta parcial emitiria `estoque-alterado` — contrato v1.1).
 - **Produto cadastrado já com quantidade inicial ≤ mínimo**: aparece em alerta em todas as telas
   desde o cadastro.
 - **Movimentação que não muda a situação** (ex.: saída em produto que continua OK): nenhuma
@@ -272,7 +275,8 @@ nas telas; executar de novo e conferir que nada mudou.
   quantidade 0 → em alerta.
 - **FR-003**: Um produto em alerta com quantidade atual 0 MUST ser classificado na variação mais
   grave "SEM ESTOQUE". As situações possíveis são mutuamente exclusivas: **OK**, **REPOSIÇÃO
-  NECESSÁRIA** e **SEM ESTOQUE**.
+  NECESSÁRIA** e **SEM ESTOQUE**; SEM ESTOQUE continua sendo um alerta de reposição (é exibido
+  com o selo composto que mantém "⚠ REPOSIÇÃO NECESSÁRIA" — FR-020, constituição IV).
 - **FR-004**: Para cada produto, o sistema MUST calcular o **déficit** = máx(estoque mínimo −
   quantidade atual, 0) e a **cobertura** = ⌊quantidade atual × 100 ÷ estoque mínimo⌋ (percentual
   inteiro arredondado para baixo). Casos especiais: quantidade 0 → cobertura 0%; estoque mínimo 0
@@ -302,14 +306,16 @@ nas telas; executar de novo e conferir que nada mudou.
   analisados").
 - **FR-009** *(Atividade, item 3 — "exibir um alerta visual destacado para aquele produto")*: O
   relatório MUST listar somente os produtos em alerta, na ordem de FR-006, com as colunas, nesta
-  ordem: ID no formato `#0001`, nome, selo de situação ("⚠ REPOSIÇÃO NECESSÁRIA" ou
-  "SEM ESTOQUE"), quantidade atual, estoque mínimo, déficit, cobertura (barra horizontal +
-  percentual), sugestão de reposição e ações.
+  ordem: ID no formato `#0001`, nome, selo de situação ("⚠ REPOSIÇÃO NECESSÁRIA" ou o selo
+  composto "⚠ REPOSIÇÃO NECESSÁRIA │ SEM ESTOQUE"), quantidade atual, estoque mínimo, déficit,
+  cobertura (barra horizontal + percentual), sugestão de reposição e ações.
 - **FR-010**: Quando houver produtos e nenhum em alerta, o relatório MUST exibir um estado vazio
   positivo ("Nenhum produto precisa de reposição") com o total analisado; quando não houver
   produtos cadastrados, MUST exibir um estado vazio que oriente a cadastrar o primeiro produto.
 - **FR-011**: Cada linha do relatório MUST oferecer a ação rápida "+ Entrada", que abre o registro
-  de entrada (feature 003) com o produto e o tipo "Entrada" já selecionados, sem sair do relatório.
+  de entrada (feature 003) com o produto e o tipo "Entrada" já selecionados e a quantidade
+  pré-preenchida com a sugestão de reposição (limitada a 1.000.000, o máximo por movimentação;
+  sugestão 0 não pré-preenche), sem sair do relatório.
 - **FR-012**: Após qualquer movimentação confirmada na mesma janela, o relatório aberto MUST se
   atualizar sozinho (nova varredura), sem recarregar a página.
 - **FR-013**: O relatório e a ação "Executar varredura" MUST funcionar também com os scripts do
@@ -321,8 +327,9 @@ nas telas; executar de novo e conferir que nada mudou.
   todas as páginas, um contador de produtos em alerta, recalculado automaticamente a cada 30
   segundos sem ação do usuário. Com os scripts do navegador desativados, o contador exibe o valor
   do momento em que a página foi carregada.
-- **FR-015**: O contador MUST ser atualizado imediatamente após qualquer movimentação confirmada
-  na mesma janela, sem recarregar a página, e MUST exibir o mesmo total da varredura mais recente
+- **FR-015**: O contador MUST ser atualizado imediatamente após qualquer operação confirmada na
+  mesma janela que altere saldo ou situação — movimentação (003), cadastro ou edição do estoque
+  mínimo (002) —, sem recarregar a página, e MUST exibir o mesmo total da varredura mais recente
   executada no relatório.
 - **FR-016**: Com 0 produtos em alerta, o contador MUST ficar oculto (o item de menu permanece);
   com 1 ou mais, MUST exibir ícone de alerta + número e um texto acessível
@@ -331,18 +338,24 @@ nas telas; executar de novo e conferir que nada mudou.
   vez por mudança; verificações que não mudam o valor MUST NOT gerar anúncio.
 - **FR-018** *(Atividade, item 3 — "para aquele produto")*: A lista de produtos e o detalhe do
   produto MUST exibir, para cada produto, o selo de situação: "⚠ REPOSIÇÃO NECESSÁRIA" (em alerta
-  com quantidade > 0), "SEM ESTOQUE" (quantidade 0) ou "OK" discreto, sem cor de alerta.
+  com quantidade > 0), o selo composto "⚠ REPOSIÇÃO NECESSÁRIA │ SEM ESTOQUE" (quantidade 0) ou
+  "OK" discreto, sem cor de alerta.
 - **FR-019**: Quando uma movimentação (entrada ou saída) **piorar** a situação de um produto —
   OK → REPOSIÇÃO NECESSÁRIA, OK → SEM ESTOQUE ou REPOSIÇÃO NECESSÁRIA → SEM ESTOQUE — a mensagem
   de confirmação MUST incluir, em destaque de alerta, o aviso correspondente ("REPOSIÇÃO
-  NECESSÁRIA" ou "SEM ESTOQUE") com o nome do produto, o saldo resultante e o mínimo. Quando a
+  NECESSÁRIA" ou "REPOSIÇÃO NECESSÁRIA · SEM ESTOQUE" — o texto de reposição nunca é omitido,
+  constituição IV) com o nome do produto, o saldo resultante e o mínimo. Quando a
   movimentação tirar o produto do alerta (→ OK), a confirmação MUST informar que ele saiu do
   alerta de reposição. Nos demais casos (situação inalterada, ou SEM ESTOQUE → REPOSIÇÃO
   NECESSÁRIA), MUST NOT haver aviso extra. O aviso vale tanto para a confirmação com a página
-  atualizada parcialmente quanto para a confirmação após recarregamento.
+  atualizada parcialmente quanto para a confirmação após recarregamento. O texto final da
+  confirmação MUST caber no limite de 200 caracteres das notificações (feature 001): se
+  ultrapassar, o nome do produto é encurtado com "…" (o código `#0001` é mantido).
 - **FR-020**: O selo de situação MUST ser idêntico (texto, ícone, cor) em todas as telas onde
-  aparece: relatório, lista e detalhe de produtos, painel. "SEM ESTOQUE" MUST ter destaque mais
-  forte que "REPOSIÇÃO NECESSÁRIA" (cor de perigo em vez de cor de alerta), mantendo ícone e texto.
+  aparece: relatório, lista e detalhe de produtos, painel — um único selo do sistema (contrato
+  v1.1). "SEM ESTOQUE" MUST ter destaque mais forte que "REPOSIÇÃO NECESSÁRIA" sem substituí-lo:
+  selo composto que mantém o segmento "⚠ REPOSIÇÃO NECESSÁRIA" (ícone + texto + cor de alerta) e
+  acrescenta o segmento "SEM ESTOQUE" na cor de perigo, com ícone próprio.
 - **FR-021**: Nenhum alerta pode depender apenas de cor: todo selo ou contador de alerta MUST
   combinar ícone, texto e cor, com contraste mínimo WCAG 2.1 AA. Todas as ações desta feature
   ("Executar varredura", "Exportar CSV", "+ Entrada", atalhos do painel) MUST ser operáveis só

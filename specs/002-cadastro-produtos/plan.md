@@ -18,7 +18,9 @@ canônica, o detalhe com região reservada à 003 e a edição de nome e estoque
 grava a quantidade. A interface é HTML renderizado no servidor com HTMX 2: cada rota atende a
 navegação comum (e *boosted*) com página completa + `302`, e requisições parciais (`HX-Target`
 `resultados`/`dialogo`) com fragmentos, status 422 em erros e `HX-Trigger` (`toast`,
-`estoque-alterado`, `dialogo-fechar`). Decisões detalhadas em [research.md](./research.md).
+`estoque-alterado`, `fechar-dialogo`), emitidos pelos helpers `apps.core.htmx` da 001
+(`eh_fragmento`, `disparar_evento`, `disparar_toast`). Decisões detalhadas em
+[research.md](./research.md); nomes conforme `docs/arquitetura.md` v1.1.
 
 ## Technical Context
 
@@ -43,7 +45,8 @@ JavaScript.
 10.000 produtos (SC-003); no máximo 4 consultas SQL por requisição de lista.
 
 **Constraints**: aprimoramento progressivo obrigatório (tudo funciona sem JS); JS próprio do
-projeto < 100 linhas (esta feature acrescenta ~12, atalhos); erros de validação com status 422;
+projeto < 100 linhas (esta feature não acrescenta JS: os atalhos usam o `data-atalho` da 001);
+erros de validação com status 422;
 WCAG 2.1 AA; interface em pt-BR; quantidade nunca editável diretamente.
 
 **Scale/Scope**: até 10 mil produtos; 1 modelo, 1 migração, 4 rotas, 5 páginas, 9 fragmentos,
@@ -56,7 +59,7 @@ WCAG 2.1 AA; interface em pt-BR; quantidade nunca editável diretamente.
 | Princípio | Como o plano cumpre | Pré-pesquisa | Pós-design |
 |-----------|---------------------|:------------:|:----------:|
 | **I. Integridade do Estoque** | Saldo nunca negativo em 3 camadas: `InteiroNaoNegativoField` (formulário), `cadastrar_produto`/`editar_produto` em `transaction.atomic()` com `select_for_update()` na edição (serviço) e `CheckConstraint` `produto_quantidade_atual_nao_negativa` (banco). `quantidade_atual` só é definida no cadastro; a edição usa `update_fields` sem ela; não há formulário, admin (R16) nem rota de exclusão (405) que a altere. Quantidade Inicial vira `Movimentacao INICIAL` quando a 003 existir (FR-030, ponto de extensão documentado). Inteiros estritos (R2). | ✅ | ✅ |
-| **II. Interface Dirigida pelo Servidor** | Django Templates + HTMX 2; fragmentos em `templates/produtos/partials/`; `hx-swap-oob` (filtros, contagem; linha/resumo para a 003); `HX-Trigger` para `toast`/`estoque-alterado`/`dialogo-fechar`. Toda ação funciona sem HTMX (GET/POST + `302`). Views escolhem página/fragmento por `request.htmx` (django-htmx), tratando *boosted* e restauração de histórico como navegação comum (R8). JS próprio: ~12 linhas de atalhos. | ✅ | ✅ |
+| **II. Interface Dirigida pelo Servidor** | Django Templates + HTMX 2; fragmentos em `templates/produtos/partials/`; `hx-swap-oob` (filtros, contagem; linha/resumo para a 003); `HX-Trigger` para `toast`/`estoque-alterado`/`fechar-dialogo`. Toda ação funciona sem HTMX (GET/POST + `302`). Views escolhem página/fragmento por `apps.core.htmx.eh_fragmento(request)` (django-htmx), tratando *boosted* e restauração de histórico como navegação comum (R8). JS próprio: nenhum — os atalhos usam o manipulador `data-atalho` da 001 (FR-045 da 001). | ✅ | ✅ |
 | **III. Testes Primeiro** | `tasks.md` coloca testes antes da implementação em cada fase; cada FR-001…FR-031 citado em nome/docstring de teste; serviços e consultas testados antes das views; testes de view cobrem variantes comum, *boosted* e parcial (200/302/422/404/405); meta de cobertura ≥ 90% em models/services/selectors; suíte em SQLite e PostgreSQL. | ✅ | ✅ |
 | **IV. Design System** | Somente componentes e tokens da 001 (tabela densa, campo, botão, badge, diálogo, estado vazio, toast); números em fonte tabular alinhados à direita com separador "."; situação em alerta = ícone SVG + "REPOSIÇÃO NECESSÁRIA" + cor; estados vazios projetados; `aria-sort`, `aria-invalid`/`aria-describedby`, `role="status"`, foco visível; ação primária "Novo produto", secundárias discretas, nenhuma ação destrutiva. Estados novos (linha destacada, `<kbd>`) entram em `components.css` usando apenas tokens. | ✅ | ✅ |
 | **V. Simplicidade, Containers, 12-Factor** | Nenhuma dependência nova (humanize é do Django); sem factory_boy, sem `pg_trgm`, sem índices extras (YAGNI, R15); nenhuma configuração nova de ambiente; migração aplicada pelo fluxo `docker compose up` da 001. | ✅ | ✅ |
@@ -65,7 +68,7 @@ WCAG 2.1 AA; interface em pt-BR; quantidade nunca editável diretamente.
 
 **Resultado**: nenhum desvio; nada a justificar em *Complexity Tracking*. Reavaliação após a
 Fase 1 (data-model, contratos, quickstart): mantida, pois o design não introduziu dependências,
-caminhos de escrita de saldo nem JS além dos atalhos.
+caminhos de escrita de saldo nem JS próprio.
 
 ## Project Structure
 
@@ -133,12 +136,13 @@ apps/produtos/
     ├── test_views_edicao.py
     └── test_atalhos.py
 
-# Arquivos compartilhados (da 001) tocados de forma pontual
-config/settings.py           # INSTALLED_APPS += "apps.produtos", "django.contrib.humanize"
-config/urls.py               # path("produtos/", include("apps.produtos.urls"))
-templates/base.html          # item "Produtos" na navegação (se ainda ausente)
-static/js/consus.js          # manipulador genérico data-atalho (se a 001 não o fornecer)
-static/css/components.css    # estado "linha destacada" e <kbd> (se ausentes), só com tokens
+# Arquivos compartilhados (da 001) estendidos de forma pontual
+config/settings.py           # ESTENDE: INSTALLED_APPS += "apps.produtos", "django.contrib.humanize"
+config/urls.py               # ESTENDE: path("produtos/", include("apps.produtos.urls"))
+docs/design/design-system.md # ESTENDE (MINOR): linha recém-cadastrada + selo "NOVO" e <kbd> (antes do CSS)
+static/css/components.css    # ESTENDE: .tabela__linha--nova e kbd, só com tokens
+# Sem alteração: templates/base.html (o item "Produtos" vira link sozinho ao registrar
+# produtos:lista — FR-013 da 001) e static/js/consus.js (atalhos data-atalho são da 001, FR-045)
 ```
 
 **Structure Decision**: estrutura de app Django definida em `docs/arquitetura.md` (`apps/<app>/`

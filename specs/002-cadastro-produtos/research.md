@@ -132,8 +132,9 @@ propostas de ajuste ao contrato.
 
 - **Decision**: com `hx-boost="true"` no `<body>` (contrato), toda navegação e envio comum chega
   com `HX-Request: true` **e** `HX-Boosted: true`. Regra das views:
-  - **parcial** somente se `request.htmx` e não `request.htmx.boosted` e não
-    `request.htmx.history_restore_request`, escolhendo o fragmento pelo alvo (`HX-Target`):
+  - **parcial** somente se `apps.core.htmx.eh_fragmento(request)` (= `request.htmx` e não
+    `request.htmx.boosted` e não `request.htmx.history_restore_request` — helper da 001, contrato
+    v1.1), escolhendo o fragmento pelo alvo (`HX-Target`):
     `resultados` (lista) e `dialogo` (cadastro em diálogo);
   - **comum/boosted**: template completo e `302` após POST bem-sucedido (o HTMX segue o
     redirect e troca o `<body>`);
@@ -176,7 +177,7 @@ propostas de ajuste ao contrato.
     padrão (página 1, `-id`, linha destacada) + `filtros` fora de banda (`hx-swap-oob`) para
     limpar busca/filtro; cabeçalhos `HX-Retarget: #resultados`, `HX-Reswap: outerHTML`,
     `HX-Push-Url: /produtos/` e `HX-Trigger` com `toast`, `estoque-alterado` e
-    `dialogo-fechar`.
+    `fechar-dialogo` (nome do contrato v1.1).
   - Erro no diálogo: `422` com o diálogo re-renderizado em `#dialogo`; o primeiro campo com erro
     recebe `autofocus` (o HTMX aplica o foco após a troca, sem JS próprio).
   - "Cancelar" usa `<button formmethod="dialog" formnovalidate>` e Esc fecha o `<dialog>`
@@ -207,10 +208,11 @@ propostas de ajuste ao contrato.
 ## R12. Detalhe e região reservada para a 003
 
 - **Decision**: `produtos/detalhe.html` inclui `produtos/partials/resumo.html`
-  (`#produto-resumo`: código, nome, quantidade, mínimo, situação, datas) e uma
-  `<section id="produto-movimentacoes" aria-label="Movimentações">` vazia. A 003 inclui ali seu
-  fragmento e atualiza `#produto-resumo` e `#produto-<id>` por `hx-swap-oob`, renderizando os
-  partials desta feature. Produto inexistente → `produtos/nao_encontrado.html` com status 404;
+  (`<section id="produto-<id>-resumo">`: código, nome, quantidade, mínimo, situação, datas) e uma
+  `<section id="produto-<id>-historico" aria-label="Movimentações">` vazia (IDs do contrato v1.1).
+  A 003 substitui essa seção pelo seu fragmento de histórico e atualiza `#produto-<id>-resumo`,
+  `#produto-<id>-historico` e `#produto-<id>` por `hx-swap-oob`, renderizando os partials desta
+  feature com `oob=True`. Produto inexistente → `produtos/nao_encontrado.html` com status 404;
   ID acima do máximo de `BigAutoField` também resulta em 404 (sem `OverflowError`). URL não
   numérica não casa com `<int:produto_id>` e cai no 404 genérico da 001.
 - **Rationale**: FR-022 proíbe controles sem função; IDs e partials estáveis formam o contrato
@@ -221,8 +223,9 @@ propostas de ajuste ao contrato.
 ## R13. Atalhos de teclado
 
 - **Decision**: marcação declarativa `data-atalho="/"` (no campo de busca: foca) e
-  `data-atalho="n"` (no link "Novo produto": aciona), com dica `<kbd>` visível. Um manipulador
-  genérico de ~12 linhas em `static/js/consus.js` ignora o evento quando há modificador
+  `data-atalho="n"` (no link "Novo produto": aciona), com dica `<kbd>` visível. O manipulador
+  genérico de ~12 linhas em `static/js/consus.js` é **da 001** (contrato v1.1, FR-045 da 001):
+  ignora o evento quando há modificador
   (Ctrl/Meta/Alt), quando o alvo é editável (`input`, `textarea`, `select`,
   `[contenteditable]`) ou quando há `<dialog open>`, e chama `preventDefault()` para que "/" não
   seja digitado.
@@ -280,14 +283,20 @@ propostas de ajuste ao contrato.
 Nenhuma proposta altera nomes já fixados em `docs/arquitetura.md`; todas acrescentam detalhes
 que as features paralelas precisam combinar. **`docs/arquitetura.md` não foi editado.**
 
+> **Status (auditoria 2026-10-20)**: consolidadas em `docs/arquitetura.md` v1.1, com duas
+> diferenças que prevalecem sobre o texto abaixo: P5 → o evento chama-se **`fechar-dialogo`**
+> (não `dialogo-fechar`); P9 → os IDs são **`#produto-<id>-resumo`** e
+> **`#produto-<id>-historico`** (não `#produto-resumo`/`#produto-movimentacoes`). P4 foi aceita
+> (o cadastro e a edição também emitem `estoque-alterado`) e P6 ficou na 001.
+
 | # | Proposta | Afeta |
 |---|----------|-------|
 | P1 | Fixar `Produto.codigo` (`#0001`) como forma canônica de exibir o ID e `str(produto)` = `"#0001 — Nome"`. | 003, 004 |
 | P2 | Fixar a API de situação: `ProdutoQuerySet.em_alerta()`, `sem_alerta()`, `com_situacao()` (anota `alerta: bool`); propriedades `Produto.em_alerta` e `Produto.situacao` (`"alerta"`/`"ok"`). A 004 consome, não redefine, a regra. | 004 |
 | P3 | Padronizar parâmetros de listas: `ordem` (prefixo `-` = decrescente) e `pagina`, além de `q` e `situacao`. | 003 (`movimentacoes:lista`), 004 |
 | P4 | Ampliar `estoque-alterado` para "após qualquer operação que altere saldo **ou situação**" (cadastro, movimentação, edição do estoque mínimo em resposta parcial). | 003, 004 |
-| P5 | Padronizar o evento `dialogo-fechar` (via `HX-Trigger`, tratado pela 001) e o vocabulário de `toast.nivel`: `sucesso` \| `info` \| `alerta` \| `erro`. | 001, 003 |
+| P5 | Padronizar o evento ~~`dialogo-fechar`~~ → **`fechar-dialogo`** (v1.1) (via `HX-Trigger`, tratado pela 001) e o vocabulário de `toast.nivel`: `sucesso` \| `info` \| `alerta` \| `erro`. | 001, 003 |
 | P6 | Incluir no contrato o manipulador genérico `data-atalho="<tecla>"` em `static/js/consus.js` (001), para que 002/003/004 declarem atalhos sem JS próprio. | 001 |
 | P7 | Acrescentar à linha `nome` do modelo: "espaços internos consecutivos colapsados" (clarificação de 2026-10-20). | 004 (dados de demonstração) |
 | P8 | Registrar `produtos.services.editar_produto(*, produto_id, nome, estoque_minimo) -> Produto` e `produtos.models.QUANTIDADE_MAXIMA = 2_147_483_647`; a 003 deve recusar entradas cujo saldo resultante ultrapasse esse limite. | 003 |
-| P9 | Fixar IDs/partials de integração: `#resultados`, `#produto-<id>` (`produtos/partials/linha.html`), `#produto-resumo` (`produtos/partials/resumo.html`), `#produto-movimentacoes` (região da 003). | 003, 004 |
+| P9 | Fixar IDs/partials de integração: `#resultados`, `#produto-<id>` (`produtos/partials/linha.html`), ~~`#produto-resumo`~~ → **`#produto-<id>-resumo`** (`produtos/partials/resumo.html`), ~~`#produto-movimentacoes`~~ → **`#produto-<id>-historico`** (região da 003) — v1.1. | 003, 004 |

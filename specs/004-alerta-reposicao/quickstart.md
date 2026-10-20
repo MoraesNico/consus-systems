@@ -13,54 +13,56 @@ Guia de validação ponta a ponta. Contratos: [contracts/](contracts/) · dados 
 
 ```bash
 docker compose up --build -d
-docker compose exec web python manage.py migrate
-docker compose exec web python manage.py popular_demo
+docker compose exec app python manage.py migrate
+docker compose exec app python manage.py popular_demo
 # esperado: "Dados de demonstração: 12 produto(s) criado(s), 0 já existia(m)."
-docker compose exec web python manage.py popular_demo
+docker compose exec app python manage.py popular_demo
 # esperado: "… 0 produto(s) criado(s), 12 já existia(m)." e "Movimentações registradas: 0."
 ```
 
 ## 2. Terminal (História 4)
 
 ```bash
-docker compose exec web python manage.py varrer_estoque
+docker compose exec app python manage.py varrer_estoque
 # esperado: 12 analisados · "Em alerta: 4 (1 sem estoque)" · 4 linhas "⚠ REPOSIÇÃO NECESSÁRIA",
 # na ordem Cola branca → Parafuso M6 → Luva de nitrilo → Fita adesiva 48 mm
 
-docker compose exec web python manage.py varrer_estoque --formato json | python -m json.tool
-docker compose exec web python manage.py varrer_estoque --formato csv
-docker compose exec web python manage.py varrer_estoque --todos          # +8 linhas "OK" no fim
+docker compose exec app python manage.py varrer_estoque --formato json | python -m json.tool
+docker compose exec app python manage.py varrer_estoque --formato csv
+docker compose exec app python manage.py varrer_estoque --todos          # +8 linhas "OK" no fim
 
-docker compose exec web python manage.py varrer_estoque --falhar-se-alerta; echo "código=$?"
+docker compose exec app python manage.py varrer_estoque --falhar-se-alerta; echo "código=$?"
 # esperado: relatório + stderr "Há 4 produto(s) em alerta de reposição." e código=1
 
-docker compose exec web python manage.py varrer_estoque --formato pdf; echo "código=$?"
+docker compose exec app python manage.py varrer_estoque --formato pdf; echo "código=$?"
 # esperado: mensagem de uso e código=2
 ```
 
 ## 3. Relatório de Reposição (História 1) — http://localhost:8000/alertas/
 
 1. Conferir o resumo "Varredura em dd/mm/aaaa HH:MM · 12 produtos analisados · 4 em alerta
-   (1 sem estoque)" e as 4 linhas na ordem acima; Cola branca com selo **SEM ESTOQUE**, as demais
-   com **⚠ REPOSIÇÃO NECESSÁRIA** (ícone + texto + cor).
+   (1 sem estoque)" e as 4 linhas na ordem acima; Cola branca com o selo composto
+   **⚠ REPOSIÇÃO NECESSÁRIA │ SEM ESTOQUE**, as demais com **⚠ REPOSIÇÃO NECESSÁRIA** (ícone +
+   texto + cor).
 2. Fita adesiva 48 mm (24/24): déficit 0, cobertura 100%, sugestão +24.
 3. Aguardar 1 minuto e clicar **Executar varredura**: a hora muda sem recarregar a página; o leitor
    de tela anuncia "Varredura concluída: 4 produtos em alerta (1 sem estoque) de 12 analisados."
-4. Na linha do Parafuso M6, **+ Entrada** → diálogo da 003 com produto e tipo Entrada →
-   quantidade 140 → confirmar. Esperado: toast "… saiu do alerta de reposição.", o Parafuso some
+4. Na linha do Parafuso M6, **+ Entrada** → diálogo da 003 com produto e tipo Entrada e a
+   quantidade já preenchida com a sugestão (140) → confirmar. Esperado: toast "… saiu do alerta de reposição.", o Parafuso some
    do relatório e o contador do menu passa de 4 para 3, sem recarregar.
 5. Desativar o JavaScript do navegador e repetir 1 e 3: a varredura funciona por recarregamento.
 
 ## 4. Alerta automático (História 2)
 
-1. Em `/produtos/`: Cola branca mostra **SEM ESTOQUE**, Grampeador (6/5) mostra **OK**, Fita
-   adesiva mostra **⚠ REPOSIÇÃO NECESSÁRIA**; o detalhe de cada um mostra o mesmo selo.
+1. Em `/produtos/`: Cola branca mostra **⚠ REPOSIÇÃO NECESSÁRIA │ SEM ESTOQUE**, Grampeador
+   (6/5) mostra **OK**, Fita adesiva mostra **⚠ REPOSIÇÃO NECESSÁRIA**; o detalhe de cada um
+   mostra o mesmo selo.
 2. No Grampeador, **− Saída** de 1 (6 → 5, mínimo 5): toast de nível alerta com
    "REPOSIÇÃO NECESSÁRIA: #0006 Grampeador de mesa 26/6 ficou com 5 un. (mínimo 5)." e contador +1.
-3. No Grampeador, nova saída de 5 (5 → 0): toast "SEM ESTOQUE: … zerou (mínimo 5)."; contador
+3. No Grampeador, nova saída de 5 (5 → 0): toast "REPOSIÇÃO NECESSÁRIA · SEM ESTOQUE: … zerou (mínimo 5)."; contador
    inalterado (já estava em alerta).
 4. Com a página aberta e sem tocar nela, em outro terminal:
-   `docker compose exec web python manage.py shell -c "from apps.movimentacoes.services import registrar_movimentacao as r; r(produto_id=7, tipo='ENTRADA', quantidade=50)"`
+   `docker compose exec app python manage.py shell -c "from apps.movimentacoes.services import registrar_movimentacao as r; r(produto_id=7, tipo='ENTRADA', quantidade=50)"`
    → em até `ALERTAS_INTERVALO_SEGUNDOS` o contador diminui sozinho.
 5. Com leitor de tela (NVDA/Orca): a mudança do contador é anunciada uma vez; ciclos sem mudança
    não anunciam nada (no DevTools, as requisições `/alertas/contador/?anterior=N` respondem 204).
@@ -93,12 +95,12 @@ mostra o texto `=1+1`, não o resultado 2.
 ## 7. Testes automatizados
 
 ```bash
-docker compose exec web pytest apps/alertas apps/produtos/tests/test_queryset_situacao.py \
-  apps/core/tests/test_painel_kpis.py -q
-docker compose exec web pytest --cov=apps.alertas --cov=apps.produtos.models --cov-report=term-missing \
-  --cov-fail-under=90 apps/alertas apps/produtos/tests/test_queryset_situacao.py
-docker compose exec web pytest -q                       # suíte completa (PostgreSQL)
-DJANGO_DATABASE_URL=sqlite:///test.sqlite3 pytest -q    # suíte completa (SQLite) — variável conforme a 001
+docker compose --profile testes run --rm testes pytest apps/alertas \
+  apps/produtos/tests/test_queryset_situacao.py apps/core/tests/test_painel_kpis.py -q
+docker compose --profile testes run --rm testes pytest --cov=apps.alertas --cov=apps.produtos.models \
+  --cov-report=term-missing --cov-fail-under=90 apps/alertas apps/produtos/tests/test_queryset_situacao.py
+docker compose --profile testes run --rm testes pytest -q   # suíte completa (PostgreSQL, serviço `testes` da 001)
+uv run pytest -q                                            # suíte completa (SQLite: sem DATABASE_URL — FR-006 da 001)
 ruff check . && ruff format --check . && python manage.py makemigrations --check --dry-run
 # makemigrations --check: "No changes detected" (a 004 não tem migrações)
 ```

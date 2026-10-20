@@ -32,6 +32,7 @@ para encaixar suas páginas na casca do Consus. Complementa a seção "Convenç�
   <footer class="rodape-app"> "Consus v{{ versao }}" · Catálogo de design (/design/) · Saúde do sistema (/saude/)
   <div id="toasts" class="toasts" role="status" aria-live="polite" aria-relevant="additions"
        hx-preserve data-duracao-ms="5000" data-maximo="3"></div>
+  <div id="anuncio-alertas" class="visualmente-oculto" role="status" aria-live="polite"></div>
   <template id="modelo-toast">{% include "components/toast.html" %}</template>
   <dialog id="dialogo" class="dialogo" aria-labelledby="dialogo-titulo"></dialog>
 </body>
@@ -44,8 +45,9 @@ para encaixar suas páginas na casca do Consus. Complementa a seção "Convenç�
 | `#toasts` | 001 | não renderizar toasts manualmente; use `disparar_toast` ou mensagens |
 | `#modelo-toast` | 001 | interno do `consus.js` |
 | `#dialogo` | 001 | **alvo** de `hx-get` para abrir formulários em diálogo |
-| `#badge-alertas` | 001 (slot) / 004 (conteúdo) | ver §5 |
-| `#painel-kpis` | 001 (região) / 004 (conteúdo) | a 004 substitui o estado vazio pelos KPIs |
+| `#anuncio-alertas` | 001 (região viva estável) / 004 (texto) | a 004 troca só o conteúdo (`hx-swap-oob="innerHTML"`); nunca substituir o elemento |
+| `#badge-alertas` | 001 (contêiner) / 004 (renderiza `{% contador_alertas %}` → `#contador-alertas`) | ver §5 |
+| `#painel-kpis` | 001 (região) / 004 (conteúdo) | a 004 substitui o estado vazio pelos KPIs; o parcial `core/partials/painel_kpis.html` mantém `#painel-kpis` como raiz |
 | `#resultados` | cada feature | convenção do contrato para listas com busca/paginação |
 
 ### 1.2 Blocos para páginas
@@ -64,7 +66,6 @@ para encaixar suas páginas na casca do Consus. Complementa a seção "Convenç�
 | Variável | Tipo | Descrição |
 |----------|------|-----------|
 | `itens_navegacao` | lista de itens resolvidos | ver [data-model §4](../data-model.md#4-item-de-navegação) |
-| `badge_alertas_url` | str \| None | URL de `alertas:contador` ou `None` |
 | `versao` | str | `config.__version__` |
 
 ---
@@ -94,11 +95,13 @@ para encaixar suas páginas na casca do Consus. Complementa a seção "Convenç�
 ## 3. Regra de renderização nas views (todas as features)
 
 ```python
-from apps.core.htmx import eh_parcial
+from django.views.decorators.vary import vary_on_headers
+from apps.core.htmx import eh_fragmento
 
+@vary_on_headers("HX-Request", "HX-Target")
 def lista(request):
     contexto = {...}
-    if eh_parcial(request):          # HX-Request e não boost
+    if eh_fragmento(request):        # HX-Request, não boost e não restauração de histórico
         return render(request, "produtos/partials/resultados.html", contexto)
     return render(request, "produtos/lista.html", contexto)
 ```
@@ -111,21 +114,25 @@ sucesso + eventos (§4). Sem HTMX: inválido → página com status 422; válido
 
 | Evento | Payload | Emitido por | Escutado por |
 |--------|---------|-------------|--------------|
-| `toast` | `{"nivel": "sucesso"\|"info"\|"alerta"\|"erro", "texto": str}` | `apps.core.htmx.disparar_toast(response, texto, nivel="sucesso")` | `consus.js` (região global ou interna do diálogo) |
-| `fechar-dialogo` | `{}` | `apps.core.htmx.fechar_dialogo(response)` | `consus.js` → `dialog.close()` |
-| `estoque-alterado` | `{}` (definido pela 003) | feature 003 | slot do badge (§5); Painel (004) |
+| `toast` | `{"nivel": "sucesso"\|"info"\|"alerta"\|"erro", "texto": str}` | `apps.core.htmx.disparar_toast(response, nivel, texto)` | `consus.js` (região global ou interna do diálogo) |
+| `fechar-dialogo` | `{}` | `apps.core.htmx.disparar_evento(response, "fechar-dialogo")` | `consus.js` → `dialog.close()` |
+| `estoque-alterado` | opcional `{produto_id, saldo_anterior, saldo_posterior}` | respostas de fragmento após qualquer operação que altere saldo ou situação: cadastro e edição do mínimo (002), movimentação (003) | `#contador-alertas`, `#relatorio` e `#painel-kpis` (004), com `hx-trigger="… estoque-alterado from:body"` |
 
 Os utilitários usam `django_htmx.http.trigger_client_event`, que **mescla** eventos no mesmo
-cabeçalho: `disparar_toast(fechar_dialogo(resp), "Entrada registrada.")` gera
-`{"fechar-dialogo": {}, "toast": {...}}`.
+cabeçalho: `disparar_toast(disparar_evento(resp, "fechar-dialogo"), "sucesso", "Entrada
+registrada.")` gera `{"fechar-dialogo": {}, "toast": {...}}`. Respostas de página inteira
+(comum/*boosted*) não precisam emitir eventos: o servidor re-renderiza o layout inteiro (inclusive
+o contador da 004) com os dados atuais.
 
 API de `apps/core/htmx.py`:
 
 | Função | Assinatura | Comportamento |
 |--------|-----------|---------------|
-| `eh_parcial` | `(request) -> bool` | `bool(request.htmx) and not request.htmx.boosted` |
-| `disparar_toast` | `(response, texto, nivel="sucesso") -> HttpResponse` | valida `nivel` ∈ `sucesso\|info\|alerta\|erro` e `texto` com 1–200 caracteres (senão `ValueError`), acrescenta o evento `toast`, devolve a mesma resposta |
-| `fechar_dialogo` | `(response) -> HttpResponse` | acrescenta o evento `fechar-dialogo` |
+| `eh_fragmento` | `(request) -> bool` | `bool(request.htmx) and not request.htmx.boosted and not request.htmx.history_restore_request` |
+| `disparar_evento` | `(response, nome, dados=None) -> HttpResponse` | acrescenta o evento `nome` com `dados` (padrão `{}`) ao `HX-Trigger`, preservando os já presentes; devolve a mesma resposta |
+| `disparar_toast` | `(response, nivel, texto) -> HttpResponse` | valida `nivel` ∈ `sucesso\|info\|alerta\|erro` e `texto` com 1–200 caracteres (senão `ValueError`), acrescenta o evento `toast` via `disparar_evento`, devolve a mesma resposta |
+
+Views com variantes (página × fragmento) declaram `Vary: HX-Request, HX-Target`.
 
 ## 5. Navegação e slot do badge
 
@@ -135,17 +142,24 @@ API de `apps/core/htmx.py`:
   demais pelo namespace da rota atual (FR-012).
 - Item indisponível: `<span class="navegacao__item" aria-disabled="true">Produtos <span
   class="navegacao__breve">(em breve)</span></span>`.
-- Slot do badge (FR-014), dentro do item Alertas:
-  - sem `alertas:contador`: `<span id="badge-alertas" class="navegacao__badge"></span>` (vazio,
-    sem atributos HTMX);
-  - com `alertas:contador`: `<span id="badge-alertas" class="navegacao__badge"
-    hx-get="/alertas/contador/" hx-trigger="load, estoque-alterado from:body, every 60s"
-    hx-swap="innerHTML"></span>`.
-  - O fragmento de `alertas:contador` (feature 004) devolve **só o conteúdo interno**: vazio
-    (quantidade 0) ou a marcação do badge da navegação (design-system §4.16), com texto
-    acessível "N produtos com reposição necessária".
-  - Atualização OOB numa resposta de movimentação: `<span hx-swap-oob="innerHTML:#badge-alertas">
-    …</span>` — **nunca** `outerHTML` (apagaria `hx-get`/`hx-trigger` do slot).
+- Contêiner do badge (FR-014), dentro do item Alertas — mecanismo único, igual ao da 004
+  (contrato v1.1):
+  - a 001 entrega `<span id="badge-alertas" class="navegacao__badge"></span>`: contêiner de
+    layout, **sem** atributos HTMX e sem visual próprio; vazio até a 004 existir;
+  - a 004 **estende** `templates/components/navegacao.html` para renderizar dentro dele
+    `{% load alertas_tags %}{% contador_alertas %}`, que produz `<span id="contador-alertas"
+    class="contador-alertas" hx-get="/alertas/contador/?anterior=<n>" hx-trigger="every 30s,
+    estoque-alterado from:body" hx-swap="outerHTML">…</span>` (o intervalo vem de
+    `ALERTAS_INTERVALO_SEGUNDOS`, padrão 30) — o polling e o evento ficam no `#contador-alertas`,
+    nunca no contêiner;
+  - `GET /alertas/contador/?anterior=<n>` responde **204** quando nada mudou e, quando mudou, o
+    novo `#contador-alertas` (trocado por `outerHTML`) + OOB `innerHTML` em `#anuncio-alertas`;
+  - atualizações fora de banda (ex.: resposta do relatório da 004) usam `<span
+    id="contador-alertas" hx-swap-oob="true">` — o alvo é sempre `#contador-alertas`, nunca o
+    contêiner `#badge-alertas`;
+  - visual do badge (design-system §4.16) na classe `.contador-alertas` (definida pela 001 em
+    `components.css`; com total 0 a 004 renderiza o elemento com `hidden`); texto acessível "N produtos em alerta de
+    reposição".
 
 ## 6. Diálogo
 
@@ -155,8 +169,9 @@ API de `apps/core/htmx.py`:
 - Fragmento: `{% extends "components/dialogo.html" %}` com blocos `titulo`, `descricao`,
   `corpo` (formulário com `hx-post`, `hx-target="#dialogo"`), `rodape` (ações; primário à
   direita). O primeiro campo leva `autofocus`.
-- Sucesso: resposta com `fechar_dialogo` + `disparar_toast` (+ `estoque-alterado`, OOB de
-  linha/badge quando aplicável). Erro de validação: 422 com o fragmento.
+- Sucesso: resposta com `disparar_evento(resp, "fechar-dialogo")` + `disparar_toast` (+
+  `estoque-alterado` e OOB de linha/resumo quando aplicável). Erro de validação: 422 com o
+  fragmento.
 - Comportamento do cliente (`consus.js`): `showModal()` após a troca; `Esc`/botão fechar fecham;
   clique no fundo não fecha; foco volta ao acionador; conteúdo é limpo ao fechar; toasts vão para
   `[data-toasts]` do diálogo enquanto ele está aberto.
@@ -173,4 +188,7 @@ Responsabilidades, e somente elas: (1) criar toasts a partir do evento `toast` e
 servidor, respeitando `data-duracao-ms`, `data-maximo`, pausa em hover/foco e `role="alert"` para
 `alerta`/`erro`; (2) abrir/fechar o `#dialogo` e devolver o foco; (3) toast de erro em
 `htmx:responseError` ("Não foi possível concluir a ação (erro N).") e `htmx:sendError` ("Sem
-conexão com o servidor."). Nenhuma regra de negócio no cliente.
+conexão com o servidor."); (4) atalhos de teclado genéricos (FR-045): no `keydown` do documento,
+localizar `[data-atalho="<tecla>"]` e focar (campo) ou acionar (`click()`) o elemento, com
+`preventDefault()`; ignorar quando houver Ctrl/Alt/Meta, alvo editável (`input`, `textarea`,
+`select`, `[contenteditable]`) ou `dialog[open]`. Nenhuma regra de negócio no cliente.

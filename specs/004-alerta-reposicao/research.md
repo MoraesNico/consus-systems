@@ -104,7 +104,9 @@ anotação `alerta` em `com_situacao()`, `QUANTIDADE_MAXIMA`, `cadastrar_produto
 
 - **Decision**:
   - O contador é renderizado **no servidor** em toda página por uma *inclusion tag*
-    `{% contador_alertas %}` no menu do `base.html` (funciona sem JS e em navegação `hx-boost`).
+    `{% contador_alertas %}` dentro do contêiner `#badge-alertas` que a 001 reserva no item
+    Alertas de `templates/components/navegacao.html` (funciona sem JS e em navegação `hx-boost`;
+    mecanismo único do contrato v1.1 — o contêiner não tem atributos HTMX).
   - O fragmento `#contador-alertas` é autocontido: carrega
     `hx-get="/alertas/contador/?anterior=<total>"`,
     `hx-trigger="every <ALERTAS_INTERVALO_SEGUNDOS>s, estoque-alterado from:body"` e
@@ -125,10 +127,11 @@ anotação `alerta` em `com_situacao()`, `QUANTIDADE_MAXIMA`, `cadastrar_produto
 
 ## R8. Fragmento × página completa
 
-- **Decision**: views da 004 devolvem fragmento somente quando
-  `request.htmx and not request.htmx.boosted`; navegação `hx-boost` e requisições sem HTMX recebem
-  a página completa. Respostas variam por cabeçalho (`Vary: HX-Request`) e não são cacheadas
-  (`Cache-Control: no-store` via `never_cache`).
+- **Decision**: views da 004 devolvem fragmento somente quando `apps.core.htmx.eh_fragmento(request)`
+  (helper da 001, contrato v1.1: HTMX, não *boosted*, não restauração de histórico); navegação
+  `hx-boost` e requisições sem HTMX recebem a página completa. Respostas variam por cabeçalho
+  (`Vary: HX-Request, HX-Target`) e não são cacheadas (`Cache-Control: no-store` via
+  `never_cache`).
 - **Rationale**: com `hx-boost="true"` no `<body>`, a navegação também envia `HX-Request`; usar só
   `request.htmx` devolveria um fragmento no lugar da página. `Vary` impede que o navegador sirva o
   fragmento ao voltar no histórico.
@@ -173,9 +176,10 @@ anotação `alerta` em `com_situacao()`, `QUANTIDADE_MAXIMA`, `cadastrar_produto
   da 003 passa a usar `confirmacao_com_alerta` no `HX-Trigger: {"toast": …}` e no framework
   `messages` (fluxo sem HTMX, com nível `WARNING` quando piora); o comando `movimentar` da 003
   imprime o mesmo aviso. `INICIAL` nunca gera aviso (cadastro é da 002).
-- **"+ Entrada" a partir do relatório/painel**: o diálogo da 003 recebe `origem=alertas`
-  (valor novo acrescentado pela 004 ao campo `origem`), cuja resposta de sucesso não traz
-  fragmentos OOB de produto (`HX-Reswap: none` + `estoque-alterado`, `toast`, `fechar-dialogo`).
+- **"+ Entrada" a partir do relatório/painel**: o diálogo da 003 recebe `origem=alertas` e
+  `quantidade=<sugestão, limitada a 1.000.000>` (ambos entregues pela 003 — contrato v1.1), cuja
+  resposta de sucesso não traz fragmentos OOB de produto (`HX-Reswap: none` +
+  `estoque-alterado`, `toast`, `fechar-dialogo`).
   Com `origem=lista`, a 003 enviaria um `<tr id="produto-<id>" hx-swap-oob>` que, no relatório,
   não teria alvo (erro `htmx:oobErrorNoTarget`) ou — pior — substituiria uma linha com colunas
   diferentes se o id coincidisse; por isso as linhas do relatório usam `id="reposicao-<id>"`.
@@ -187,8 +191,9 @@ anotação `alerta` em `com_situacao()`, `QUANTIDADE_MAXIMA`, `cadastrar_produto
 ## R12. Painel
 
 - **Decision**: a view `core:painel` (da 001) passa a chamar `alertas.selectors.resumo_painel(agora=None)`
-  e renderiza `core/painel.html` (completo) ou `core/partials/painel_conteudo.html` (fragmento,
-  região `#painel-conteudo` com `hx-trigger="estoque-alterado from:body"`). KPIs em uma única
+  e renderiza `core/painel.html` (completo) ou `core/partials/painel_kpis.html` (fragmento cuja
+  raiz é a região `#painel-kpis` reservada pela 001, com `hx-trigger="estoque-alterado
+  from:body"`). KPIs em uma única
   agregação (`Count`, `Sum` com `Coalesce`, `Count(filter=…)`); movimentações 24 h com
   `tipo__in=[ENTRADA, SAIDA]` e janela móvel `criado_em >= agora − 24 h`; "Reposição necessária" =
   5 primeiros itens da ordem de criticidade; cobertura = 8 menores `cobertura_percentual` não nulas;
@@ -201,14 +206,16 @@ anotação `alerta` em `com_situacao()`, `QUANTIDADE_MAXIMA`, `cadastrar_produto
 
 ## R13. Componentes visuais (Tremor → design system)
 
-- **Decision**: dois componentes novos em `templates/components/`, só com tokens:
-  `barra_cobertura.html` (estilo ProgressBar/CategoryBar: trilho neutro + preenchimento na cor da
-  situação, largura `min(cobertura, 100)%` via `--valor`, `aria-hidden="true"` com o percentual
-  visível ao lado) e `bar_list.html` (estilo BarList: rótulo à esquerda, barra proporcional, valor
-  tabular à direita, link opcional). O selo de situação é **o parcial da 002**
-  (`produtos/partials/situacao.html`, badge da 001), estendido pela 004 com a variante `perigo`
-  (SEM ESTOQUE) ao lado de `alerta` (REPOSIÇÃO NECESSÁRIA) e neutra (OK), sempre com ícone SVG
-  `alerta` + texto — um único selo para lista, detalhe, relatório e painel.
+- **Decision** (revista na auditoria de 2026-10-20): **nenhum componente novo**. A cobertura usa
+  o ProgressBar da 001 (`components/barra_progresso.html`, `valor=cobertura_percentual`,
+  `maximo=100`, parâmetro opcional `sufixo="%"`, `tom` = `Situacao.variante`), que já desenha a
+  barra cheia acima do máximo e expõe `role="meter"`; a lista de cobertura do painel é um `<ul>`
+  desses componentes (`{% lista_cobertura %}`). O selo de situação é **o parcial único da 002**
+  (`produtos/partials/situacao.html` → `components/badge_estoque.html`), que já cobre SEM ESTOQUE
+  como selo composto mantendo "⚠ REPOSIÇÃO NECESSÁRIA" (contrato v1.1, constituição IV) — um
+  único selo para lista, detalhe, relatório e painel. A proposta original (`barra_cobertura.html`,
+  `bar_list.html` e selo SEM ESTOQUE só com "SEM ESTOQUE") duplicava componentes do design system
+  e omitia o texto obrigatório; foi substituída.
 - **Rationale**: constituição IV (tokens primeiro, alerta nunca só por cor); a barra é decorativa
   para leitores de tela porque o número já está no texto.
 - **Alternatives considered**: `<meter>` nativo (estilização inconsistente entre navegadores);
@@ -251,6 +258,14 @@ anotação `alerta` em `com_situacao()`, `QUANTIDADE_MAXIMA`, `cadastrar_produto
 
 > Não editei `docs/arquitetura.md` (regra do brief). Proponho ao coordenador:
 
+> **Status (auditoria 2026-10-20)**: consolidadas em `docs/arquitetura.md` v1.1, que prevalece
+> onde divergir: proposta 4 → nível de erro do toast é **`erro`** (não `perigo`); proposta 6 → o
+> contador é renderizado **dentro do contêiner `#badge-alertas`** da navegação (001); proposta 7
+> → **SEM ESTOQUE é selo composto que mantém "⚠ REPOSIÇÃO NECESSÁRIA"**; proposta 9 → o helper
+> **`eh_fragmento`** também exclui a restauração de histórico; proposta 10 → `origem=alertas` e
+> `quantidade` são implementados **pela 003**; proposta 11 → reconciliada: **`linha.html`** e
+> **`resumo.html`**. Propostas 1, 2, 3, 5 e 8 foram aceitas como escritas.
+
 1. **Nomes e dono das anotações de `ProdutoQuerySet`** — registrar no contrato que
    `com_situacao()` anota `alerta` (002) e `deficit`/`cobertura_percentual` (004, fórmulas de
    [data-model.md](data-model.md), com cast para `bigint`), e que o booleano **não** se chama
@@ -264,7 +279,7 @@ anotação `alerta` em `com_situacao()`, `QUANTIDADE_MAXIMA`, `cadastrar_produto
 3. **Parâmetro opcional `quantidade`** em `movimentacoes:nova`
    (`?produto=<id>&tipo=ENTRADA&quantidade=<n>`) para pré-preencher a sugestão de reposição no
    "+ Entrada" do relatório. Sem ele, a 004 funciona (a sugestão fica visível na linha).
-4. **Vocabulário de `toast.nivel`** — fixar `sucesso | info | alerta | perigo` (a 004 usa
+4. **Vocabulário de `toast.nivel`** — fixar `sucesso | info | alerta | ~~perigo~~ erro` (v1.1) (a 004 usa
    `alerta` para o aviso de reposição).
 5. **Rota de exportação** — registrar na tabela de rotas que `alertas:relatorio` aceita
    `?formato=csv`.
@@ -277,14 +292,15 @@ anotação `alerta` em `com_situacao()`, `QUANTIDADE_MAXIMA`, `cadastrar_produto
 8. **Ponto de extensão do toast da 003** — a 003 já centraliza o texto em
    `Movimentacao.mensagem_confirmacao`; registrar no contrato que a view e o comando `movimentar`
    o publicam via `alertas.regras.confirmacao_com_alerta(mov)` a partir da 004.
-9. **Helper de fragmento** — padronizar na 001 um helper `eh_fragmento(request)`
-   (`request.htmx and not request.htmx.boosted`) para todas as features.
+9. **Helper de fragmento** — padronizar na 001 um helper `eh_fragmento(request)` para todas as
+   features (v1.1: `request.htmx and not request.htmx.boosted and not
+   request.htmx.history_restore_request`).
 10. **`origem=alertas` em `movimentacoes:nova`** — acrescentar ao contrato de rotas o valor
     `alertas` do parâmetro `origem` (sucesso sem OOB de produto), usado pelo "+ Entrada" do
     relatório e do painel.
 11. **Divergência 002 × 003 nos nomes de parciais** — a 002 planeja `produtos/partials/linha.html`
-    e `resumo.html`; a 003 referencia `linha_produto.html` e `resumo_produto.html`. Não afeta a
-    004 (que só toca `situacao.html`), mas precisa ser reconciliada pelo coordenador.
+    e `resumo.html`; a 003 referenciava nomes diferentes. Reconciliada na v1.1 e na auditoria de
+    2026-10-20: valem `linha.html` e `resumo.html`.
 
 ## Riscos e mitigação
 

@@ -81,7 +81,9 @@ context processor `apps.core.context_processors.consus`.
 | `url` *(resolvido)* | str \| None | `reverse(rota)`; `None` em `NoReverseMatch` |
 | `disponivel` *(resolvido)* | bool | `url is not None` (FR-013) |
 | `ativo` *(resolvido)* | bool | conforme `secao` × `request.resolver_match` (FR-012) |
-| `badge_url` *(resolvido, só Alertas)* | str \| None | `reverse("alertas:contador")` ou `None` (FR-014) |
+
+O item Alertas sempre contém o contêiner vazio `#badge-alertas` (FR-014); o contador é
+renderizado dentro dele pela feature 004 (`{% contador_alertas %}`), sem dado de contexto da 001.
 
 Estados: `indisponível` → `disponível` (transição automática quando a feature registra a rota);
 `disponível` × `ativo`/`inativo` por requisição.
@@ -93,7 +95,7 @@ Fontes: cabeçalho `HX-Trigger` (evento `toast`) ou framework de mensagens do Dj
 | Campo | Tipo | Regra |
 |-------|------|-------|
 | `nivel` | enum | `sucesso` \| `info` \| `alerta` \| `erro` (inválido ⇒ tratado como `info` no cliente; no servidor, `disparar_toast` levanta `ValueError`) |
-| `texto` | str | 1–200 caracteres (fora disso, `disparar_toast` levanta `ValueError`), frase curta com ponto final, exibido como texto puro (`textContent` no cliente; escapado no servidor) |
+| `texto` | str | 1–200 caracteres (fora disso, `disparar_toast` levanta `ValueError`), frase curta, exibido como texto puro (`textContent` no cliente; escapado no servidor). Features que compõem textos com nomes de produto (até 120 caracteres) garantem o limite encurtando o nome (ver 003/004) |
 
 Mapeamento de mensagens do Django (`MESSAGE_TAGS`): `DEBUG→info`, `INFO→info`,
 `SUCCESS→sucesso`, `WARNING→alerta`, `ERROR→erro`.
@@ -141,4 +143,4 @@ Fonte: `apps/core/forms.py::FormularioExemplo` (não persiste nada; só demonstr
 | Campo | Tipo | Validação |
 |-------|------|-----------|
 | `nome` | `CharField(max_length=120)` | obrigatório, aparado; ajuda "Dado fictício — nada é salvo." |
-| `quantidade` | `IntegerField(min_value=1)` | obrigatório, inteiro ≥ 1 (mensagem: "Informe um número inteiro maior que zero.") |
+| `quantidade` | `IntegerField(min_value=1)` com aceitação só de dígitos (`^[0-9]+$` após aparar — mesma regra das features 002/003, contrato v1.1) | obrigatório, inteiro ≥ 1 (mensagem: "Informe um número inteiro maior que zero.") |
