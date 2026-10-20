@@ -9,7 +9,7 @@ pytestmark = pytest.mark.django_db
 
 def nav(resposta) -> str:
     conteudo = resposta.content.decode()
-    return re.search(r'<nav aria-label="Principal".*?</nav>', conteudo, re.S).group(0)
+    return re.search(r'<nav[^>]*aria-label="Principal".*?</nav>', conteudo, re.S).group(0)
 
 
 def itens(trecho: str) -> list[str]:
@@ -44,7 +44,7 @@ def test_fr013_secoes_sem_rota_aparecem_em_breve(client):
         assert item.startswith("<span")
         assert 'aria-disabled="true"' in item
         assert "(em breve)" in item
-        assert "href=" not in item
+        assert "href=" not in item.split(">", 1)[0]
 
 
 def test_fr013_secoes_com_rota_viram_links(client, urls_com_secoes):

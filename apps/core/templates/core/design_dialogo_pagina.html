@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% block titulo %}Exemplo de formulário{% endblock %}
+{% block head_extra %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+{% block sobretitulo %}Catálogo de design{% endblock %}
+{% block titulo_pagina %}Exemplo de formulário{% endblock %}
+{% block conteudo %}{% include "core/partials/design_dialogo.html" with url_voltar="/design/#dialogo" %}{% endblock %}

@@ -33,8 +33,9 @@ def test_fr011_estrutura_da_casca(resposta_painel):
     primeiro_focavel = re.search(r"<(a|button|input|select|textarea)\b[^>]*>", corpo).group(0)
     assert 'class="pular-conteudo"' in primeiro_focavel
     assert 'href="#conteudo"' in primeiro_focavel
-    assert re.search(r'<a[^>]+class="marca"[^>]+href="/"|<a[^>]+href="/"[^>]+class="marca"',
-                     conteudo)
+    assert re.search(
+        r'<a[^>]+class="marca"[^>]+href="/"|<a[^>]+href="/"[^>]+class="marca"', conteudo
+    )
     assert "Consus" in conteudo
     assert '<main id="conteudo"' in conteudo
     rodape = conteudo.split('class="rodape-app"', 1)[1]

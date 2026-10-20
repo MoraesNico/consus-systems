@@ -1,0 +1,7 @@
+<div class="barra-categorias">
+  <div class="barra-categorias__cabecalho"><span class="rotulo">{{ titulo }}</span><span class="texto-atenuado"><span class="mono">{{ total }}</span> {{ unidade }}</span></div>
+  <div class="barra-categorias__barra" aria-hidden="true">{% for s in segmentos %}{% if s.valor > 0 %}<span class="barra-categorias__segmento tom--{{ s.tom }}" style="--valor: {{ s.valor|unlocalize }}" title="{{ s.rotulo }}: {{ s.valor }}"></span>{% endif %}{% endfor %}</div>
+  <ul class="barra-categorias__legenda">
+    {% for s in segmentos %}<li><span class="amostra tom--{{ s.tom }}" aria-hidden="true"></span>{{ s.rotulo }} <span class="mono">{{ s.valor }}</span> <span class="texto-sutil mono">({{ s.valor|porcentagem:total }}%)</span></li>{% endfor %}
+  </ul>
+</div>

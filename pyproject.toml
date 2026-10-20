@@ -27,16 +27,21 @@ package = false
 [tool.ruff]
 target-version = "py313"
 line-length = 100
-extend-exclude = ["**/migrations/**"]
+extend-exclude = ["**/migrations/**", "specs", "docs", ".specify", ".claude"]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "UP", "B", "DJ", "SIM"]
+
+[tool.ruff.lint.per-file-ignores]
+# Tabela espelho do design system: uma linha por par facilita a revisão.
+"apps/core/design_tokens.py" = ["E501"]
 
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "config.settings"
 testpaths = ["apps"]
 python_files = ["test_*.py"]
 addopts = '-m "not docker" --cov --cov-report=term-missing:skip-covered'
+filterwarnings = ["ignore:No directory at:UserWarning"]
 markers = [
     "docker: integração com Docker Compose (opt-in, `pytest -m docker`)",
     "postgres: exige PostgreSQL (pulado automaticamente no SQLite)",

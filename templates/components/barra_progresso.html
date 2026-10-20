@@ -1,0 +1,4 @@
+<div class="barra-progresso" role="meter" aria-label="{{ rotulo }}" aria-valuenow="{{ valor|unlocalize }}" aria-valuemin="0" aria-valuemax="{{ maximo|unlocalize }}" aria-valuetext="{{ valor }} de {{ maximo }}">
+  <div class="barra-progresso__textos"><span>{{ rotulo }}</span><span class="barra-progresso__valor">{{ valor }} / {{ maximo }}</span></div>
+  <div class="barra-progresso__trilha" aria-hidden="true"><div class="barra-progresso__preenchimento tom--{{ tom|default:'acento' }}" style="--valor: {{ valor|porcentagem:maximo }}"></div></div>
+</div>

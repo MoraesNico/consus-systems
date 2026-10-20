@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block titulo %}Painel{% endblock %}
+{% block titulo_pagina %}Painel{% endblock %}
+{% block descricao %}Visão geral do estoque.{% endblock %}
+{% block conteudo %}
+<section id="painel-kpis" aria-labelledby="painel-kpis-titulo">
+  <h2 id="painel-kpis-titulo" class="visualmente-oculto">Indicadores</h2>
+  {% include "components/estado_vazio.html" with icone="layout-dashboard" titulo="Os indicadores aparecem aqui" descricao="Assim que houver produtos cadastrados, o Painel mostra saldo, alertas de reposição e movimentações recentes." acao_rotulo="Cadastrar produto" acao_url=url_cadastro_produto %}
+</section>
+{% endblock %}

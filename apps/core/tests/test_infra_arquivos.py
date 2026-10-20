@@ -10,15 +10,27 @@ ENTRYPOINT = (RAIZ / "entrypoint.sh").read_text()
 ENV_EXEMPLO = (RAIZ / ".env.example").read_text()
 
 VARIAVEIS = [
-    "DJANGO_SECRET_KEY", "DJANGO_DEBUG", "DJANGO_ALLOWED_HOSTS", "DJANGO_CSRF_TRUSTED_ORIGINS",
-    "DATABASE_URL", "DATABASE_CONNECT_TIMEOUT", "DJANGO_LOG_LEVEL", "DJANGO_SECURE_COOKIES",
-    "WEB_CONCURRENCY", "CONSUS_PORTA", "POSTGRES_DB", "POSTGRES_USER", "POSTGRES_PASSWORD",
+    "DJANGO_SECRET_KEY",
+    "DJANGO_DEBUG",
+    "DJANGO_ALLOWED_HOSTS",
+    "DJANGO_CSRF_TRUSTED_ORIGINS",
+    "DATABASE_URL",
+    "DATABASE_CONNECT_TIMEOUT",
+    "DJANGO_LOG_LEVEL",
+    "DJANGO_SECURE_COOKIES",
+    "WEB_CONCURRENCY",
+    "CONSUS_PORTA",
+    "POSTGRES_DB",
+    "POSTGRES_USER",
+    "POSTGRES_PASSWORD",
 ]
 
 
 def servico(nome: str) -> str:
     """Bloco YAML de um serviço (até o próximo serviço de mesma indentação)."""
-    return re.search(rf"\n  {nome}:\n(.*?)(?=\n  \w[\w-]*:\n|\nvolumes:|\Z)", COMPOSE, re.S).group(1)
+    return re.search(rf"\n  {nome}:\n(.*?)(?=\n  \w[\w-]*:\n|\nvolumes:|\Z)", COMPOSE, re.S).group(
+        1
+    )
 
 
 def estagio(nome: str) -> str:

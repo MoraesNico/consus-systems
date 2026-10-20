@@ -15,10 +15,29 @@ FONTES = [
     "IBMPlexMono-SemiBold-Latin1.woff2",
 ]
 ICONES = [
-    "layout-dashboard", "package", "arrow-left-right", "bell", "triangle-alert", "circle-check",
-    "info", "octagon-x", "circle-alert", "arrow-down-to-line", "arrow-up-from-line", "arrow-up",
-    "arrow-down", "arrow-right", "plus", "search", "x", "chevron-left", "chevron-right",
-    "chevron-down", "inbox", "loader-circle", "activity",
+    "layout-dashboard",
+    "package",
+    "arrow-left-right",
+    "bell",
+    "triangle-alert",
+    "circle-check",
+    "info",
+    "octagon-x",
+    "circle-alert",
+    "arrow-down-to-line",
+    "arrow-up-from-line",
+    "arrow-up",
+    "arrow-down",
+    "arrow-right",
+    "plus",
+    "search",
+    "x",
+    "chevron-left",
+    "chevron-right",
+    "chevron-down",
+    "inbox",
+    "loader-circle",
+    "activity",
 ]
 URL_EXTERNA = re.compile(r"""(?:src|href)=["'](?:https?:)?//|url\(\s*["']?(?:https?:)?//""")
 

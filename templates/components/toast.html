@@ -1,0 +1,5 @@
+<div class="toast toast--{{ nivel|default:'info' }}" data-toast>
+  <span class="toast__icone" data-toast-icone>{% if nivel == "sucesso" %}{% icone "circle-check" tamanho="md" %}{% elif nivel == "alerta" %}{% icone "triangle-alert" tamanho="md" %}{% elif nivel == "erro" %}{% icone "octagon-x" tamanho="md" %}{% else %}{% icone "info" tamanho="md" %}{% endif %}</span>
+  <p class="toast__texto" data-toast-texto>{{ texto }}</p>
+  <button type="button" class="botao botao--fantasma botao--icone botao--xs" aria-label="Fechar notificação" data-toast-fechar>{% icone "x" %}</button>
+</div>

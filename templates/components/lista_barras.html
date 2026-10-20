@@ -1,0 +1,19 @@
+<div class="lista-barras">
+  <div class="lista-barras__cabecalho"><span class="rotulo">{{ titulo }}</span><span class="rotulo">{{ rotulo_valor }}</span></div>
+  {% if itens %}
+    {% with maximo=itens.0.valor %}
+    <ul class="lista-barras__itens">
+      {% for item in itens %}
+        <li>
+          {% if item.href %}<a class="lista-barras__item" href="{{ item.href }}">{% else %}<div class="lista-barras__item">{% endif %}
+            <span class="lista-barras__trilha"><span class="lista-barras__barra" style="--valor: {% if item.valor > 0 %}{% with p=item.valor|porcentagem:maximo %}{% if p < 2 %}2{% else %}{{ p }}{% endif %}{% endwith %}{% else %}0{% endif %}" aria-hidden="true"></span><span class="lista-barras__rotulo" title="{{ item.rotulo }}">{{ item.rotulo }}</span></span>
+            <span class="lista-barras__valor">{{ item.valor }}<span class="visualmente-oculto"> {{ rotulo_valor|lower }}</span></span>
+          {% if item.href %}</a>{% else %}</div>{% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+    {% endwith %}
+  {% else %}
+    {% include "components/estado_vazio.html" with icone="inbox" titulo="Sem dados no período" descricao="" acao_rotulo="" compacto=True %}
+  {% endif %}
+</div>
