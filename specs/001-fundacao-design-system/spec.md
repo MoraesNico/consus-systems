@@ -222,6 +222,14 @@ terminam com sucesso e que a cobertura é reportada.
   de erro estilizada orientando a recarregar (FR-039).
 - Fontes locais não carregadas: o texto aparece imediatamente na fonte de sistema substituta
   (sem texto invisível) e troca quando a fonte carrega (FR-026).
+- Ícones não carregados (sprite indisponível): badges, toasts e botões continuam legíveis porque o
+  texto nunca é substituído pelo ícone (FR-028, FR-029).
+- Modo de cores forçadas/alto contraste do sistema: o navegador remove sombras e fundos; bordas,
+  foco e textos dos alertas continuam visíveis (FR-025).
+- Falha ao aplicar migrações na subida: a aplicação não sobe servindo um esquema inconsistente;
+  o contêiner encerra com o erro no log (FR-002).
+- Texto de toast longo demais (> 200 caracteres) emitido por uma feature: rejeitado no servidor
+  como erro de programação (FR-015).
 
 ## Requirements *(mandatory)*
 
@@ -234,7 +242,9 @@ terminam com sucesso e que a cobertura é reportada.
   de contêineres a partir de um clone limpo, exigindo apenas a cópia do arquivo de exemplo de
   variáveis de ambiente.
 - **FR-002**: Na inicialização, o sistema MUST aplicar automaticamente as migrações pendentes do
-  banco e disponibilizar os arquivos estáticos, sem passo manual.
+  banco e disponibilizar os arquivos estáticos, sem passo manual. Se as migrações não puderem ser
+  aplicadas (esgotadas as tentativas de espera pelo banco ou erro na migração), a aplicação MUST
+  NOT começar a atender requisições e MUST encerrar com o erro registrado no log.
 - **FR-003**: A aplicação MUST aguardar o banco aceitar conexões antes de iniciar e MUST NOT
   falhar por causa da ordem de inicialização dos serviços.
 - **FR-004**: Toda configuração MUST vir de variáveis de ambiente — no mínimo: chave secreta,
@@ -277,6 +287,7 @@ terminam com sucesso e que a cobertura é reportada.
   texto e cor próprios; toasts MUST poder ser disparados tanto por respostas parciais (evento
   `toast` com nível e texto) quanto por mensagens do servidor após um redirecionamento de página
   inteira; sem JavaScript, as mensagens MUST aparecer como avisos estáticos no topo do conteúdo.
+  O texto de um toast MUST ter de 1 a 200 caracteres e ser exibido como texto puro (sem HTML).
 - **FR-016**: Toasts de sucesso e info MUST sumir após 5 segundos (pausando enquanto o ponteiro
   ou o foco estiverem sobre eles); toasts de alerta e erro MUST permanecer até serem fechados;
   todo toast MUST ter botão de fechar com nome acessível; no máximo 3 toasts MUST ficar visíveis
@@ -324,7 +335,10 @@ terminam com sucesso e que a cobertura é reportada.
   limites de componentes, indicador de foco e marcas gráficas) — verificação automática a partir
   do arquivo de tokens.
 - **FR-025**: Todo elemento interativo MUST exibir indicador de foco visível de pelo menos 2 px
-  com contraste ≥ 3:1; o indicador MUST NOT ser removido sem substituto.
+  com contraste ≥ 3:1; o indicador MUST NOT ser removido sem substituto. No modo de cores
+  forçadas do sistema operacional (alto contraste), bordas de componentes, indicador de foco e o
+  contorno dos badges MUST continuar visíveis, e nenhuma informação MUST depender de sombra ou de
+  cor de fundo.
 - **FR-026**: As famílias tipográficas (sans e mono) MUST ser servidas localmente e exibir texto
   imediatamente com fonte substituta enquanto carregam; números em tabelas e indicadores MUST
   usar a fonte mono com algarismos de largura fixa, alinhados à direita em tabelas.
@@ -340,7 +354,8 @@ terminam com sucesso e que a cobertura é reportada.
   desenhado (não emoji), o texto "REPOSIÇÃO NECESSÁRIA" em caixa alta e a cor de alerta — nunca
   apenas cor — e ser o elemento de maior destaque visual da linha ou cartão em que aparece; o
   estado SEM ESTOQUE MUST manter o texto "REPOSIÇÃO NECESSÁRIA" e acrescentar a indicação "SEM
-  ESTOQUE".
+  ESTOQUE". O texto do alerta MUST continuar visível e compreensível mesmo que o ícone não
+  carregue.
 - **FR-029**: Ícones MUST vir de um único conjunto de ícones vetoriais servido localmente;
   ícones decorativos MUST ser ocultos de tecnologias assistivas e ícones sem texto ao lado MUST
   ter nome acessível; emojis MUST NOT ser usados como ícones.

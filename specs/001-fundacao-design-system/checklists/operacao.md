@@ -39,7 +39,7 @@
 - [x] CHK016 Há requisito para queda do banco com a aplicação já no ar? [Coverage, Edge Cases, US3]
 - [x] CHK017 Há requisito para persistência de dados entre reinicializações? [Coverage, Spec §FR-007]
 - [x] CHK018 O conflito de porta no host está tratado? [Edge Case, Spec §FR-004]
-- [ ] CHK019 Há requisito para o que ocorre se uma migração falhar na subida (a aplicação não deve iniciar servindo com esquema inconsistente)? [Edge Case, Gap]
+- [x] CHK019 Há requisito para o que ocorre se uma migração falhar na subida (a aplicação não deve iniciar servindo com esquema inconsistente)? [Edge Case, Gap]
 - [x] CHK020 O comportamento sem variável de conexão (desenvolvimento local) está definido? [Coverage, Spec §FR-006]
 
 ## Non-Functional Requirements
@@ -60,5 +60,5 @@
 - Leave items unchecked when they still require clarification, correction, or reviewer evaluation
 - `/speckit-implement` reads checklist checkbox state as a gate and must not modify markers
 - `checklists/requirements.md` has a separate built-in lifecycle maintained by `/speckit-specify` and `/speckit-clarify`
-- Avaliação 2026-10-20: 25/26 atendidos. Pendência: CHK019 (falha de migração na subida) —
-  tratada na autoanálise.
+- Avaliação 2026-10-20: 25/26 atendidos na geração. CHK019 resolvido em seguida na spec
+  (FR-002 e Edge Cases): 26/26.

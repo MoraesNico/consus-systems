@@ -17,7 +17,8 @@
 
 1. [Personalidade e princípios](#1-personalidade-e-princípios)
 2. [Tokens](#2-tokens) — cor · tipografia · espaçamento · tamanhos · bordas e raios · sombras ·
-   foco · grid e layout · tabela · camadas (z-index) · movimento · opacidade · iconografia
+   foco · grid e layout · tabela · camadas (z-index) · movimento · opacidade · iconografia ·
+   cores forçadas
 3. [Contraste (WCAG 2.1 AA)](#3-contraste-wcag-21-aa)
 4. [Componentes](#4-componentes) — botão · campo · tabela densa · badge (status, semântico,
    delta) · cartão · KPI card · BarList · CategoryBar · Tracker · ProgressBar · diálogo · toast ·
@@ -367,6 +368,22 @@ Desabilitado **não** usa opacidade (usa cores próprias, para manter legibilida
 | `inbox` | estado vazio genérico |
 | `loader-circle` | carregando |
 | `activity` | saúde |
+
+Ícone **nunca substitui texto** em status: se o sprite não carregar, badges, toasts e botões
+continuam legíveis (o texto é obrigatório; o ícone é reforço).
+
+### 2.14 Modo de cores forçadas (alto contraste do sistema)
+
+No `@media (forced-colors: active)` o navegador substitui as cores do autor por cores do sistema e
+**remove sombras e imagens de fundo**. Regras:
+
+- `tokens.css` redefine `--color-border: CanvasText` e `--focus-color: Highlight` dentro desse
+  bloco (cores de sistema só são permitidas em `tokens.css`).
+- Todo componente cujo significado dependa de fundo (badges, botões preenchidos, segmentos de
+  barra) **tem borda** — no modo forçado a borda permanece e delimita o objeto.
+- Barras de destaque feitas com `box-shadow` (linha de tabela em alerta) somem nesse modo; por
+  isso nunca são a única pista (o badge com texto continua na linha).
+- O foco usa `outline` (preservado no modo forçado), nunca `box-shadow`.
 
 ---
 
@@ -944,7 +961,8 @@ primária "Voltar ao Painel". A 500 não depende de banco nem de contexto e usa 
 calculado a partir de `tokens.css`; (2) nenhum arquivo CSS além de `tokens.css` contém cor
 literal (`#hex`, `rgb()`, `hsl()`, nomes de cor) nem medida literal em `px`/`rem`/`em` diferente
 de 0 (exceto prelúdios de `@media` com comentário do token); (3) componentes não usam
-`--palette-*`; (4) `/design/` exibe todos os componentes desta seção. Comando para humanos:
+`--palette-*`; (4) `/design/` exibe todos os componentes desta seção; (5) `tokens.css` contém os
+blocos `prefers-reduced-motion` e `forced-colors`. Comando para humanos:
 `python manage.py checar_contraste` (imprime a tabela da §3 recalculada).
 
 **Catálogo vivo:** `/design/` mostra cada token (amostra, nome, valor, contraste calculado) e cada

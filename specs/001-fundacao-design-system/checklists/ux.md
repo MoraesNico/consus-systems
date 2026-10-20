@@ -25,7 +25,7 @@
 - [x] CHK007 Os três estados do badge de estoque e o texto obrigatório de cada um estão definidos? [Completeness, Spec §FR-028]
 - [x] CHK008 Estão definidos os requisitos de estado vazio do Painel, incluindo mensagem e ação? [Completeness, Spec §FR-022]
 - [x] CHK009 Estão especificados os estados de carregamento dos controles e regiões que fazem requisições parciais? [Completeness, Spec §FR-027 → design-system §4.1/§4.3]
-- [ ] CHK010 O tamanho máximo do texto de um toast está definido na spec (e não só no data-model)? [Gap, data-model §5]
+- [x] CHK010 O tamanho máximo do texto de um toast está definido na spec (e não só no data-model)? [Gap, data-model §5]
 - [x] CHK011 O conteúdo do catálogo `/design/` (seções de tokens + todos os componentes + trechos de uso) está enumerado? [Completeness, Spec §FR-031, SC-004]
 
 ## Requirement Clarity
@@ -66,8 +66,8 @@
 - [x] CHK033 Está definido o comportamento com mais de 3 toasts simultâneos? [Edge Case, Spec §FR-016]
 - [x] CHK034 Está definido o que o usuário vê enquanto as fontes locais não carregam? [Edge Case, Spec §FR-026]
 - [x] CHK035 Está definido o comportamento com preferência por movimento reduzido? [Edge Case, Spec §FR-030]
-- [ ] CHK036 Está definido o comportamento quando o sprite de ícones não carrega (ícones obrigatórios do alerta)? [Edge Case, Gap]
-- [ ] CHK037 Há requisitos para o modo de cores forçadas/alto contraste do sistema operacional? [Edge Case, Gap]
+- [x] CHK036 Está definido o comportamento quando o sprite de ícones não carrega (ícones obrigatórios do alerta)? [Edge Case, Gap]
+- [x] CHK037 Há requisitos para o modo de cores forçadas/alto contraste do sistema operacional? [Edge Case, Gap]
 
 ## Non-Functional Requirements (Acessibilidade)
 
@@ -88,6 +88,6 @@
 - Leave items unchecked when they still require clarification, correction, or reviewer evaluation
 - `/speckit-implement` reads checklist checkbox state as a gate and must not modify markers
 - `checklists/requirements.md` has a separate built-in lifecycle maintained by `/speckit-specify` and `/speckit-clarify`
-- Avaliação 2026-10-20: 41/44 atendidos. Pendências: CHK010 (limite de texto do toast só no
-  data-model), CHK036 (falha do sprite de ícones), CHK037 (cores forçadas) — tratadas na
-  autoanálise (`/speckit-analyze`).
+- Avaliação 2026-10-20: 41/44 atendidos na geração. CHK010, CHK036 e CHK037 resolvidos em
+  seguida na spec (FR-015, FR-028/FR-029 e Edge Cases, FR-025) e no design system (§2.13, §2.14):
+  44/44.
