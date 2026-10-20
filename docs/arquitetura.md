@@ -139,7 +139,7 @@ quando a saída deixaria o saldo negativo.
 
 ## Decisões consolidadas (v1.1 — 2026-10-20)
 
-Consolidação das propostas registradas nos `research.md` das features 002, 003 e 004.
+Consolidação das propostas registradas nos `research.md` das features 001, 002, 003 e 004.
 Onde as propostas divergiam, vale a coluna **Decisão**; specs, planos e tarefas devem usar
 exatamente estes nomes.
 
@@ -152,7 +152,7 @@ exatamente estes nomes.
 | Limites | `produtos.models.QUANTIDADE_MAXIMA = 2_147_483_647` (teto de saldo, quantidade inicial e estoque mínimo). Quantidade por Entrada/Saída: 1 a 1.000.000. Campos aceitam só dígitos (`"1.000"`, `"2,5"`, `"+5"` são recusados). |
 | Serviços de produto | `cadastrar_produto(*, nome, quantidade_inicial, estoque_minimo) -> Produto`; `editar_produto(*, produto_id, nome, estoque_minimo) -> Produto` (salva com `update_fields`, nunca sobrescreve `quantidade_atual`). |
 | Situação (regra única) | `ProdutoQuerySet.em_alerta()`, `sem_alerta()`, `com_situacao()` → anota `alerta` (bool, 002), `deficit` e `cobertura_percentual` (004, com `Cast(..., BigIntegerField())`). Propriedades do modelo: `em_alerta` (bool) e `situacao` (`"alerta"`/`"ok"`). Proibido criar propriedades `alerta`, `deficit` ou `cobertura_percentual` no modelo (colidem com as anotações). |
-| Variações do selo | `produtos/partials/situacao.html` é o selo único do sistema: `OK`, `⚠ REPOSIÇÃO NECESSÁRIA` (quantidade ≤ mínimo) e `SEM ESTOQUE` (quantidade 0 — forma mais grave do mesmo alerta). |
+| Variações do selo | `produtos/partials/situacao.html` é o selo único do sistema: `OK`, `⚠ REPOSIÇÃO NECESSÁRIA` (quantidade ≤ mínimo) e `SEM ESTOQUE` (quantidade 0 — forma mais grave: selo composto que mantém o texto "REPOSIÇÃO NECESSÁRIA"). Visual definido em `docs/design/design-system.md`. |
 | Exceções da 003 | `MovimentacaoError` (base) → `MovimentacaoInvalidaError`, `EstoqueInsuficienteError` (`disponivel`, `solicitado`), `SaldoMaximoExcedidoError`; `MovimentacaoImutavelError` no modelo. |
 | Mensagens | `Movimentacao.mensagem_confirmacao` (003) enriquecida por `alertas.regras.confirmacao_com_alerta(mov)` (004) quando a situação piora ou melhora. |
 | Dados de demonstração | `popular_demo` usa apenas `cadastrar_produto` e `registrar_movimentacao`; nunca grava `quantidade_atual` diretamente. |
@@ -161,6 +161,7 @@ exatamente estes nomes.
 
 | Tema | Decisão |
 |------|---------|
+| Helpers HTMX (001) | `apps/core/htmx.py`: `eh_fragmento(request)`, `disparar_evento(response, nome, dados=None)` e `disparar_toast(response, nivel, texto)` (acumulam em um único `HX-Trigger`). Formulários usam o `FORM_RENDERER` do projeto. Botões e tabelas são classes CSS do design system, não templates. |
 | Fragmento × página | Helper `apps.core.htmx.eh_fragmento(request)` = `request.htmx and not request.htmx.boosted and not request.htmx.history_restore_request`. Views com variantes declaram `Vary: HX-Request, HX-Target`. |
 | Validação | Erro de formulário responde **422** em todas as variantes (001 configura o HTMX para trocar 422). |
 | Parâmetros de lista | `q`, `situacao`, `ordem` (prefixo `-` = decrescente, lista branca) e **`pagina`** em todas as listas (não `page`). |
@@ -169,7 +170,7 @@ exatamente estes nomes.
 | Evento `fechar-dialogo` | Via `HX-Trigger`; `static/js/consus.js` (001) fecha o `<dialog id="dialogo">`. |
 | Evento `toast` | `{nivel, texto}` com `nivel ∈ {sucesso, info, alerta, erro}`. |
 | Atalhos | `data-atalho="<tecla>"` tratado genericamente por `consus.js` (001); `/` foca a busca, `n` abre novo produto. |
-| Pontos fixos do `base.html` (001) | `<dialog id="dialogo">`, região de toasts `#toasts` (`aria-live="polite"`), região visualmente oculta `#anuncio-alertas` (`role="status"`), item de menu "Alertas" com o slot `{% contador_alertas %}` (tag da 004; placeholder vazio antes dela). |
+| Pontos fixos do `base.html` (001) | `<dialog id="dialogo">`, região de toasts `#toasts` (`aria-live="polite"`), região visualmente oculta `#anuncio-alertas` (`role="status"`), item de menu "Alertas" com o contêiner `<span id="badge-alertas">` onde a 004 renderiza `{% contador_alertas %}` (vazio antes dela). Itens de menu cujas rotas ainda não existem aparecem como "(em breve)" e viram link automaticamente quando a rota é registrada. |
 | Contador de alertas | `#contador-alertas` com `hx-get="/alertas/contador/?anterior=<n>"`, `hx-trigger="every 30s, estoque-alterado from:body"`; responde 204 quando nada mudou. |
 | Diálogo de movimentação | `movimentacoes:nova` aceita `origem` (`pagina`, `lista`, `detalhe`, `alertas`) e `quantidade` opcional (pré-preenche a sugestão de reposição). |
 | CSV | `alertas:relatorio?formato=csv` — separador `;`, UTF-8 com BOM, proteção contra injeção de fórmula. |
