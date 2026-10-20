@@ -12,7 +12,7 @@ from django.views.decorators.http import require_http_methods, require_safe
 
 from . import design_tokens
 from .forms import FormularioExemplo
-from .htmx import NIVEIS_TOAST, disparar_toast, eh_fragmento, fechar_dialogo
+from .htmx import NIVEIS_TOAST, disparar_evento, disparar_toast, eh_fragmento
 from .navegacao import url_se_existir
 from .selectors import estado_saude
 
@@ -188,7 +188,7 @@ def _design_post(request):
             raise SuspiciousOperation("Nível de toast inválido.")
         texto = f"Exemplo de toast de {nivel}."
         if eh_fragmento(request):
-            return disparar_toast(HttpResponse(status=204), texto, nivel)
+            return disparar_toast(HttpResponse(status=204), nivel, texto)
         nivel_django = {
             "sucesso": messages.SUCCESS,
             "info": messages.INFO,
@@ -203,7 +203,9 @@ def _design_post(request):
             return _render_dialogo(request, form, status=422)
         texto = f"Exemplo enviado: {form.cleaned_data['nome']} × {form.cleaned_data['quantidade']}."
         if eh_fragmento(request):
-            return disparar_toast(fechar_dialogo(HttpResponse()), texto)
+            return disparar_toast(
+                disparar_evento(HttpResponse(), "fechar-dialogo"), "sucesso", texto
+            )
         messages.success(request, texto)
         return redirect("/design/#dialogo")
     raise SuspiciousOperation("Exemplo desconhecido.")

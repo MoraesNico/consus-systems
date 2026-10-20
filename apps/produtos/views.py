@@ -16,7 +16,7 @@ from django.views.decorators.http import require_http_methods, require_safe
 from django.views.decorators.vary import vary_on_headers
 from django_htmx.http import HttpResponseClientRedirect, push_url, reswap, retarget
 
-from apps.core.htmx import disparar_evento, disparar_toast, eh_fragmento, fechar_dialogo
+from apps.core.htmx import disparar_evento, disparar_toast, eh_fragmento
 
 from .forms import ProdutoEdicaoForm, ProdutoForm
 from .models import Produto
@@ -118,7 +118,8 @@ def _sucesso_cadastro(request, produto: Produto, no_dialogo: bool):
         resposta = render(request, "produtos/partials/sucesso_cadastro.html", contexto)
         resposta = push_url(reswap(retarget(resposta, "#resultados"), "outerHTML"), url_lista)
         disparar_evento(resposta, "estoque-alterado", {"produto_id": produto.pk})
-        return disparar_toast(fechar_dialogo(resposta), texto)
+        disparar_evento(resposta, "fechar-dialogo")
+        return disparar_toast(resposta, "sucesso", texto)
     messages.success(request, texto)
     request.session[CHAVE_DESTAQUE] = produto.pk
     if no_dialogo:

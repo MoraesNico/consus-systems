@@ -197,7 +197,7 @@
       {% endfor %}
     </div>
     <div class="pilha pilha--compacta">{% for nivel in niveis_toast %}{% include "components/toast.html" with nivel=nivel texto="Exemplo de toast." %}{% endfor %}</div>
-    <pre class="catalogo__codigo"><code>disparar_toast(resposta, "Produto cadastrado.", "sucesso")</code></pre>
+    <pre class="catalogo__codigo"><code>disparar_toast(resposta, "sucesso", "Produto cadastrado.")</code></pre>
   </section>
 
   <section id="aviso" class="catalogo__secao" aria-labelledby="titulo-aviso">
