@@ -2,6 +2,7 @@
 {% block titulo %}Transações{% endblock %}
 {% block sobretitulo %}Financeiro{% endblock %}
 {% block titulo_pagina %}Histórico de transações{% endblock %}
+{% block acoes %}<a class="botao botao--secundario" href="{% url 'financeiro:painel' %}">{% icone "wallet" %}Painel financeiro</a>{% endblock %}
 {% block descricao %}Cada entrada é uma despesa (quantidade × custo) e cada saída é uma receita (quantidade × venda). Valores congelados no momento da movimentação.{% endblock %}
 {% block conteudo %}
 <div class="pilha">

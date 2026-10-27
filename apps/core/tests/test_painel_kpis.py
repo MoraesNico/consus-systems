@@ -94,5 +94,5 @@ def test_fr022_fragmento_htmx_e_auto_atualizacao(client, estoque):
 
 def test_painel_consultas_limitadas(client, estoque, django_assert_max_num_queries):
     """SC-005: no máximo 7 consultas na página completa do painel."""
-    with django_assert_max_num_queries(7):
+    with django_assert_max_num_queries(9):  # 7 da 004 + 2 da faixa financeira (009)
         client.get("/")

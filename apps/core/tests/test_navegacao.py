@@ -17,10 +17,16 @@ def itens(trecho: str) -> list[str]:
 
 
 def test_fr012_ordem_e_item_ativo_no_painel(client):
-    """FR-012: Painel, Produtos, Movimentações, Alertas; em / só Painel é ativo."""
+    """FR-012: Painel, Produtos, Movimentações, Financeiro, Alertas; em / só Painel é ativo."""
     trecho = nav(client.get("/"))
     rotulos = [re.sub(r"<[^>]+>|\(em breve\)", "", item).split() for item in itens(trecho)]
-    assert [r[0] for r in rotulos] == ["Painel", "Produtos", "Movimentações", "Alertas"]
+    assert [r[0] for r in rotulos] == [
+        "Painel",
+        "Produtos",
+        "Movimentações",
+        "Financeiro",
+        "Alertas",
+    ]
     assert trecho.count('aria-current="page"') == 1
     assert 'aria-current="page"' in itens(trecho)[0]
 
@@ -50,7 +56,7 @@ def test_fr013_secoes_sem_rota_aparecem_em_breve(client, urls_sem_secoes):
 def test_fr013_secoes_com_rota_viram_links(client, urls_com_secoes):
     """FR-013: registrar a rota é suficiente para o item virar link."""
     lista = itens(nav(client.get("/")))
-    esperados = ["/produtos/", "/movimentacoes/", "/alertas/"]
+    esperados = ["/produtos/", "/movimentacoes/", "/financeiro/", "/alertas/"]
     for item, url in zip(lista[1:], esperados, strict=True):
         assert item.startswith("<a")
         assert f'href="{url}"' in item
