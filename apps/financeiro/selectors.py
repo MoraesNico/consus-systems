@@ -9,7 +9,7 @@ from django.db.models.functions import Coalesce, TruncDate, TruncMonth
 from django.urls import reverse
 from django.utils import timezone
 
-from apps.core.dinheiro import ZERO, DinheiroField
+from apps.core.dinheiro import ZERO, DinheiroField, formatar_moeda
 from apps.core.periodos import Periodo
 from apps.produtos.models import Produto
 
@@ -80,6 +80,29 @@ class ResumoFinanceiro:
     @property
     def caixa_negativo(self) -> bool:
         return self.saldo_caixa < 0
+
+    @property
+    def meta_lucro(self) -> str:
+        if self.margem_realizada_percentual is None:
+            return "receita − custo das vendas (CPV)"
+        margem = str(self.margem_realizada_percentual).replace(".", ",")
+        return f"receita − CPV · margem realizada {margem}%"
+
+    @property
+    def meta_estoque(self) -> str:
+        if self.produtos_preco_pendente:
+            return f"Σ quantidade × custo · {self.produtos_preco_pendente} com preço pendente"
+        return "Σ quantidade × preço de custo"
+
+    @property
+    def meta_saldo(self) -> str:
+        sufixo = " · CAIXA NEGATIVO" if self.caixa_negativo else ""
+        return f"despesas {formatar_moeda(self.despesas)}{sufixo}"
+
+    @property
+    def passo_rotulos(self) -> int:
+        """Mostra no máximo ~10 rótulos no eixo do gráfico."""
+        return max(1, -(-len(self.serie_fluxo) // 10))
 
     @property
     def maior_valor_serie(self) -> Decimal:

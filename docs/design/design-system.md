@@ -1,6 +1,6 @@
 # Consus — Design System
 
-**High-Density Neo-Brutalism Sóbrio / Swiss Grid Enterprise** · versão **1.1.0** · 2026-10-20
+**High-Density Neo-Brutalism Sóbrio / Swiss Grid Enterprise** · versão **2.0.0** · 2026-10-27 (paleta "sóbria" e movimento da Parte 2)
 (1.1.0 — auditoria de especificações: parâmetro opcional `sufixo` no ProgressBar, classe
 `.contador-alertas` do badge da navegação, paginação com `hx-swap="outerHTML"`; sem mudança de
 token nem de contraste)
@@ -78,14 +78,27 @@ Neutros "tinta" — matiz fixa ≈ 40° (quente), saturação crescente para as 
 | `--palette-neutral-800` | `#36332D` | 40° 9% 19% | (reserva) |
 | `--palette-neutral-900` | `#1A1814` | 40° 13% 9% | tinta |
 
-Acento "ultramar" e semânticas (4 tons cada, RUI-17):
+Acento "azul-tinta" e semânticas terrosas — **paleta v2 "sóbria"** (4 tons cada, RUI-17):
 
 | Família | `-50` (fundo sutil) | base (preenchimento) | `strong`/`hover` | `ink` (texto sobre `-50`) |
 |---------|--------------------|----------------------|------------------|---------------------------|
-| `--palette-blue-*` (acento/info) | `-50` `#E6E9FA` | `-600` `#2337C6` | `-700` `#1B2A9E` | `-700` `#1B2A9E` |
-| `--palette-green-*` (sucesso) | `-50` `#E3F2E7` | `-700` `#1F7A3E` | — | `-900` `#14532B` |
-| `--palette-amber-*` (alerta) | `-50` `#FFF3CC` | `-400` `#F2B300` | `-700` `#A87400` | `-900` `#6B4400` |
-| `--palette-red-*` (perigo) | `-50` `#FCE8E6` | `-600` `#C4261D` | `-700` `#A11F17` | `-800` `#8F1A13` |
+| `--palette-blue-*` (acento/info) | `-50` `#E9EDF3` | `-600` `#2F4A78` | `-700` `#233960` | `-700` `#233960` |
+| `--palette-green-*` (sucesso/receita) | `-50` `#E7EEE4` | `-700` `#3B6A3E` | — | `-900` `#24452A` |
+| `--palette-amber-*` (alerta) | `-50` `#F6EEDB` | `-400` `#C99A3E` | `-700` `#8A6420` | `-900` `#553C0E` |
+| `--palette-red-*` (perigo/despesa) | `-50` `#F5E6E2` | `-600` `#A3402F` | `-700` `#873325` | `-800` `#6F2A1F` |
+| `--palette-slate-400` / `--palette-sand-400` | — | `#7D8BA3` / `#B9A57E` | — | — (só séries de gráfico) |
+
+**Por que cada cor (v2.0.0).** A v1 usava ultramar saturado e amarelo-sinal. Em telas densas de
+números, isso cansava e competia com os dados. A v2 mantém os **mesmos nomes semânticos** e troca só as primitivas:
+
+- **Azul-tinta `#2F4A78`**: cor de caneta-tinteiro sobre o papel creme. Marca ação e foco sem gritar. Sobre ele, o branco tem contraste ≥ 8:1.
+- **Musgo `#3B6A3E`**: sucesso e **receita**. É um verde de livro-caixa, não de semáforo.
+- **Ocre `#C99A3E`**: atenção e reposição. Os selos usam fundo `-50` suave, borda forte `-700` e tinta escura `-900`, em vez de amarelo saturado. O alerta segue visível (ícone + texto + borda), mas sem ofuscar.
+- **Tijolo `#A3402F`**: perigo e **despesa**. É vermelho terroso, legível como "saída de dinheiro" sem parecer erro do sistema.
+- **Séries de gráfico** (`--color-serie-1…5`): azul-tinta, musgo, ocre, ardósia e areia. Têm a mesma luminosidade média e são distinguíveis em escala de cinza pela ordem fixa.
+
+Tokens financeiros: `--color-receita(-subtle)` → musgo; `--color-despesa(-subtle)` → tijolo.
+Todos os 31 pares da §3 continuam WCAG AA (o teste de contraste falha se algum cair).
 
 #### 2.1.2 Semânticas (as únicas usadas por componentes)
 
@@ -323,20 +336,45 @@ faixa da constituição (32–40 px).
 O `<dialog>` aberto com `showModal()` vai para a *top layer* do navegador (acima de qualquer
 z-index); por isso o diálogo tem **região de toasts própria** (§4.12).
 
-### 2.11 Movimento (mínimo)
+### 2.11 Movimento (v2.0.0 — `static/css/motion.css`)
 
-| Token | Valor | Origem |
-|-------|-------|--------|
-| `--duration-instant` | 0ms | |
-| `--duration-fast` | 70ms | Carbon `fast-01` |
-| `--duration-moderate` | 150ms | Carbon `moderate-01` |
-| `--ease-standard` | `cubic-bezier(0.2, 0, 0.38, 0.9)` | Carbon productive standard |
-| `--ease-entrance` | `cubic-bezier(0, 0, 0.38, 0.9)` | Carbon productive entrance |
-| `--ease-exit` | `cubic-bezier(0.2, 0, 1, 0.9)` | Carbon productive exit |
+| Token | Valor | Uso |
+|-------|-------|-----|
+| `--duration-instant` | 0ms | movimento reduzido |
+| `--duration-fast` | 90ms | hover, pressionar, cor |
+| `--duration-moderate` | 160ms | toasts, diálogo, menu |
+| `--duration-slow` | 240ms | entrada de cartões/KPIs (`.animar-surgir`) |
+| `--duration-deliberate` | 400ms | tremor de erro, barras crescendo |
+| `--ease-standard` / `--ease-entrance` / `--ease-exit` | Carbon productive | |
+| `--ease-press` | `cubic-bezier(0.3, 0, 0.2, 1.4)` | "pressionar" neo-brutalista |
+| `--motion-distance-sm` / `-md` | 0.25rem / 0.75rem | deslocamentos |
 
-Só se anima `background-color`, `color`, `border-color`, `box-shadow`, `transform` e `opacity`.
-Nada de animação de largura/altura/dados. Com `@media (prefers-reduced-motion: reduce)` as
-durações viram `--duration-instant` e `transform` de hover/pressão é desligado.
+Keyframes: `consus-surgir`, `consus-sair`, `consus-tremer`, `consus-pulsar`, `consus-destacar`,
+`consus-crescer-x`, `consus-crescer-y`, `consus-girar`, `consus-carregando`.
+
+**Comportamentos automáticos**
+
+- Linhas e seções novas do HTMX (`.htmx-added`) esmaecem de `--color-accent-subtle`.
+- As barras (progresso, BarList, fluxo de caixa) crescem ao entrar.
+- O botão "afunda" sobre a sombra ao pressionar.
+- O `<dialog>` abre e fecha com `@starting-style`.
+- Os toasts entram e saem (`.toast--saindo`).
+- Os cartões interativos sobem 2 px no hover.
+- A barra global `#barra-carregamento` aparece após 150 ms de espera.
+- A navegação usa View Transitions (`globalViewTransitions`): o cabeçalho e o item ativo ficam fixos e o conteúdo cruza.
+
+**Classes de autor**
+
+- `.animar-surgir`, escalonado com `style="--ordem: N"`;
+- `.animar-tremer`, usado no cartão de login com erro;
+- `.animar-destacar`.
+
+**Limites**
+
+- Só se anima `transform`, `opacity`, `background-color` e `box-shadow`.
+- Nada passa de 400 ms, exceto o laço da barra de carregamento e o esmaecer do destaque (1,2 s).
+- Nenhuma animação bloqueia clique ou digitação.
+- Com `prefers-reduced-motion: reduce`, durações e distâncias viram 0, e `motion.css` zera as animações e transições restantes.
 
 ### 2.12 Opacidade
 

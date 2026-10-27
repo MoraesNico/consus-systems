@@ -5,7 +5,7 @@
   <td class="num">{{ produto.estoque_minimo }}</td>
   {% if produto.precos_pendentes %}<td class="num" colspan="3">{% include "produtos/partials/selo_margem.html" %}</td>{% else %}<td class="num mono">{{ produto.preco_custo|moeda }}</td>
   <td class="num mono">{{ produto.preco_venda|moeda }}</td>
-  <td class="num mono margem margem--{{ produto.variante_margem }}">{{ produto.margem_prevista|moeda }}<span class="margem__pct">{{ produto.margem_percentual }}%</span>{% if produto.variante_margem == "negativa" %} {% include "produtos/partials/selo_margem.html" %}{% endif %}</td>{% endif %}
+  <td class="num mono margem margem--{{ produto.variante_margem }}">{{ produto.margem_prevista|moeda }}{% if produto.variante_margem == "negativa" %}{% icone "trending-down" rotulo="Margem negativa" %}{% endif %}<span class="margem__pct">{{ produto.margem_percentual }}%</span></td>{% endif %}
   <td>{% include "produtos/partials/situacao.html" %}</td>
   <td class="tabela__acoes">{% load movimentacoes_tags %}{% acoes_rapidas produto "lista" %}</td>
 </tr>

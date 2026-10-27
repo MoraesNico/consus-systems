@@ -6,9 +6,16 @@
   const dialogo = () => document.getElementById("dialogo");
   let acionador = null;
 
+  // Saída animada (005): .toast--saindo; remove ao fim da animação (ou já, sem animação).
+  function sair(el) {
+    el.classList.add("toast--saindo");
+    const duracao = parseFloat(getComputedStyle(el).animationDuration) || 0;
+    if (duracao) el.addEventListener("animationend", () => el.remove(), { once: true }); else el.remove();
+  }
+
   function temporizar(el, ms) {
     let restante = ms, inicio = 0, id = null;
-    const iniciar = () => { if (id) return; inicio = Date.now(); id = setTimeout(() => el.remove(), restante); };
+    const iniciar = () => { if (id) return; inicio = Date.now(); id = setTimeout(() => sair(el), restante); };
     const pausar = () => { if (!id) return; clearTimeout(id); id = null; restante -= Date.now() - inicio; };
     ["mouseenter", "focusin"].forEach((nome) => el.addEventListener(nome, pausar));
     ["mouseleave", "focusout"].forEach((nome) => el.addEventListener(nome, iniciar));
@@ -27,7 +34,7 @@
     const uso = el.querySelector("[data-toast-icone] use");
     if (uso) uso.setAttribute("href", uso.getAttribute("href").replace(/#.*$/, `#${ICONES[nivel]}`));
     if (nivel === "alerta" || nivel === "erro") el.setAttribute("role", "alert");
-    el.querySelector("[data-toast-fechar]").addEventListener("click", () => el.remove());
+    el.querySelector("[data-toast-fechar]").addEventListener("click", () => sair(el));
     regiao.prepend(el);
     const maximo = Number(raiz.dataset.maximo || 3);
     const atuais = regiao.querySelectorAll("[data-toast]");

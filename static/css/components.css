@@ -448,10 +448,11 @@
     color: var(--color-danger-ink);
   }
 
+  /* Paleta v2: selo de alerta sóbrio — fundo suave, borda forte, tinta escura. */
   .badge--reposicao {
-    background-color: var(--color-warning);
-    border-color: var(--color-border);
-    color: var(--color-on-warning);
+    background-color: var(--color-warning-subtle);
+    border-color: var(--color-warning-strong);
+    color: var(--color-warning-ink);
   }
 
   .badge-composto {
@@ -1425,7 +1426,10 @@
   .previa-margem--negativa, .previa-margem__aviso { color: var(--color-danger-ink); }
   .previa-margem__aviso { font-weight: var(--font-weight-semibold); }
   .margem { white-space: nowrap; }
-  .margem__pct { margin-inline-start: var(--space-1); color: var(--color-ink-muted); font-size: var(--text-xs); }
+  .tabela td.mono { white-space: nowrap; }
+  .tabela td:has(> .tabela__principal) { min-inline-size: calc(var(--size-lg) * 5); }
+  .margem .icone { display: inline-block; vertical-align: middle; margin-inline-start: var(--space-2); }
+  .margem__pct { margin-inline-start: var(--space-3); color: var(--color-ink-muted); font-size: var(--text-xs); }
   .margem--negativa { color: var(--color-danger-ink); }
   .resumo-produto__secao { display: flex; gap: var(--space-2); align-items: center; margin-block-start: var(--space-4); }
 }
@@ -1457,7 +1461,7 @@
   .fluxo__barras { display: flex; flex: 1; gap: var(--border-width); align-items: flex-end; }
   .fluxo__barra { flex: 1; block-size: calc(var(--valor, 0) * 1%); min-block-size: 0; transform-origin: bottom; }
   .fluxo__rotulo { font-size: var(--text-xs); color: var(--color-ink-muted); text-align: center; white-space: nowrap; }
-  .fluxo__grupo:nth-child(odd) .fluxo__rotulo { visibility: visible; }
+  .fluxo__rotulo[data-oculto] { visibility: hidden; }
   .fluxo__tabela { margin-block-start: var(--space-4); font-size: var(--text-sm); }
   .fluxo__tabela summary { cursor: pointer; color: var(--color-ink-muted); }
 }

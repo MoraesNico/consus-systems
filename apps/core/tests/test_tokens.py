@@ -8,7 +8,7 @@ from apps.core import design_tokens
 RAIZ = Path(__file__).resolve().parents[3]
 CSS = RAIZ / "static" / "css"
 TOKENS = CSS / "tokens.css"
-OUTROS_CSS = [CSS / "base.css", CSS / "components.css", CSS / "utilities.css"]
+OUTROS_CSS = [CSS / "base.css", CSS / "components.css", CSS / "motion.css", CSS / "utilities.css"]
 
 TOKENS_SEMANTICOS = [
     "--color-paper",
@@ -201,11 +201,11 @@ def test_fr026_fontes_declaradas_com_swap():
 
 
 def test_fr030_movimento_minimo():
-    """FR-030: durações ≤ 150 ms, movimento reduzido zera, transições só em propriedades leves."""
+    """FR-030 (005): durações ≤ 400 ms, reduzido zera, transições só em propriedades leves."""
     tokens = design_tokens.carregar_tokens(TOKENS)
     for nome, valor in tokens.items():
         if nome.startswith("--duration-"):
-            assert int(valor.removesuffix("ms")) <= 150, (nome, valor)
+            assert int(valor.removesuffix("ms")) <= 400, (nome, valor)
     texto_tokens = TOKENS.read_text()
     reduzido = re.search(
         r"@media \(prefers-reduced-motion: reduce\)\s*\{(.*?)\n\}", texto_tokens, re.S
