@@ -21,7 +21,7 @@ def test_fr012_colunas_e_formatos(client, produto_factory):
     produto = produto_factory(nome="Parafuso", quantidade_inicial=1500, estoque_minimo=200)
     conteudo = html(client.get("/produtos/"))
     cabecalho = re.sub(r"<[^>]+>", " ", conteudo.split("<thead", 1)[1].split("</thead>", 1)[0])
-    for coluna in ("ID", "Nome", "Quantidade atual", "Estoque mínimo", "Situação"):
+    for coluna in ("ID", "Nome", "Qtd. atual", "Mínimo", "Custo", "Venda", "Margem", "Situação"):
         assert coluna in cabecalho, coluna
     assert produto.codigo in conteudo and "1.500" in conteudo
 
