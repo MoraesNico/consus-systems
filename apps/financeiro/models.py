@@ -63,7 +63,9 @@ class TransacaoQuerySet(models.QuerySet):
         return MovimentacaoQuerySet.no_periodo(self, de, ate)
 
     def recentes(self):
-        return self.select_related("produto", "movimentacao").order_by("-criado_em", "-id")
+        return self.select_related("produto", "movimentacao__registrado_por").order_by(
+            "-criado_em", "-id"
+        )
 
     def totais(self) -> Totais:
         saida = Q(tipo=TipoTransacao.SAIDA)

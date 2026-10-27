@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block titulo %}Trocar senha{% endblock %}
+{% block sobretitulo %}Conta{% endblock %}
+{% block titulo_pagina %}Trocar senha{% endblock %}
+{% block descricao %}Informe a senha atual e a nova senha duas vezes.{% endblock %}
+{% block conteudo %}
+<div class="grade"><div class="col-md-8 col-lg-6 cartao">
+  <form class="formulario" method="post" novalidate>{% csrf_token %}{{ form }}
+    <div class="formulario__acoes"><a class="botao botao--secundario" href="{% url 'core:painel' %}">Cancelar</a><button class="botao botao--primario" type="submit">{% icone "key-round" %}Salvar nova senha</button></div>
+  </form>
+</div></div>
+{% endblock %}

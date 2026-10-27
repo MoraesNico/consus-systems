@@ -31,7 +31,7 @@ def test_fr028_script_progressivo_carregado(client):
     assert "data-atalho" in (RAIZ / "static" / "js" / "consus.js").read_text()
 
 
-def test_fr028_js_proprio_abaixo_de_100_linhas():
-    """Constituição II: JS próprio (fora de vendor/) com menos de 100 linhas."""
+def test_fr028_js_proprio_abaixo_de_200_linhas():
+    """Constituição 1.1.0: JS próprio (fora de vendor/) com menos de 200 linhas."""
     total = sum(len(f.read_text().splitlines()) for f in (RAIZ / "static" / "js").glob("*.js"))
-    assert total < 100
+    assert total < 200

@@ -1,0 +1,8 @@
+<details class="menu-usuario">
+  <summary class="menu-usuario__gatilho" aria-label="Conta de {{ user.get_username }}"><span class="menu-usuario__inicial" aria-hidden="true">{{ user.get_username|first|upper }}</span><span class="menu-usuario__nome">{{ user.get_short_name|default:user.get_username }}</span>{% icone "chevron-down" %}</summary>
+  <div class="menu-usuario__painel">
+    <p class="menu-usuario__conta">{% icone "user-round" %}<span>Conectado como <strong>{{ user.get_username }}</strong></span></p>
+    <a class="menu-usuario__item" href="{% url 'contas:trocar_senha' %}">{% icone "key-round" %}Trocar senha</a>
+    <form method="post" action="{% url 'contas:sair' %}" hx-boost="false">{% csrf_token %}<button class="menu-usuario__item menu-usuario__sair" type="submit">{% icone "log-out" %}Sair</button></form>
+  </div>
+</details>

@@ -5,8 +5,9 @@ from pathlib import Path
 import pytest
 from django.db import connection
 from django.template.loader import render_to_string
-from django.test import Client
 from django.test.utils import CaptureQueriesContext
+
+from apps.core.tests.clientes import Client
 
 pytestmark = pytest.mark.django_db
 

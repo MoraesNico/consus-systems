@@ -153,8 +153,8 @@ def test_fr043_cookies_seguros_por_variavel():
 
 
 @pytest.mark.django_db
-def test_fr044_admin_e_auth_nao_expostos(client):
-    """FR-044: sem django.contrib.admin/auth e /admin/ responde 404."""
+def test_fr044_admin_nao_exposto(client):
+    """FR-044: sem django.contrib.admin e /admin/ responde 404 (auth entra na 2.0, feature 006)."""
     assert "django.contrib.admin" not in settings.INSTALLED_APPS
-    assert "django.contrib.auth" not in settings.INSTALLED_APPS
+    assert "django.contrib.auth" in settings.INSTALLED_APPS
     assert client.get("/admin/").status_code == 404

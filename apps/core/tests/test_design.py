@@ -3,9 +3,9 @@
 import json
 
 import pytest
-from django.test import Client
 
 from apps.core import design_tokens
+from apps.core.tests.clientes import Client
 from apps.core.views import COMPONENTES_CATALOGO
 
 pytestmark = pytest.mark.django_db

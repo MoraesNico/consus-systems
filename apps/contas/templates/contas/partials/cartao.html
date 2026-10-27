@@ -1,0 +1,28 @@
+<section id="cartao-login" class="cartao cartao-login animar-surgir{% if form.errors or bloqueio %} animar-tremer{% endif %}" aria-labelledby="titulo-login">
+  <header class="cartao-login__cabecalho">
+    <span class="cartao-login__icone">{% icone "lock-keyhole" tamanho="md" %}</span>
+    <div><h1 id="titulo-login" class="cartao-login__titulo">Entrar no Consus</h1><p class="texto-atenuado">Controle de estoque e financeiro · SENAI-SP</p></div>
+  </header>
+  {% if bloqueio %}
+    <div class="aviso aviso--erro" role="alert"><span class="aviso__icone">{% icone "octagon-x" %}</span><div class="aviso__corpo"><p>Muitas tentativas. Tente novamente em {{ bloqueio }} min.</p></div></div>
+  {% elif form.non_field_errors %}
+    <div class="aviso aviso--erro" role="alert"><span class="aviso__icone">{% icone "triangle-alert" %}</span><div class="aviso__corpo">{% for erro in form.non_field_errors %}<p>{{ erro }}</p>{% endfor %}</div></div>
+  {% endif %}
+  <form class="formulario" method="post" action="{% url 'contas:entrar' %}" novalidate hx-post="{% url 'contas:entrar' %}" hx-target="#cartao-login" hx-swap="outerHTML" hx-disabled-elt="find button[type=submit]">
+    {% csrf_token %}
+    <input type="hidden" name="next" value="{{ next }}">
+    {{ form.usuario.as_field_group }}
+    <div class="campo">
+      <label class="campo__rotulo" for="{{ form.senha.id_for_label }}">Senha</label>
+      <div class="campo-senha">
+        <input type="password" name="senha" id="{{ form.senha.id_for_label }}" autocomplete="current-password" required{% if form.senha.errors or form.non_field_errors %} aria-invalid="true" autofocus{% endif %} aria-describedby="aviso-caps{% if form.senha.errors %} erro-senha{% endif %}" data-senha>
+        <button class="campo-senha__alternar" type="button" aria-pressed="false" aria-controls="{{ form.senha.id_for_label }}" data-alternar-senha>{% icone "eye" %}<span class="visualmente-oculto">Mostrar senha</span></button>
+      </div>
+      <p id="aviso-caps" class="campo-senha__caps" aria-live="polite" hidden>{% icone "triangle-alert" %}Caps Lock ativado</p>
+      {% if form.senha.errors %}<p id="erro-senha" class="campo__erro">{{ form.senha.errors.0 }}</p>{% endif %}
+    </div>
+    <label class="caixa-selecao"><input type="checkbox" name="lembrar"{% if form.lembrar.value %} checked{% endif %}> Manter conectado por 14 dias</label>
+    <button class="botao botao--primario botao--bloco" type="submit"><span class="botao__carregando">{% icone "loader-circle" %}</span>{% icone "log-in" %}<span class="botao__texto">Entrar</span><span class="botao__texto-carregando">Entrando…</span></button>
+  </form>
+  {% if demo %}<p class="cartao-login__demo">{% icone "info" %}Ambiente de demonstração: usuário <strong class="mono">admin</strong>; a senha é a de <span class="mono">CONSUS_SENHA</span> no .env.</p>{% endif %}
+</section>
