@@ -1429,3 +1429,10 @@
   .margem--negativa { color: var(--color-danger-ink); }
   .resumo-produto__secao { display: flex; gap: var(--space-2); align-items: center; margin-block-start: var(--space-4); }
 }
+
+/* ── 008 · Valores financeiros ─────────────────────────────────────────── */
+@layer components {
+  .valor--receita { color: var(--color-receita, var(--color-success-ink)); }
+  .valor--despesa { color: var(--color-despesa, var(--color-danger-ink)); }
+  .cluster--entre { justify-content: space-between; align-items: center; }
+}

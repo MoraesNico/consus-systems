@@ -1,0 +1,9 @@
+<tr class="linha-transacao">
+  <td class="mono texto-atenuado">{{ t.criado_em|date:"d/m/Y H:i" }}</td>
+  <td><a class="tabela__link" href="{% url 'produtos:detalhe' t.produto_id %}"><span class="tabela__id">{{ t.produto.codigo }}</span> {{ t.produto.nome }}</a></td>
+  <td><span class="badge badge--{{ t.eh_receita|yesno:'sucesso,info' }}">{% if t.eh_receita %}{% icone "trending-up" %}{% else %}{% icone "trending-down" %}{% endif %}{{ t.get_tipo_display }} · {{ t.natureza }}</span></td>
+  <td class="num">{{ t.quantidade }}</td>
+  <td class="num mono">{{ t.preco_unitario|moeda }}</td>
+  <td class="num mono valor--{{ t.eh_receita|yesno:'receita,despesa' }}">{{ t.valor_assinado|moeda:"sinal" }}</td>
+  <td class="texto-atenuado">{{ t.movimentacao.registrado_por|default:"—" }}</td>
+</tr>
