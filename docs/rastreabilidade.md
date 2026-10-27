@@ -118,3 +118,22 @@ histórico imutável de movimentações com filtros (003/FR-021…FR-026), saldo
 CSV (004/FR-032/FR-033), dados de demonstração `popular_demo` (004/FR-034/FR-035), catálogo vivo
 do design system `/design/` (001/FR-031…FR-033) e verificação de saúde `/saude/`
 (001/FR-034…FR-036).
+
+## Parte 2 (2.0) — Passo 3: Módulo Financeiro e Fluxo de Caixa
+
+| ID | Requisito atômico | Onde | Testes | Veredito |
+|----|-------------------|------|--------|----------|
+| F1.1 | Cadastro com **Preço de Custo** obrigatório | 007 FR-001/002 | `test_precos_margem.py::test_fr001…`, `test_fr002…`, `test_fr010…` | **Coberto** |
+| F1.2 | Cadastro com **Preço de Venda** obrigatório | 007 FR-001/002 | idem | **Coberto** |
+| F1.3 | **Margem** calculada automaticamente (Venda − Custo) | 007 FR-001/006/008 | `test_fr001…`, `test_fr006…`, `test_fr008_previa_margem` | **Coberto** |
+| F2.1 | Entrada → **despesa** = qtd × custo | 008 FR-001/002 | `test_transacoes.py::test_fr001…`, `test_fr002…` | **Coberto** |
+| F2.2 | Saída → **receita** = qtd × venda | 008 FR-003 | `test_fr003_saida_registra_receita_com_cpv_congelado` | **Coberto** |
+| F2.3 | Histórico com Data/Hora, ID do Produto, Tipo, Quantidade, Valor Total | 008 FR-009 | `test_fr009_historico_lista_filtra_e_exporta` | **Coberto** |
+| F3.1 | **Valor Total do Estoque** = Σ qtd × custo | 009 FR-001 | `test_painel.py::test_fr001_indicadores_da_atividade` | **Coberto** |
+| F3.2 | **Faturamento Total** = soma das receitas | 009 FR-001 | idem | **Coberto** |
+| F3.3 | **Lucro Bruto Realizado** = Receita − CPV | 009 FR-001 | idem (CPV congelado na venda) | **Coberto** |
+| F3.4 | **Alerta Financeiro** com saldo do caixa negativo no período | 009 FR-002/005/006 | `test_fr002…`, `test_fr004…`, `test_fr006…`, `test_fr008_demo_tem_os_dois_estados` | **Coberto** |
+| X1 | Login interativo | 006 | `apps/contas/tests/test_autenticacao.py` (17 testes) | **Coberto** |
+| X2 | Mais animações e transições | 005 | `test_movimento_paleta.py`, `test_tokens.py::test_fr030…` | **Coberto** |
+| X3 | Paleta de cores documentada (mais sóbria) | 005 | `test_fr006_paleta_sobria_mantem_contraste`; README "Paleta de cores"; design system §2.1 | **Coberto** |
+| X4 | Rodar só com Python, mantendo Docker | 010 | `test_execucao_local.py`; verificação manual em Python 3.11 e `docker compose` | **Coberto** |
