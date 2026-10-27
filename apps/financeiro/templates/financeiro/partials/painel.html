@@ -15,10 +15,10 @@
   {% include "financeiro/partials/selo_caixa.html" %}
 
   <div class="grade">
-    <div class="col-md-4 col-lg-3 animar-surgir" style="--ordem: 0">{% if resumo.produtos_preco_pendente %}{% with meta="quantidade × custo · "|add:resumo.produtos_preco_pendente|stringformat:"s"|add:" com preço pendente" %}{% include "components/kpi.html" with rotulo="Valor total do estoque" valor=resumo.valor_estoque|moeda meta=meta icone="package" %}{% endwith %}{% else %}{% include "components/kpi.html" with rotulo="Valor total do estoque" valor=resumo.valor_estoque|moeda meta="Σ quantidade × preço de custo" icone="package" %}{% endif %}</div>
+    <div class="col-md-4 col-lg-3 animar-surgir" style="--ordem: 0">{% include "components/kpi.html" with rotulo="Valor total do estoque" valor=resumo.valor_estoque|moeda meta=resumo.meta_estoque icone="package" %}</div>
     <div class="col-md-4 col-lg-3 animar-surgir" style="--ordem: 1">{% include "components/kpi.html" with rotulo="Faturamento" valor=resumo.receitas|moeda meta="soma das receitas de vendas" icone="trending-up" %}</div>
-    <div class="col-md-4 col-lg-3 animar-surgir" style="--ordem: 2">{% if resumo.margem_realizada_percentual is not None %}{% with meta="receita − CPV · margem "|add:resumo.margem_realizada_percentual|stringformat:"s"|add:"%" %}{% include "components/kpi.html" with rotulo="Lucro bruto realizado" valor=resumo.lucro_bruto|moeda meta=meta icone="circle-dollar-sign" %}{% endwith %}{% else %}{% include "components/kpi.html" with rotulo="Lucro bruto realizado" valor=resumo.lucro_bruto|moeda meta="receita − custo das vendas" icone="circle-dollar-sign" %}{% endif %}</div>
-    <div class="col-md-4 col-lg-3 animar-surgir" style="--ordem: 3" id="kpi-saldo-caixa">{% with meta="despesas "|add:resumo.despesas|stringformat:"s" %}{% if resumo.caixa_negativo %}{% include "components/kpi.html" with rotulo="Saldo do caixa" valor=resumo.saldo_caixa|moeda meta="receitas − despesas · CAIXA NEGATIVO" destaque="perigo" %}{% else %}{% include "components/kpi.html" with rotulo="Saldo do caixa" valor=resumo.saldo_caixa|moeda meta="receitas − despesas" icone="wallet" %}{% endif %}{% endwith %}</div>
+    <div class="col-md-4 col-lg-3 animar-surgir" style="--ordem: 2">{% include "components/kpi.html" with rotulo="Lucro bruto realizado" valor=resumo.lucro_bruto|moeda meta=resumo.meta_lucro icone="circle-dollar-sign" %}</div>
+    <div class="col-md-4 col-lg-3 animar-surgir" style="--ordem: 3" id="kpi-saldo-caixa">{% if resumo.caixa_negativo %}{% include "components/kpi.html" with rotulo="Saldo do caixa" valor=resumo.saldo_caixa|moeda meta=resumo.meta_saldo destaque="perigo" %}{% else %}{% include "components/kpi.html" with rotulo="Saldo do caixa" valor=resumo.saldo_caixa|moeda meta=resumo.meta_saldo icone="wallet" %}{% endif %}</div>
   </div>
 
   <section class="cartao painel__secao" aria-labelledby="titulo-fluxo">
@@ -35,7 +35,7 @@
               <span class="fluxo__barra fluxo__barra--receita" style="--valor: {{ ponto.receitas|porcentagem:maximo }}"></span>
               <span class="fluxo__barra fluxo__barra--despesa" style="--valor: {{ ponto.despesas|porcentagem:maximo }}"></span>
             </div>
-            <span class="fluxo__rotulo mono">{{ ponto.rotulo }}</span>
+            <span class="fluxo__rotulo mono"{% if not forloop.counter0|divisibleby:resumo.passo_rotulos %} aria-hidden="true" data-oculto{% endif %}>{{ ponto.rotulo }}</span>
           </div>
         {% endfor %}
       </div>

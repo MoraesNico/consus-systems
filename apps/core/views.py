@@ -64,7 +64,7 @@ SECOES_TOKENS = (
     ("bordas", "Bordas e raios", ("--border-", "--radius-")),
     ("sombras", "Sombras e foco", ("--shadow-", "--focus-")),
     ("camadas", "Camadas", ("--z-",)),
-    ("movimento", "Movimento e opacidade", ("--duration-", "--ease-", "--opacity-")),
+    ("movimento", "Movimento e opacidade", ("--duration-", "--ease-", "--motion-", "--opacity-")),
 )
 
 ICONES = (

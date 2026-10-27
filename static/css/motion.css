@@ -1,0 +1,147 @@
+/*
+ * Consus — movimento (design-system §2.11, v2.0.0 · feature 005).
+ * Só transform/opacity/background-color/box-shadow; ≤ 400 ms (exceto o laço da barra de
+ * carregamento e o esmaecer do destaque). Em movimento reduzido, durações e distâncias são 0.
+ * Nenhuma animação bloqueia clique ou digitação.
+ */
+
+@layer components {
+  @keyframes consus-surgir {
+    from { opacity: 0; transform: translateY(var(--motion-distance-md)); }
+    to { opacity: 1; transform: none; }
+  }
+
+  @keyframes consus-sair {
+    from { opacity: 1; transform: none; }
+    to { opacity: 0; transform: translateX(var(--motion-distance-md)); }
+  }
+
+  @keyframes consus-tremer {
+    0%, 100% { transform: none; }
+    20%, 60% { transform: translateX(calc(var(--motion-distance-sm) * -2)); }
+    40%, 80% { transform: translateX(calc(var(--motion-distance-sm) * 2)); }
+  }
+
+  @keyframes consus-pulsar {
+    0%, 100% { opacity: 1; }
+    50% { opacity: var(--opacity-busy); }
+  }
+
+  @keyframes consus-destacar {
+    from { background-color: var(--color-accent-subtle); }
+    to { background-color: transparent; }
+  }
+
+  @keyframes consus-crescer-x {
+    from { transform: scaleX(0); }
+    to { transform: scaleX(1); }
+  }
+
+  @keyframes consus-crescer-y {
+    from { transform: scaleY(0); }
+    to { transform: scaleY(1); }
+  }
+
+  @keyframes consus-girar {
+    to { transform: rotate(1turn); }
+  }
+
+  @keyframes consus-carregando {
+    from { transform: translateX(-100%) scaleX(0.3); }
+    to { transform: translateX(100%) scaleX(0.6); }
+  }
+
+  /* Classes de autor: surgir escalonado (style="--ordem: N"), tremer no erro, destacar. */
+  .animar-surgir {
+    animation: consus-surgir var(--duration-slow) var(--ease-entrance) both;
+    animation-delay: calc(var(--ordem, 0) * var(--duration-fast) / 2);
+  }
+
+  .animar-tremer { animation: consus-tremer var(--duration-deliberate) var(--ease-standard); }
+  .animar-surgir.animar-tremer { animation: consus-tremer var(--duration-deliberate) var(--ease-standard); }
+  .animar-destacar { animation: consus-destacar calc(var(--duration-deliberate) * 3) var(--ease-exit); }
+
+  /* Conteúdo novo do HTMX: linhas e seções recebem destaque sutil. */
+  tr.htmx-added,
+  .resultados.htmx-added tbody tr,
+  .cartao.htmx-added,
+  .painel.htmx-added .cartao {
+    animation: consus-destacar calc(var(--duration-deliberate) * 3) var(--ease-exit);
+  }
+
+  .painel.htmx-added .kpi { animation: consus-surgir var(--duration-slow) var(--ease-entrance) both; }
+
+  /* Barras crescem ao entrar. */
+  .barra-progresso__preenchimento,
+  .lista-barras__barra { transform-origin: left; animation: consus-crescer-x var(--duration-deliberate) var(--ease-entrance) both; }
+  .fluxo__barra { animation: consus-crescer-y var(--duration-deliberate) var(--ease-entrance) both; }
+
+  /* Diálogo abre e fecha animado (@starting-style); fundo esmaece. */
+  .dialogo {
+    transition:
+      opacity var(--duration-moderate) var(--ease-entrance),
+      transform var(--duration-moderate) var(--ease-entrance);
+  }
+  .dialogo[open] { opacity: 1; transform: none; }
+  @starting-style {
+    .dialogo[open] { opacity: 0; transform: translateY(var(--motion-distance-md)) scale(0.98); }
+  }
+  .dialogo::backdrop { transition: opacity var(--duration-moderate) var(--ease-standard); }
+  @starting-style {
+    .dialogo[open]::backdrop { opacity: 0; }
+  }
+
+  /* Toasts entram pela direita e saem (classe .toast--saindo aplicada pelo consus.js). */
+  .toast { animation: consus-surgir var(--duration-moderate) var(--ease-entrance) both; }
+  .toast--saindo { animation: consus-sair var(--duration-moderate) var(--ease-exit) both; }
+
+  /* Cartões interativos e itens de navegação: resposta ao hover "neo-brutalista". */
+  .cartao--interativo { transition: transform var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard); }
+  .cartao--interativo:hover { transform: translate(calc(var(--shadow-offset-sm) * -1), calc(var(--shadow-offset-sm) * -1)); box-shadow: var(--shadow-md); }
+  .navegacao__item { transition: background-color var(--duration-fast) var(--ease-standard); }
+  .menu-usuario__painel { animation: consus-surgir var(--duration-moderate) var(--ease-entrance) both; }
+
+  /* Ícone de carregamento dos botões gira. */
+  .botao__carregando .icone { animation: consus-girar calc(var(--duration-deliberate) * 2) linear infinite; }
+
+  /* Barra global de carregamento: aparece só após 150 ms de espera. */
+  .barra-carregamento {
+    position: fixed;
+    inset-block-start: 0;
+    inset-inline: 0;
+    z-index: var(--z-toast);
+    block-size: var(--border-width-accent);
+    overflow: hidden;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--duration-fast) var(--ease-standard);
+  }
+  .barra-carregamento::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-color: var(--color-accent);
+    animation: consus-carregando calc(var(--duration-deliberate) * 3) var(--ease-standard) infinite;
+  }
+  .htmx-request .barra-carregamento,
+  .htmx-request.barra-carregamento { opacity: 1; transition-delay: calc(var(--duration-moderate) - 10ms); }
+
+  /* Transições de página (View Transitions do HTMX): cabeçalho fica; conteúdo cruza. */
+  .cabecalho-app { view-transition-name: cabecalho-app; }
+  .navegacao__item[aria-current="page"] { view-transition-name: navegacao-ativa; }
+  ::view-transition-old(root) { animation: consus-sair var(--duration-moderate) var(--ease-exit) both; }
+  ::view-transition-new(root) { animation: consus-surgir var(--duration-slow) var(--ease-entrance) both; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after,
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation-duration: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0ms !important;
+  }
+}
