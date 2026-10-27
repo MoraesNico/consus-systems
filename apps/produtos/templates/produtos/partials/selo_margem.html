@@ -1,0 +1,1 @@
+{% with v=produto.variante_margem %}{% if v == "pendente" %}<span class="badge badge--info">{% icone "circle-dollar-sign" %}PREÇO PENDENTE</span>{% elif v == "negativa" %}<span class="badge badge--perigo">{% icone "trending-down" %}MARGEM NEGATIVA</span>{% endif %}{% endwith %}

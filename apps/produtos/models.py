@@ -1,6 +1,7 @@
 """Produto do estoque (docs/arquitetura.md; specs/002-cadastro-produtos/data-model.md)."""
 
 import re
+from decimal import Decimal
 
 from django.db import models
 from django.db.models import (
@@ -15,6 +16,8 @@ from django.db.models import (
 )
 from django.db.models.functions import Cast, Greatest, Lower
 from django.urls import reverse
+
+from apps.core.dinheiro import PRECO_MAXIMO, ZERO, DinheiroField
 
 # Teto do `integer` do PostgreSQL: limite de saldo, quantidade inicial e estoque mínimo.
 QUANTIDADE_MAXIMA = 2_147_483_647
@@ -69,12 +72,26 @@ class ProdutoQuerySet(models.QuerySet):
             ),
         )
 
+    def com_financeiro(self) -> "ProdutoQuerySet":
+        """Anota `margem` (venda − custo) e `valor_estoque` (quantidade × custo), em reais."""
+        return self.annotate(
+            margem=ExpressionWrapper(
+                F("preco_venda") - F("preco_custo"), output_field=DinheiroField()
+            ),
+            valor_estoque=ExpressionWrapper(
+                Cast("quantidade_atual", BigIntegerField()) * F("preco_custo"),
+                output_field=DinheiroField(),
+            ),
+        )
+
 
 class Produto(models.Model):
     id = models.BigAutoField(primary_key=True)
     nome = models.CharField("nome", max_length=120)
     quantidade_atual = models.PositiveIntegerField("quantidade atual")
     estoque_minimo = models.PositiveIntegerField("estoque mínimo de segurança")
+    preco_custo = DinheiroField("preço de custo", default=ZERO, db_default=0)
+    preco_venda = DinheiroField("preço de venda", default=ZERO, db_default=0)
     criado_em = models.DateTimeField("criado em", auto_now_add=True)
     atualizado_em = models.DateTimeField("atualizado em", auto_now=True)
 
@@ -94,6 +111,16 @@ class Produto(models.Model):
             ),
             models.CheckConstraint(condition=~Q(nome=""), name="produto_nome_nao_vazio"),
             models.UniqueConstraint(Lower("nome"), name="produto_nome_unico_ci"),
+            models.CheckConstraint(
+                condition=Q(preco_custo__gte=0), name="produto_preco_custo_nao_negativo"
+            ),
+            models.CheckConstraint(
+                condition=Q(preco_venda__gte=0), name="produto_preco_venda_nao_negativo"
+            ),
+            models.CheckConstraint(
+                condition=Q(preco_custo__lte=PRECO_MAXIMO, preco_venda__lte=PRECO_MAXIMO),
+                name="produto_precos_ate_maximo",
+            ),
         ]
 
     def __str__(self) -> str:
@@ -123,3 +150,31 @@ class Produto(models.Model):
         if self.quantidade_atual == 0:
             return "sem_estoque"
         return "reposicao" if self.em_alerta else "ok"
+
+    @property
+    def precos_pendentes(self) -> bool:
+        """Produtos anteriores à 2.0 nascem com preços zerados até serem editados."""
+        return not (self.preco_custo and self.preco_venda)
+
+    @property
+    def margem_prevista(self) -> Decimal:
+        return self.preco_venda - self.preco_custo
+
+    @property
+    def margem_percentual(self) -> Decimal | None:
+        if not self.preco_venda:
+            return None
+        return (self.margem_prevista * 100 / self.preco_venda).quantize(Decimal("0.1"))
+
+    @property
+    def valor_em_estoque(self) -> Decimal:
+        return self.quantidade_atual * self.preco_custo
+
+    @property
+    def variante_margem(self) -> str:
+        """`positiva`, `zero`, `negativa` ou `pendente` (selo de margem)."""
+        if self.precos_pendentes:
+            return "pendente"
+        if self.margem_prevista > 0:
+            return "positiva"
+        return "negativa" if self.margem_prevista < 0 else "zero"

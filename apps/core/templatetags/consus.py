@@ -2,6 +2,8 @@
 
 from django import template
 
+from apps.core.dinheiro import formatar_moeda
+
 register = template.Library()
 
 
@@ -20,3 +22,9 @@ def porcentagem(valor, total) -> int:
     if total <= 0:
         return 0
     return max(0, min(100, valor * 100 // total))
+
+
+@register.filter
+def moeda(valor, modo: str = "") -> str:
+    """`{{ v|moeda }}` → `R$ 1.234,56`; `{{ v|moeda:"sinal" }}` → `+R$ 12,00` (contrato v1.2)."""
+    return formatar_moeda(valor, sinal=modo == "sinal")

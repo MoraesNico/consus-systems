@@ -8,13 +8,17 @@ from django.test.utils import CaptureQueriesContext
 from apps.produtos import services
 from apps.produtos.models import QUANTIDADE_MAXIMA, Produto
 from apps.produtos.services import cadastrar_produto, editar_produto, normalizar_nome
+from apps.produtos.tests import PRECOS_TESTE
 
 pytestmark = pytest.mark.django_db
 
 
 def cadastrar(nome="Caneta Azul", quantidade_inicial=10, estoque_minimo=5):
     return cadastrar_produto(
-        nome=nome, quantidade_inicial=quantidade_inicial, estoque_minimo=estoque_minimo
+        **PRECOS_TESTE,
+        nome=nome,
+        quantidade_inicial=quantidade_inicial,
+        estoque_minimo=estoque_minimo,
     )
 
 
@@ -156,7 +160,9 @@ def test_fr030_poscondicoes_invariantes():
 def test_fr024_editar_nome_e_estoque_minimo():
     """FR-024: edição altera nome e estoque mínimo."""
     produto = cadastrar("Caneta", 10, 5)
-    editado = editar_produto(produto_id=produto.pk, nome=" Caneta  Preta ", estoque_minimo=8)
+    editado = editar_produto(
+        **PRECOS_TESTE, produto_id=produto.pk, nome=" Caneta  Preta ", estoque_minimo=8
+    )
     assert (editado.nome, editado.estoque_minimo) == ("Caneta Preta", 8)
     assert Produto.objects.get(pk=produto.pk).estoque_minimo == 8
 
@@ -164,7 +170,10 @@ def test_fr024_editar_nome_e_estoque_minimo():
 def test_fr024_unicidade_desconsidera_o_proprio():
     """FR-024: mudar só maiúsculas do próprio nome é permitido."""
     produto = cadastrar("Caneta")
-    assert editar_produto(produto_id=produto.pk, nome="CANETA", estoque_minimo=5).nome == "CANETA"
+    assert (
+        editar_produto(**PRECOS_TESTE, produto_id=produto.pk, nome="CANETA", estoque_minimo=5).nome
+        == "CANETA"
+    )
 
 
 def test_fr024_nome_de_outro_produto_recusado():
@@ -172,7 +181,7 @@ def test_fr024_nome_de_outro_produto_recusado():
     outro = cadastrar("Lápis")
     produto = cadastrar("Caneta")
     with pytest.raises(ValidationError) as erro:
-        editar_produto(produto_id=produto.pk, nome="lápis", estoque_minimo=5)
+        editar_produto(**PRECOS_TESTE, produto_id=produto.pk, nome="lápis", estoque_minimo=5)
     assert mensagens(erro.value, "nome") == [
         f"Já existe um produto com este nome ({outro.codigo})."
     ]
@@ -187,7 +196,7 @@ def test_fr024_mesmas_validacoes_do_cadastro(nome, minimo, campo):
     """FR-024: edição aplica as mesmas validações do cadastro."""
     produto = cadastrar("Caneta")
     with pytest.raises(ValidationError) as erro:
-        editar_produto(produto_id=produto.pk, nome=nome, estoque_minimo=minimo)
+        editar_produto(**PRECOS_TESTE, produto_id=produto.pk, nome=nome, estoque_minimo=minimo)
     assert campo in erro.value.error_dict
 
 
@@ -195,7 +204,7 @@ def test_fr025_editar_nunca_grava_quantidade_atual():
     """FR-025: o UPDATE da edição não toca em quantidade_atual."""
     produto = cadastrar("Caneta", 10, 5)
     with CaptureQueriesContext(connection) as consultas:
-        editar_produto(produto_id=produto.pk, nome="Caneta", estoque_minimo=6)
+        editar_produto(**PRECOS_TESTE, produto_id=produto.pk, nome="Caneta", estoque_minimo=6)
     updates = [q["sql"] for q in consultas.captured_queries if q["sql"].startswith("UPDATE")]
     assert updates and all("quantidade_atual" not in sql for sql in updates)
 
@@ -204,11 +213,11 @@ def test_fr027_atualizado_em_avanca():
     """FR-027: a edição atualiza atualizado_em."""
     produto = cadastrar("Caneta")
     antes = produto.atualizado_em
-    editado = editar_produto(produto_id=produto.pk, nome="Caneta", estoque_minimo=9)
+    editado = editar_produto(**PRECOS_TESTE, produto_id=produto.pk, nome="Caneta", estoque_minimo=9)
     assert editado.atualizado_em > antes
 
 
 def test_fr023_editar_produto_inexistente():
     """FR-023: editar um ID inexistente lança DoesNotExist."""
     with pytest.raises(Produto.DoesNotExist):
-        editar_produto(produto_id=999, nome="X", estoque_minimo=1)
+        editar_produto(**PRECOS_TESTE, produto_id=999, nome="X", estoque_minimo=1)

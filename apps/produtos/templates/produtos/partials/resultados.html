@@ -7,7 +7,7 @@
         <thead>
           <tr>
             {% for coluna in colunas %}
-              <th scope="col" aria-sort="{{ coluna.aria_sort }}"{% if coluna.num %} class="num"{% endif %}><a href="{% url 'produtos:lista' %}{% querystring ordem=coluna.nova_ordem pagina=None %}" hx-get="{% url 'produtos:lista' %}{% querystring ordem=coluna.nova_ordem pagina=None %}" hx-target="#resultados" hx-swap="outerHTML" hx-push-url="true">{{ coluna.rotulo }}{% if coluna.aria_sort == "ascending" %} <span aria-hidden="true">↑</span>{% elif coluna.aria_sort == "descending" %} <span aria-hidden="true">↓</span>{% endif %}</a></th>
+              {% if not coluna.aria_sort %}<th scope="col"{% if coluna.num %} class="num"{% endif %}>{{ coluna.rotulo }}</th>{% else %}<th scope="col" aria-sort="{{ coluna.aria_sort }}"{% if coluna.num %} class="num"{% endif %}><a href="{% url 'produtos:lista' %}{% querystring ordem=coluna.nova_ordem pagina=None %}" hx-get="{% url 'produtos:lista' %}{% querystring ordem=coluna.nova_ordem pagina=None %}" hx-target="#resultados" hx-swap="outerHTML" hx-push-url="true">{{ coluna.rotulo }}{% if coluna.aria_sort == "ascending" %} <span aria-hidden="true">↑</span>{% elif coluna.aria_sort == "descending" %} <span aria-hidden="true">↓</span>{% endif %}</a></th>{% endif %}
             {% endfor %}
             <th scope="col" class="tabela__acoes"><span class="visualmente-oculto">Ações</span></th>
           </tr>

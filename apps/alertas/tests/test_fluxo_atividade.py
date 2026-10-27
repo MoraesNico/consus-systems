@@ -24,7 +24,9 @@ def test_atividade_completa(client, htmx):
 
     # Item 1 — cadastro com Nome, Quantidade Inicial e Estoque Mínimo; ID automático.
     client.post("/produtos/novo/", {"nome": "Caneta Azul", "quantidade_inicial": "10",
-                                    "estoque_minimo": "5"}, **extra)  # fmt: skip
+                                    "estoque_minimo": "5",
+                                    "preco_custo": "1,00", "preco_venda": "2,00"},
+                **extra)  # fmt: skip
     produto = Produto.objects.get(nome="Caneta Azul")
     assert produto.quantidade_atual == 10 and produto.codigo.startswith("#")
     for busca in (str(produto.pk), f"%23{produto.pk}", f"%23{produto.pk:04d}"):

@@ -1,6 +1,7 @@
 <form id="form-edicao" class="formulario" method="post" action="{% url 'produtos:editar' produto.pk %}" novalidate>
   {% csrf_token %}
   {{ form }}
+  <output id="previa-margem" class="previa-margem" aria-live="polite">{% include "produtos/partials/previa_margem.html" %}</output>
   <div class="campo">
     <span class="campo__rotulo">Quantidade atual</span>
     <p class="campo__somente-leitura"><span class="mono">{{ produto.quantidade_atual }}</span> unidades</p>

@@ -6,6 +6,8 @@ import pytest
 
 from apps.produtos.models import Produto
 
+PRECOS = {"preco_custo": "1,00", "preco_venda": "2,00"}
+
 pytestmark = pytest.mark.django_db
 
 
@@ -32,7 +34,8 @@ def test_fr027_post_valido_302_detalhe_com_mensagem(client, produto_factory, hx_
     produto = produto_factory(nome="Caneta")
     extra = hx_boosted if boost else {}
     resposta = client.post(f"/produtos/{produto.pk}/editar/",
-                           {"nome": "Caneta Preta", "estoque_minimo": "3"}, **extra)  # fmt: skip
+                           {"nome": "Caneta Preta", "estoque_minimo": "3", **PRECOS},
+                           **extra)  # fmt: skip
     assert resposta.status_code == 302 and resposta["Location"] == f"/produtos/{produto.pk}/"
     detalhe = html(client.get(resposta["Location"], **extra))
     assert f"Produto {produto.codigo} atualizado" in detalhe and "Caneta Preta" in detalhe
@@ -41,7 +44,9 @@ def test_fr027_post_valido_302_detalhe_com_mensagem(client, produto_factory, hx_
 def test_fr027_situacao_recalculada_apos_mudar_minimo(client, produto_factory):
     """FR-027: aumentar o mínimo pode colocar o produto em alerta."""
     produto = produto_factory(quantidade_inicial=10, estoque_minimo=5)
-    client.post(f"/produtos/{produto.pk}/editar/", {"nome": produto.nome, "estoque_minimo": "10"})
+    client.post(
+        f"/produtos/{produto.pk}/editar/", {"nome": produto.nome, "estoque_minimo": "10", **PRECOS}
+    )
     assert "REPOSIÇÃO NECESSÁRIA" in html(client.get(f"/produtos/{produto.pk}/"))
 
 
@@ -49,7 +54,7 @@ def test_fr031_edicao_boosted_rerenderiza_pagina_completa(client, produto_factor
     """FR-031: após editar com boost, o layout inteiro (com o contador) é re-renderizado."""
     produto = produto_factory()
     resposta = client.post(f"/produtos/{produto.pk}/editar/",
-                           {"nome": produto.nome, "estoque_minimo": "1"}, follow=True,
+                           {"nome": produto.nome, "estoque_minimo": "1", **PRECOS}, follow=True,
                            **hx_boosted)  # fmt: skip
     assert "<html" in html(resposta) and 'id="badge-alertas"' in html(resposta)
 
@@ -58,15 +63,16 @@ def test_fr025_post_adulterado_quantidade_ignorada(client, produto_factory):
     """FR-025: campos extras (quantidade) enviados à edição são ignorados."""
     produto = produto_factory(quantidade_inicial=10)
     client.post(f"/produtos/{produto.pk}/editar/",
-                {"nome": produto.nome, "estoque_minimo": "2", "quantidade_atual": "999",
+                {"nome": produto.nome, "estoque_minimo": "2", "quantidade_atual": "999", **PRECOS,
                  "quantidade_inicial": "999"})  # fmt: skip
     assert Produto.objects.get(pk=produto.pk).quantidade_atual == 10
 
 
 @pytest.mark.parametrize(
     "dados",
-    [{"nome": "Outro", "estoque_minimo": "1"}, {"nome": "", "estoque_minimo": "1"},
-     {"nome": "Ok", "estoque_minimo": "-1"}],
+    [{"nome": "Outro", "estoque_minimo": "1", **PRECOS},
+     {"nome": "", "estoque_minimo": "1", **PRECOS},
+     {"nome": "Ok", "estoque_minimo": "-1", **PRECOS}],
 )  # fmt: skip
 def test_fr024_post_invalido_422(client, produto_factory, dados):
     """FR-024: duplicado, vazio ou negativo → 422."""
@@ -81,7 +87,9 @@ def test_fr023_editar_inexistente_404(client):
     """FR-023: editar produto inexistente → 404."""
     assert client.get("/produtos/999/editar/").status_code == 404
     assert (
-        client.post("/produtos/999/editar/", {"nome": "X", "estoque_minimo": "1"}).status_code
+        client.post(
+            "/produtos/999/editar/", {"nome": "X", "estoque_minimo": "1", **PRECOS}
+        ).status_code
         == 404
     )
 

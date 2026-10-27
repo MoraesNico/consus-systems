@@ -4,7 +4,10 @@ import re
 
 from django import forms
 from django.core.validators import MaxValueValidator
+from django.urls import reverse
 from django.utils.formats import number_format
+
+from apps.core.dinheiro import CampoDinheiro
 
 from .models import QUANTIDADE_MAXIMA
 from .services import MENSAGENS, NOME_MAXIMO, normalizar_nome
@@ -62,7 +65,38 @@ class FocoNoPrimeiroErroMixin:
                 campo.widget.attrs["autofocus"] = True
 
 
-class ProdutoForm(FocoNoPrimeiroErroMixin, forms.Form):
+def _campos_preco() -> tuple[CampoDinheiro, CampoDinheiro]:
+    return (
+        CampoDinheiro(
+            label="Preço de custo (unitário)",
+            error_messages={"required": "Informe o preço de custo."},
+            help_text="Quanto você paga por unidade ao fornecedor. Ex.: 12,50",
+        ),
+        CampoDinheiro(
+            label="Preço de venda (unitário)",
+            error_messages={"required": "Informe o preço de venda."},
+            help_text="Quanto o cliente paga por unidade.",
+        ),
+    )
+
+
+class PrecosMixin:
+    """Prévia da margem: o campo de venda atualiza `#previa-margem` (produtos:previa_margem)."""
+
+    def configurar_precos(self) -> None:
+        for nome in ("preco_custo", "preco_venda"):
+            self.fields[nome].widget.attrs.update(
+                {
+                    "hx-get": reverse("produtos:previa_margem"),
+                    "hx-trigger": "input changed delay:300ms",
+                    "hx-target": "#previa-margem",
+                    "hx-include": "[name=preco_custo],[name=preco_venda]",
+                    "hx-swap": "innerHTML",
+                }
+            )
+
+
+class ProdutoForm(PrecosMixin, FocoNoPrimeiroErroMixin, forms.Form):
     nome = NomeProdutoField(help_text="Como aparece na nota fiscal ou no fornecedor.")
     quantidade_inicial = InteiroNaoNegativoField(
         label="Quantidade inicial",
@@ -74,15 +108,22 @@ class ProdutoForm(FocoNoPrimeiroErroMixin, forms.Form):
         error_messages={"required": "Informe o estoque mínimo."},
         help_text="Com a quantidade igual ou abaixo deste valor, o produto entra em alerta.",
     )
+    preco_custo, preco_venda = _campos_preco()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["nome"].widget.attrs["autofocus"] = True
+        self.configurar_precos()
 
 
-class ProdutoEdicaoForm(FocoNoPrimeiroErroMixin, forms.Form):
+class ProdutoEdicaoForm(PrecosMixin, FocoNoPrimeiroErroMixin, forms.Form):
     nome = NomeProdutoField()
     estoque_minimo = InteiroNaoNegativoField(
         label="Estoque mínimo de segurança",
         error_messages={"required": "Informe o estoque mínimo."},
     )
+    preco_custo, preco_venda = _campos_preco()
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.configurar_precos()
