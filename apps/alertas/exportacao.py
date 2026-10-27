@@ -1,11 +1,11 @@
 """Serialização única do resultado da varredura: CSV (web e terminal), texto e JSON."""
 
-import csv
-import io
 import json
 
 from django.utils import timezone
 from django.utils.formats import number_format
+
+from apps.core.csv import montar_csv, proteger_celula
 
 from .regras import Situacao
 from .selectors import ResultadoVarredura
@@ -20,13 +20,8 @@ COLUNAS = (
     "Sugestão de reposição",
     "Situação",
 )
-_PREFIXOS_FORMULA = ("=", "+", "-", "@", "\t", "\r")
 LARGURA_NOME = 40
-
-
-def _seguro(texto: str) -> str:
-    """Proteção contra injeção de fórmula em planilhas (OWASP "CSV Injection")."""
-    return f"'{texto}" if texto.startswith(_PREFIXOS_FORMULA) else texto
+_seguro = proteger_celula
 
 
 def _vazio_se_none(valor) -> str:
@@ -34,23 +29,20 @@ def _vazio_se_none(valor) -> str:
 
 
 def para_csv(resultado: ResultadoVarredura, *, bom: bool) -> str:
-    saida = io.StringIO()
-    escritor = csv.writer(saida, delimiter=";", lineterminator="\r\n")
-    escritor.writerow(COLUNAS)
-    for p in resultado.itens:
-        escritor.writerow(
-            [
-                p.codigo,
-                _seguro(p.nome),
-                p.quantidade_atual,
-                p.estoque_minimo,
-                p.deficit,
-                _vazio_se_none(p.cobertura_percentual),
-                _vazio_se_none(p.sugestao_reposicao),
-                p.situacao_estoque.rotulo,
-            ]
-        )
-    return ("﻿" if bom else "") + saida.getvalue()
+    linhas = (
+        [
+            p.codigo,
+            _seguro(p.nome),
+            p.quantidade_atual,
+            p.estoque_minimo,
+            p.deficit,
+            _vazio_se_none(p.cobertura_percentual),
+            _vazio_se_none(p.sugestao_reposicao),
+            p.situacao_estoque.rotulo,
+        ]
+        for p in resultado.itens
+    )
+    return montar_csv(COLUNAS, linhas, bom=bom)
 
 
 def nome_arquivo_csv(resultado: ResultadoVarredura) -> str:
