@@ -75,5 +75,5 @@ def test_sc005_volume_de_mil_produtos(client, django_assert_max_num_queries):
         client.get("/alertas/", HTTP_HX_REQUEST="true")
     with django_assert_max_num_queries(1):
         client.get("/alertas/contador/")
-    with django_assert_max_num_queries(7):
+    with django_assert_max_num_queries(9):
         client.get("/")

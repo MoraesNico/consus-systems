@@ -4,10 +4,12 @@ Tudo passa pelos serviços oficiais (`cadastrar_produto` e `registrar_movimentac
 cada produto vem do livro-razão, nunca de escrita direta.
 """
 
+import datetime
 from dataclasses import dataclass
 from decimal import Decimal
 
 from django.db import transaction
+from django.utils import timezone
 
 from apps.movimentacoes.services import registrar_movimentacao
 from apps.produtos.models import Produto
@@ -54,11 +56,37 @@ PRODUTOS_DEMO: tuple[ProdutoDemo, ...] = (
     ProdutoDemo("Pilha alcalina AA (par)", 60, 100, (_s(30, "Venda balcão"),), Decimal("7.20"), Decimal("6.90")),
 )  # fmt: skip
 
+# Dias atrás de cada movimentação (009): compras antigas e vendas recentes, para que "Todo o
+# período" mostre caixa negativo (estoque inicial comprado) e "Últimos 7 dias" saldo positivo.
+DIAS_INICIAL = 30
+DIAS_MOVIMENTOS: tuple[tuple[int, ...], ...] = (
+    (18, 3),
+    (16, 9),
+    (5,),
+    (20, 2),
+    (14, 1),
+    (6,),
+    (4,),
+    (11,),
+    (12, 8),
+    (),
+    (2,),
+    (1,),
+)
+
+
+def _momento(dias: int, ordem: int) -> datetime.datetime:
+    """Horário comercial do dia, deslocado pela ordem para manter o livro-razão em sequência."""
+    agora = timezone.localtime()
+    base = (agora - datetime.timedelta(days=dias)).replace(hour=9, minute=0, second=0,
+                                                         microsecond=0)  # fmt: skip
+    return min(base + datetime.timedelta(minutes=7 * ordem), agora)
+
 
 def popular() -> tuple[int, int, int]:
     """Cria os produtos que faltam. Devolve (criados, já existentes, movimentações)."""
     criados = existentes = movimentacoes = 0
-    for item in PRODUTOS_DEMO:
+    for ordem, (item, dias) in enumerate(zip(PRODUTOS_DEMO, DIAS_MOVIMENTOS, strict=True)):
         if Produto.objects.filter(nome__iexact=item.nome).exists():
             existentes += 1
             continue
@@ -69,13 +97,15 @@ def popular() -> tuple[int, int, int]:
                 estoque_minimo=item.minimo,
                 preco_custo=item.custo,
                 preco_venda=item.venda,
+                momento=_momento(DIAS_INICIAL, ordem),
             )
-            for movimento in item.movimentos:
+            for movimento, dias_atras in zip(item.movimentos, dias, strict=True):
                 registrar_movimentacao(
                     produto_id=produto.pk,
                     tipo=movimento.tipo,
                     quantidade=movimento.quantidade,
                     observacao=movimento.observacao,
+                    momento=_momento(dias_atras, ordem),
                 )
         criados += 1
         movimentacoes += len(item.movimentos)

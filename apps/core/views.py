@@ -98,10 +98,12 @@ ICONES = (
 @vary_on_headers("HX-Request", "HX-Target")
 def painel(request):
     from apps.alertas.selectors import resumo_painel  # feature 004: KPIs do Painel
+    from apps.financeiro.selectors import faixa_financeira  # feature 009: faixa financeira
 
     resumo = resumo_painel()
     contexto = {
         "resumo": resumo,
+        "financeiro": faixa_financeira() if resumo.total_produtos else None,
         "meta_alerta": f"{resumo.total_sem_estoque} sem estoque",
         "url_cadastro_produto": url_se_existir("produtos:novo"),
         "url_lista_produtos": url_se_existir("produtos:lista"),

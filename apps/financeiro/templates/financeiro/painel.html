@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block titulo %}Financeiro{% endblock %}
+{% block titulo_pagina %}Painel financeiro{% endblock %}
+{% block descricao %}Valor do estoque, faturamento, lucro bruto e fluxo de caixa: receitas das vendas menos despesas das compras.{% endblock %}
+{% block acoes %}<a class="botao botao--secundario" href="{% url 'financeiro:transacoes' %}">{% icone "receipt" %}Histórico de transações</a>{% endblock %}
+{% block conteudo %}
+{% include "financeiro/partials/painel.html" %}
+{% endblock %}

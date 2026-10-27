@@ -1418,14 +1418,14 @@
     padding: var(--space-2) var(--space-3);
     border: var(--border-width) dashed var(--color-border);
     font-size: var(--text-sm);
-    color: var(--color-text-muted);
+    color: var(--color-ink-muted);
   }
   .previa-margem__valor { display: inline-flex; gap: var(--space-1); align-items: center; }
   .previa-margem--positiva strong { color: var(--color-success-ink); }
   .previa-margem--negativa, .previa-margem__aviso { color: var(--color-danger-ink); }
   .previa-margem__aviso { font-weight: var(--font-weight-semibold); }
   .margem { white-space: nowrap; }
-  .margem__pct { margin-inline-start: var(--space-1); color: var(--color-text-muted); font-size: var(--text-xs); }
+  .margem__pct { margin-inline-start: var(--space-1); color: var(--color-ink-muted); font-size: var(--text-xs); }
   .margem--negativa { color: var(--color-danger-ink); }
   .resumo-produto__secao { display: flex; gap: var(--space-2); align-items: center; margin-block-start: var(--space-4); }
 }
@@ -1435,4 +1435,33 @@
   .valor--receita { color: var(--color-receita, var(--color-success-ink)); }
   .valor--despesa { color: var(--color-despesa, var(--color-danger-ink)); }
   .cluster--entre { justify-content: space-between; align-items: center; }
+}
+
+/* ── 009 · Painel financeiro ───────────────────────────────────────────── */
+@layer components {
+  .periodos { display: flex; flex-wrap: wrap; gap: var(--space-3) var(--space-5); align-items: center; justify-content: space-between; }
+  .periodos__atalhos { display: flex; flex-wrap: wrap; gap: 0; margin: 0; padding: 0; list-style: none; border: var(--border-width-strong) solid var(--color-ink); }
+  .periodos__atalho { display: block; padding: var(--space-3) var(--space-4); font-size: var(--text-sm); font-weight: var(--font-weight-medium); color: var(--color-ink); text-decoration: none; border-inline-end: var(--border-width) solid var(--color-border); transition: background-color var(--duration-fast) var(--ease-standard); }
+  .periodos__atalhos li:last-child .periodos__atalho { border-inline-end: 0; }
+  .periodos__atalho:hover { background: var(--color-muted); }
+  .periodos__atalho[aria-current="true"] { background: var(--color-ink); color: var(--color-paper); }
+  .periodos__personalizado { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: center; }
+  .alerta-caixa .aviso__titulo { font-family: var(--font-mono); font-weight: var(--font-weight-semibold); }
+  .legenda { display: flex; flex-wrap: wrap; gap: var(--space-4); margin: 0; padding: 0; list-style: none; font-size: var(--text-xs); color: var(--color-ink-muted); }
+  .legenda li { display: inline-flex; gap: var(--space-2); align-items: center; }
+  .legenda__marca { inline-size: var(--space-4); block-size: var(--space-4); border: var(--border-width) solid var(--color-ink); }
+  .legenda__marca--receita, .fluxo__barra--receita { background: var(--color-receita, var(--color-success)); }
+  .legenda__marca--despesa, .fluxo__barra--despesa { background: var(--color-despesa, var(--color-danger)); }
+  .fluxo { display: flex; gap: var(--space-2); align-items: stretch; block-size: calc(var(--size-lg) * 4); padding-block: var(--space-4) 0; overflow-x: auto; border-block-end: var(--border-width-strong) solid var(--color-ink); }
+  .fluxo__grupo { display: flex; flex: 1 0 var(--icon-md); flex-direction: column; gap: var(--space-2); min-inline-size: var(--icon-md); }
+  .fluxo__barras { display: flex; flex: 1; gap: var(--border-width); align-items: flex-end; }
+  .fluxo__barra { flex: 1; block-size: calc(var(--valor, 0) * 1%); min-block-size: 0; transform-origin: bottom; }
+  .fluxo__rotulo { font-size: var(--text-xs); color: var(--color-ink-muted); text-align: center; white-space: nowrap; }
+  .fluxo__grupo:nth-child(odd) .fluxo__rotulo { visibility: visible; }
+  .fluxo__tabela { margin-block-start: var(--space-4); font-size: var(--text-sm); }
+  .fluxo__tabela summary { cursor: pointer; color: var(--color-ink-muted); }
+}
+@layer components {
+  .faixa-financeira__dados { display: grid; grid-template-columns: repeat(auto-fit, minmax(calc(var(--size-lg) * 4), 1fr)); gap: var(--space-5); margin: 0; }
+  .faixa-financeira__dados dd { margin: 0; }
 }

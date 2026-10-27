@@ -89,6 +89,7 @@ def cadastrar_produto(
     preco_custo: Decimal,
     preco_venda: Decimal,
     usuario=None,
+    momento=None,
 ) -> Produto:
     """Cadastra um produto (FR-001, FR-029).
 
@@ -125,6 +126,7 @@ def cadastrar_produto(
                 tipo=TipoMovimentacao.INICIAL,
                 quantidade=quantidade_inicial,
                 usuario=usuario,
+                momento=momento,
             )
             produto.refresh_from_db()
             return produto
