@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light">
-  <meta name="htmx-config" content='{"responseHandling": [{"code": "204", "swap": false}, {"code": "[23]..", "swap": true}, {"code": "422", "swap": true}, {"code": "[45]..", "swap": false, "error": true}], "includeIndicatorStyles": false, "historyCacheSize": 0}'>
+  <meta name="htmx-config" content='{"responseHandling": [{"code": "204", "swap": false}, {"code": "[23]..", "swap": true}, {"code": "422", "swap": true}, {"code": "429", "swap": true}, {"code": "[45]..", "swap": false, "error": true}], "includeIndicatorStyles": false, "historyCacheSize": 0}'>
   <title>{% block titulo %}{% endblock %} — Consus</title>
   <link rel="preload" href="{% static 'fonts/IBMPlexSans-Regular-Latin1.woff2' %}" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="{% static 'css/tokens.css' %}">
@@ -17,12 +17,15 @@
 </head>
 <body hx-boost="true" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
   <a class="pular-conteudo" href="#conteudo">Pular para o conteúdo</a>
+  {% block cabecalho_app %}
   <header class="cabecalho-app">
     <div class="cabecalho-app__interno">
       <a class="marca" href="{% url 'core:painel' %}"><span class="marca__simbolo" aria-hidden="true"></span>Consus</a>
       {% include "components/navegacao.html" %}
+      {% if user.is_authenticated %}{% include "components/menu_usuario.html" %}{% endif %}
     </div>
   </header>
+  {% endblock %}
   <main id="conteudo" class="conteudo-app" tabindex="-1">
     <div class="mensagens" data-mensagens>{% for mensagem in messages %}{% include "components/aviso.html" with nivel=mensagem.tags texto=mensagem.message titulo="" %}{% endfor %}</div>
     {% block cabecalho_pagina %}
@@ -37,6 +40,7 @@
     {% endblock %}
     {% block conteudo %}{% endblock %}
   </main>
+  {% block rodape_app %}
   <footer class="rodape-app">
     <div class="rodape-app__interno">
       <span>Consus v{{ versao }}</span><span aria-hidden="true">·</span>
@@ -44,6 +48,7 @@
       <a href="{% url 'core:saude' %}" hx-boost="false">Saúde do sistema</a>
     </div>
   </footer>
+  {% endblock %}
   <div id="toasts" class="toasts" role="status" aria-live="polite" aria-relevant="additions" hx-preserve data-duracao-ms="5000" data-maximo="3"></div>
   <template id="modelo-toast">{% include "components/toast.html" with nivel="info" texto="" %}</template>
   <div id="anuncio-alertas" class="visualmente-oculto" role="status" aria-live="polite"></div>

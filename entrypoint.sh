@@ -17,4 +17,8 @@ if [ "${CONSUS_POPULAR_DEMO:-0}" = "1" ] && python manage.py help popular_demo >
     python manage.py popular_demo
 fi
 
+if [ -n "${CONSUS_USUARIO:-}" ] && [ -n "${CONSUS_SENHA:-}" ]; then
+    python manage.py garantir_usuario
+fi
+
 exec "$@"

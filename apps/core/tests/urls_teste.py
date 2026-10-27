@@ -71,6 +71,7 @@ urlpatterns = [
     path("movimentacoes/", include(movimentacoes)),
     path("financeiro/", include(financeiro)),
     path("alertas/", include(alertas)),
+    path("contas/", include("apps.contas.urls")),
     path("teste/mensagem/<str:nivel>/", mensagem),
     path("teste/erro-500/", erro_500),
     path("teste/erro-400/", erro_400),

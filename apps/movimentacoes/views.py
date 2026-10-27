@@ -145,6 +145,7 @@ def _registrar(request):
                 tipo=dados["tipo"],
                 quantidade=dados["quantidade"],
                 observacao=dados["observacao"],
+                usuario=request.user,
             )
         except (EstoqueInsuficienteError, SaldoMaximoExcedidoError) as erro:
             form.add_error("quantidade", str(erro))

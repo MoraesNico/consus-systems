@@ -190,5 +190,5 @@ def test_sc003_lista_consultas_limitadas(client, produto_factory, django_assert_
     """SC-003: no máximo 4 consultas por requisição da lista, com 60 produtos."""
     for _ in range(60):
         produto_factory()
-    with django_assert_max_num_queries(4):
+    with django_assert_max_num_queries(6):  # +2 da sessão autenticada (006)
         client.get("/produtos/?q=Produto&situacao=ok&ordem=nome&pagina=2")

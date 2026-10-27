@@ -88,4 +88,22 @@
     e.preventDefault();
     if (alvo.matches("input, textarea, select")) alvo.focus(); else alvo.click();
   });
+
+  // Login (006): mostrar/ocultar senha e aviso de Caps Lock.
+  document.addEventListener("click", (e) => {
+    const botao = e.target.closest("[data-alternar-senha]");
+    const campo = botao && document.getElementById(botao.getAttribute("aria-controls"));
+    if (!campo) return;
+    const mostrar = campo.type === "password";
+    campo.type = mostrar ? "text" : "password";
+    botao.setAttribute("aria-pressed", String(mostrar));
+    botao.querySelector("use").setAttribute("href", botao.querySelector("use").getAttribute("href").replace(/#.*$/, mostrar ? "#eye-off" : "#eye"));
+    botao.querySelector(".visualmente-oculto").textContent = mostrar ? "Ocultar senha" : "Mostrar senha";
+    campo.focus();
+  });
+  ["keydown", "keyup"].forEach((nome) => document.addEventListener(nome, (e) => {
+    if (!e.target.matches || !e.target.matches("[data-senha]") || !e.getModifierState) return;
+    const aviso = document.getElementById("aviso-caps");
+    if (aviso) aviso.hidden = !e.getModifierState("CapsLock");
+  }));
 })();

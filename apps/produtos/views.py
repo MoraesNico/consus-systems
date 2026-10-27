@@ -166,7 +166,7 @@ def novo(request):
     form = ProdutoForm(request.POST)
     if form.is_valid():
         try:
-            produto = cadastrar_produto(**form.cleaned_data)
+            produto = cadastrar_produto(**form.cleaned_data, usuario=request.user)
         except ValidationError as erro:
             _anexar_erros(form, erro)
         else:

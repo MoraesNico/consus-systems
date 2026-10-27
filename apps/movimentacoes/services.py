@@ -125,6 +125,7 @@ def registrar_movimentacao(
             saldo_anterior=saldo_anterior,
             saldo_posterior=saldo_posterior,
             observacao=observacao,
+            registrado_por=usuario if getattr(usuario, "is_authenticated", False) else None,
             criado_em=agora,
         )
         # Importação tardia: financeiro depende de movimentacoes (evita ciclo no carregamento).
