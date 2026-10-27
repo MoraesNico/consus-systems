@@ -1,9 +1,9 @@
 [project]
 name = "consus"
-version = "1.0.0"
+version = "2.0.0"
 description = "Consus — Controle de Estoque Simples (Django + HTMX)"
 readme = "README.md"
-requires-python = ">=3.13,<3.14"
+requires-python = ">=3.11"
 dependencies = [
     "django>=5.2,<5.3",
     "django-htmx>=1.23",
@@ -25,7 +25,7 @@ dev = [
 package = false
 
 [tool.ruff]
-target-version = "py313"
+target-version = "py311"
 line-length = 100
 extend-exclude = ["**/migrations/**", "specs", "docs", ".specify", ".claude"]
 

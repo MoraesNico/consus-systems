@@ -1427,6 +1427,8 @@
   .previa-margem__aviso { font-weight: var(--font-weight-semibold); }
   .margem { white-space: nowrap; }
   .tabela td.mono { white-space: nowrap; }
+  .tabela .badge-composto { flex-direction: column; }
+  .tabela .tabela__acoes { white-space: nowrap; }
   .tabela td:has(> .tabela__principal) { min-inline-size: calc(var(--size-lg) * 5); }
   .margem .icone { display: inline-block; vertical-align: middle; margin-inline-start: var(--space-2); }
   .margem__pct { margin-inline-start: var(--space-3); color: var(--color-ink-muted); font-size: var(--text-xs); }
@@ -1468,6 +1470,7 @@
 @layer components {
   .faixa-financeira__dados { display: grid; grid-template-columns: repeat(auto-fit, minmax(calc(var(--size-lg) * 4), 1fr)); gap: var(--space-5); margin: 0; }
   .faixa-financeira__dados dd { margin: 0; }
+  .faixa-financeira__alerta { margin-block-start: var(--space-3); }
 }
 
 /* ── 006 · Login e menu do usuário ─────────────────────────────────────── */
@@ -1511,5 +1514,7 @@
   .menu-usuario__sair { color: var(--color-danger-ink); }
   @media (max-width: 41.99rem) { /* --bp-md */
     .menu-usuario__nome { display: none; }
+    .cabecalho-app__interno { position: relative; }
+    .menu-usuario { position: absolute; inset-block-start: var(--space-4); inset-inline-end: 0; }
   }
 }

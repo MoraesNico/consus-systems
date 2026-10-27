@@ -36,8 +36,8 @@ CHAVE_DESTAQUE = "produtos_destaque"
 COLUNAS = (
     ("ID", "id", False),
     ("Nome", "nome", False),
-    ("Quantidade atual", "quantidade", True),
-    ("Estoque mínimo", "minimo", True),
+    ("Qtd. atual", "quantidade", True),
+    ("Mínimo", "minimo", True),
     ("Custo", None, True),
     ("Venda", None, True),
     ("Margem", "margem", True),

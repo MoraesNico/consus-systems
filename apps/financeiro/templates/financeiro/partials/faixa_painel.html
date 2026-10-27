@@ -3,7 +3,6 @@
   <dl class="faixa-financeira__dados">
     <div><dt class="rotulo">Valor em estoque</dt><dd class="kpi__valor">{{ financeiro.valor_estoque|moeda }}</dd></div>
     <div><dt class="rotulo">Faturamento total</dt><dd class="kpi__valor">{{ financeiro.receitas|moeda }}</dd></div>
-    <div><dt class="rotulo">Saldo do caixa</dt><dd class="kpi__valor{% if financeiro.caixa_negativo %} valor--despesa{% endif %}">{{ financeiro.saldo_caixa|moeda }}</dd></div>
+    <div><dt class="rotulo">Saldo do caixa</dt><dd class="kpi__valor{% if financeiro.caixa_negativo %} valor--despesa{% endif %}">{{ financeiro.saldo_caixa|moeda }}</dd>{% if financeiro.caixa_negativo %}<dd class="faixa-financeira__alerta"><span class="badge badge--perigo">{% icone "triangle-alert" %}CAIXA NEGATIVO</span></dd>{% endif %}</div>
   </dl>
-  {% if financeiro.caixa_negativo %}<p class="badge badge--perigo">{% icone "triangle-alert" %}CAIXA NEGATIVO</p>{% endif %}
 </section>
