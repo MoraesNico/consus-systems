@@ -3,6 +3,9 @@
   <td><a class="tabela__principal tabela__link" href="{{ produto.get_absolute_url }}">{{ produto.nome }}</a>{% if destaque_id and produto.pk == destaque_id %} <span class="badge badge--info">NOVO</span>{% endif %}</td>
   <td class="num">{{ produto.quantidade_atual }}</td>
   <td class="num">{{ produto.estoque_minimo }}</td>
+  {% if produto.precos_pendentes %}<td class="num" colspan="3">{% include "produtos/partials/selo_margem.html" %}</td>{% else %}<td class="num mono">{{ produto.preco_custo|moeda }}</td>
+  <td class="num mono">{{ produto.preco_venda|moeda }}</td>
+  <td class="num mono margem margem--{{ produto.variante_margem }}">{{ produto.margem_prevista|moeda }}<span class="margem__pct">{{ produto.margem_percentual }}%</span>{% if produto.variante_margem == "negativa" %} {% include "produtos/partials/selo_margem.html" %}{% endif %}</td>{% endif %}
   <td>{% include "produtos/partials/situacao.html" %}</td>
   <td class="tabela__acoes">{% load movimentacoes_tags %}{% acoes_rapidas produto "lista" %}</td>
 </tr>

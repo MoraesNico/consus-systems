@@ -13,6 +13,7 @@ _EXPRESSOES = {
     "nome": Lower("nome"),
     "quantidade": F("quantidade_atual"),
     "minimo": F("estoque_minimo"),
+    "margem": F("margem"),
     "situacao": F("alerta"),  # crescente = em alerta primeiro (ver _expressao)
 }
 ORDENS_VALIDAS = set(_EXPRESSOES)
@@ -43,7 +44,7 @@ def _expressao(ordem: str):
 def listar_produtos(
     *, q: str | None = "", situacao: str = "", ordem: str = ""
 ) -> QuerySet[Produto]:
-    qs = Produto.objects.com_situacao().buscar(q)
+    qs = Produto.objects.com_situacao().com_financeiro().buscar(q)
     situacao = normalizar_situacao(situacao)
     if situacao == "alerta":
         qs = qs.em_alerta()
@@ -60,4 +61,4 @@ def obter_produto(produto_id: int) -> Produto:
     """Lança Produto.DoesNotExist, inclusive para IDs acima do máximo do BigAutoField."""
     if not 0 < produto_id <= ID_MAXIMO:
         raise Produto.DoesNotExist
-    return Produto.objects.com_situacao().get(pk=produto_id)
+    return Produto.objects.com_situacao().com_financeiro().get(pk=produto_id)

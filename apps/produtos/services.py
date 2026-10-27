@@ -3,11 +3,15 @@
 Toda validação de domínio vive aqui; formulários apenas convertem texto em valores.
 """
 
+from decimal import Decimal
+
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from django.db.models import Value
 from django.db.models.functions import Lower
 from django.utils.formats import number_format
+
+from apps.core.dinheiro import CENTAVO, PRECO_MAXIMO, formatar_moeda
 
 from .models import QUANTIDADE_MAXIMA, Produto
 
@@ -19,6 +23,9 @@ MENSAGENS = {
     "nome_duplicado": "Já existe um produto com este nome ({codigo}).",
     "inteiro_invalido": "Informe um número inteiro igual ou maior que zero.",
     "inteiro_maximo": "Informe um valor de no máximo {maximo}.",
+    "preco_obrigatorio": "Informe um preço maior que R$ 0,00.",
+    "preco_maximo": f"Informe um preço de no máximo {formatar_moeda(PRECO_MAXIMO)}.",
+    "preco_casas": "Use no máximo 2 casas decimais.",
 }
 
 
@@ -64,7 +71,25 @@ def _validar_inteiro(campo: str, valor, erros: dict) -> None:
         )
 
 
-def cadastrar_produto(*, nome: str, quantidade_inicial: int, estoque_minimo: int) -> Produto:
+def _validar_preco(campo: str, valor, erros: dict) -> None:
+    """Preços da Parte 2: `Decimal` > R$ 0,00, até `PRECO_MAXIMO`, no máximo 2 casas."""
+    if isinstance(valor, bool) or not isinstance(valor, Decimal | int) or valor <= 0:
+        erros[campo] = ValidationError(MENSAGENS["preco_obrigatorio"], code="preco_obrigatorio")
+    elif valor > PRECO_MAXIMO:
+        erros[campo] = ValidationError(MENSAGENS["preco_maximo"], code="preco_maximo")
+    elif Decimal(valor) != Decimal(valor).quantize(CENTAVO):
+        erros[campo] = ValidationError(MENSAGENS["preco_casas"], code="preco_casas")
+
+
+def cadastrar_produto(
+    *,
+    nome: str,
+    quantidade_inicial: int,
+    estoque_minimo: int,
+    preco_custo: Decimal,
+    preco_venda: Decimal,
+    usuario=None,
+) -> Produto:
     """Cadastra um produto (FR-001, FR-029).
 
     Com a feature 003, a Quantidade Inicial é registrada como a movimentação `INICIAL`, na mesma
@@ -75,6 +100,8 @@ def cadastrar_produto(*, nome: str, quantidade_inicial: int, estoque_minimo: int
     _validar_nome(nome, erros)
     _validar_inteiro("quantidade_inicial", quantidade_inicial, erros)
     _validar_inteiro("estoque_minimo", estoque_minimo, erros)
+    _validar_preco("preco_custo", preco_custo, erros)
+    _validar_preco("preco_venda", preco_venda, erros)
     if "nome" not in erros and _nome_em_uso(nome):
         raise _erro_nome_duplicado(nome)
     if erros:
@@ -87,10 +114,17 @@ def cadastrar_produto(*, nome: str, quantidade_inicial: int, estoque_minimo: int
         with transaction.atomic():
             # O produto nasce com saldo 0; a Quantidade Inicial entra como movimentação INICIAL.
             produto = Produto.objects.create(
-                nome=nome, quantidade_atual=0, estoque_minimo=estoque_minimo
+                nome=nome,
+                quantidade_atual=0,
+                estoque_minimo=estoque_minimo,
+                preco_custo=Decimal(preco_custo),
+                preco_venda=Decimal(preco_venda),
             )
             servicos_mov.registrar_movimentacao(
-                produto_id=produto.pk, tipo=TipoMovimentacao.INICIAL, quantidade=quantidade_inicial
+                produto_id=produto.pk,
+                tipo=TipoMovimentacao.INICIAL,
+                quantidade=quantidade_inicial,
+                usuario=usuario,
             )
             produto.refresh_from_db()
             return produto
@@ -100,12 +134,24 @@ def cadastrar_produto(*, nome: str, quantidade_inicial: int, estoque_minimo: int
         raise
 
 
-def editar_produto(*, produto_id: int, nome: str, estoque_minimo: int) -> Produto:
-    """Altera nome e estoque mínimo; nunca a quantidade (FR-024, FR-025)."""
+def editar_produto(
+    *,
+    produto_id: int,
+    nome: str,
+    estoque_minimo: int,
+    preco_custo: Decimal,
+    preco_venda: Decimal,
+) -> Produto:
+    """Altera nome, estoque mínimo e preços; nunca a quantidade (FR-024, FR-025).
+
+    Mudar o preço não altera transações já registradas (o valor delas é congelado).
+    """
     nome = normalizar_nome(nome)
     erros: dict = {}
     _validar_nome(nome, erros)
     _validar_inteiro("estoque_minimo", estoque_minimo, erros)
+    _validar_preco("preco_custo", preco_custo, erros)
+    _validar_preco("preco_venda", preco_venda, erros)
     with transaction.atomic():
         produto = Produto.objects.select_for_update().get(pk=produto_id)
         if "nome" not in erros and _nome_em_uso(nome, excluir_pk=produto.pk):
@@ -114,9 +160,12 @@ def editar_produto(*, produto_id: int, nome: str, estoque_minimo: int) -> Produt
             raise ValidationError(erros)
         produto.nome = nome
         produto.estoque_minimo = estoque_minimo
+        produto.preco_custo = Decimal(preco_custo)
+        produto.preco_venda = Decimal(preco_venda)
+        campos = ["nome", "estoque_minimo", "preco_custo", "preco_venda", "atualizado_em"]
         try:
             with transaction.atomic():
-                produto.save(update_fields=["nome", "estoque_minimo", "atualizado_em"])
+                produto.save(update_fields=campos)
         except IntegrityError as erro:
             raise _erro_nome_duplicado(nome, excluir_pk=produto.pk) from erro
     return produto

@@ -5,6 +5,7 @@ import itertools
 import pytest
 
 from apps.produtos.services import cadastrar_produto
+from apps.produtos.tests import PRECOS_TESTE
 
 _sequencia = itertools.count(1)
 
@@ -15,6 +16,7 @@ def produto_com_saldo(db):
 
     def criar(nome: str | None = None, saldo: int = 10, minimo: int = 3):
         return cadastrar_produto(
+            **PRECOS_TESTE,
             nome=nome or f"Parafuso {next(_sequencia)}",
             quantidade_inicial=saldo,
             estoque_minimo=minimo,

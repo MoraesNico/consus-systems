@@ -17,6 +17,7 @@ from apps.movimentacoes.selectors import auditar_saldos
 from apps.movimentacoes.services import MovimentacaoInvalidaError
 from apps.produtos.models import Produto
 from apps.produtos.services import cadastrar_produto
+from apps.produtos.tests import PRECOS_TESTE
 
 pytestmark = pytest.mark.django_db
 
@@ -143,7 +144,7 @@ def test_terminal_cp1252_troca_o_simbolo(cenario):
 )  # fmt: skip
 def test_fr035_produto_do_usuario_nao_e_alterado(db, nome):
     """FR-035: nome já cadastrado (em outra caixa) conta como existente e fica intacto."""
-    meu = cadastrar_produto(nome=nome, quantidade_inicial=7, estoque_minimo=1)
+    meu = cadastrar_produto(**PRECOS_TESTE, nome=nome, quantidade_inicial=7, estoque_minimo=1)
     saida = rodar("popular_demo")
     assert "11 produto(s) criado(s), 1 já existia(m)." in saida
     meu.refresh_from_db()

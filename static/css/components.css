@@ -1407,3 +1407,25 @@
     word-break: break-all;
   }
 }
+
+/* ── 007 · Preços e margem ─────────────────────────────────────────────── */
+@layer components {
+  .previa-margem {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1) var(--space-3);
+    align-items: center;
+    padding: var(--space-2) var(--space-3);
+    border: var(--border-width) dashed var(--color-border);
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+  }
+  .previa-margem__valor { display: inline-flex; gap: var(--space-1); align-items: center; }
+  .previa-margem--positiva strong { color: var(--color-success-ink); }
+  .previa-margem--negativa, .previa-margem__aviso { color: var(--color-danger-ink); }
+  .previa-margem__aviso { font-weight: var(--font-weight-semibold); }
+  .margem { white-space: nowrap; }
+  .margem__pct { margin-inline-start: var(--space-1); color: var(--color-text-muted); font-size: var(--text-xs); }
+  .margem--negativa { color: var(--color-danger-ink); }
+  .resumo-produto__secao { display: flex; gap: var(--space-2); align-items: center; margin-block-start: var(--space-4); }
+}

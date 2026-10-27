@@ -5,12 +5,15 @@ import pytest
 from apps.movimentacoes.services import registrar_movimentacao
 from apps.produtos.models import QUANTIDADE_MAXIMA, Produto
 from apps.produtos.services import cadastrar_produto, editar_produto
+from apps.produtos.tests import PRECOS_TESTE
 
 pytestmark = pytest.mark.django_db
 
 
 def criar(nome, quantidade, minimo):
-    return cadastrar_produto(nome=nome, quantidade_inicial=quantidade, estoque_minimo=minimo)
+    return cadastrar_produto(
+        **PRECOS_TESTE, nome=nome, quantidade_inicial=quantidade, estoque_minimo=minimo
+    )
 
 
 def test_em_alerta_inclui_igualdade_e_zero():
@@ -45,7 +48,7 @@ def test_situacao_muda_apos_movimentar_e_editar_minimo():
     assert not Produto.objects.com_situacao().get(pk=produto.pk).alerta
     registrar_movimentacao(produto_id=produto.pk, tipo="SAIDA", quantidade=1)
     assert Produto.objects.com_situacao().get(pk=produto.pk).alerta
-    editar_produto(produto_id=produto.pk, nome="Derivada", estoque_minimo=5)
+    editar_produto(**PRECOS_TESTE, produto_id=produto.pk, nome="Derivada", estoque_minimo=5)
     assert not Produto.objects.com_situacao().get(pk=produto.pk).alerta
     campos = {f.name for f in Produto._meta.get_fields()}
     assert not campos & {"alerta", "deficit", "cobertura_percentual", "situacao"}

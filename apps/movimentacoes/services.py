@@ -63,7 +63,13 @@ def _validar_quantidade(tipo: str, quantidade) -> None:
 
 
 def registrar_movimentacao(
-    *, produto_id: int, tipo: str, quantidade: int, observacao: str = ""
+    *,
+    produto_id: int,
+    tipo: str,
+    quantidade: int,
+    observacao: str = "",
+    usuario=None,
+    momento=None,
 ) -> Movimentacao:
     """Registra Entrada, Saída/Venda ou Saldo inicial e atualiza o saldo atomicamente."""
     if tipo not in TipoMovimentacao.values:
