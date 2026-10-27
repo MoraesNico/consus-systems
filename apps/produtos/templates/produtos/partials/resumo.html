@@ -8,5 +8,12 @@
     <div><dt class="rotulo">Estoque mínimo</dt><dd class="resumo-produto__minimo mono">{{ produto.estoque_minimo }}</dd></div>
   </dl>
   {% if produto.estoque_minimo %}{% include "components/barra_progresso.html" with rotulo="Saldo × mínimo" valor=produto.quantidade_atual maximo=produto.estoque_minimo tom=produto.variante_situacao|default:"ok" %}{% endif %}
+  <h3 class="rotulo resumo-produto__secao">Preços e margem {% include "produtos/partials/selo_margem.html" %}</h3>
+  <dl class="resumo-produto__dados resumo-produto__dados--precos">
+    <div><dt class="rotulo">Custo</dt><dd class="mono">{{ produto.preco_custo|moeda }}</dd></div>
+    <div><dt class="rotulo">Venda</dt><dd class="mono">{{ produto.preco_venda|moeda }}</dd></div>
+    <div><dt class="rotulo">Margem prevista</dt><dd class="mono margem margem--{{ produto.variante_margem }}">{% if produto.precos_pendentes %}—{% else %}{{ produto.margem_prevista|moeda }} <span class="margem__pct">({{ produto.margem_percentual }}%)</span>{% endif %}</dd></div>
+    <div><dt class="rotulo">Valor em estoque</dt><dd class="mono">{{ produto.valor_em_estoque|moeda }}</dd></div>
+  </dl>
   <p class="ajuda resumo-produto__datas">Cadastrado em <span class="mono">{{ produto.criado_em|date:"d/m/Y H:i" }}</span> · atualizado em <span class="mono">{{ produto.atualizado_em|date:"d/m/Y H:i" }}</span></p>
 </section>

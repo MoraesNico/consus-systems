@@ -1,6 +1,7 @@
 <form id="form-produto" class="formulario" method="post" action="{% url 'produtos:novo' %}" novalidate{% if contexto == "dialogo" %} hx-post="{% url 'produtos:novo' %}" hx-target="#dialogo" hx-disabled-elt="#salvar-produto" hx-disinherit="*"{% endif %}>
   {% csrf_token %}
   {{ form }}
+  <output id="previa-margem" class="previa-margem" aria-live="polite">{% include "produtos/partials/previa_margem.html" %}</output>
   {% if contexto != "dialogo" %}
     <div class="formulario__acoes">
       <a class="botao botao--secundario" href="{% url 'produtos:lista' %}">Voltar para a lista</a>

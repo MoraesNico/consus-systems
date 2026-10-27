@@ -6,9 +6,16 @@
   const dialogo = () => document.getElementById("dialogo");
   let acionador = null;
 
+  // Saída animada (005): .toast--saindo; remove ao fim da animação (ou já, sem animação).
+  function sair(el) {
+    el.classList.add("toast--saindo");
+    const duracao = parseFloat(getComputedStyle(el).animationDuration) || 0;
+    if (duracao) el.addEventListener("animationend", () => el.remove(), { once: true }); else el.remove();
+  }
+
   function temporizar(el, ms) {
     let restante = ms, inicio = 0, id = null;
-    const iniciar = () => { if (id) return; inicio = Date.now(); id = setTimeout(() => el.remove(), restante); };
+    const iniciar = () => { if (id) return; inicio = Date.now(); id = setTimeout(() => sair(el), restante); };
     const pausar = () => { if (!id) return; clearTimeout(id); id = null; restante -= Date.now() - inicio; };
     ["mouseenter", "focusin"].forEach((nome) => el.addEventListener(nome, pausar));
     ["mouseleave", "focusout"].forEach((nome) => el.addEventListener(nome, iniciar));
@@ -27,7 +34,7 @@
     const uso = el.querySelector("[data-toast-icone] use");
     if (uso) uso.setAttribute("href", uso.getAttribute("href").replace(/#.*$/, `#${ICONES[nivel]}`));
     if (nivel === "alerta" || nivel === "erro") el.setAttribute("role", "alert");
-    el.querySelector("[data-toast-fechar]").addEventListener("click", () => el.remove());
+    el.querySelector("[data-toast-fechar]").addEventListener("click", () => sair(el));
     regiao.prepend(el);
     const maximo = Number(raiz.dataset.maximo || 3);
     const atuais = regiao.querySelectorAll("[data-toast]");
@@ -88,4 +95,22 @@
     e.preventDefault();
     if (alvo.matches("input, textarea, select")) alvo.focus(); else alvo.click();
   });
+
+  // Login (006): mostrar/ocultar senha e aviso de Caps Lock.
+  document.addEventListener("click", (e) => {
+    const botao = e.target.closest("[data-alternar-senha]");
+    const campo = botao && document.getElementById(botao.getAttribute("aria-controls"));
+    if (!campo) return;
+    const mostrar = campo.type === "password";
+    campo.type = mostrar ? "text" : "password";
+    botao.setAttribute("aria-pressed", String(mostrar));
+    botao.querySelector("use").setAttribute("href", botao.querySelector("use").getAttribute("href").replace(/#.*$/, mostrar ? "#eye-off" : "#eye"));
+    botao.querySelector(".visualmente-oculto").textContent = mostrar ? "Ocultar senha" : "Mostrar senha";
+    campo.focus();
+  });
+  ["keydown", "keyup"].forEach((nome) => document.addEventListener(nome, (e) => {
+    if (!e.target.matches || !e.target.matches("[data-senha]") || !e.getModifierState) return;
+    const aviso = document.getElementById("aviso-caps");
+    if (aviso) aviso.hidden = !e.getModifierState("CapsLock");
+  }));
 })();

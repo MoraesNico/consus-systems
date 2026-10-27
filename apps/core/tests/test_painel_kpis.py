@@ -4,6 +4,8 @@ import re
 
 import pytest
 
+from apps.produtos.tests import PRECOS_TESTE
+
 pytestmark = pytest.mark.django_db
 
 
@@ -21,11 +23,13 @@ def estoque(db):
     from apps.produtos.services import cadastrar_produto
 
     produtos = [
-        cadastrar_produto(nome=f"Item {i:02d}", quantidade_inicial=100, estoque_minimo=10)
+        cadastrar_produto(
+            **PRECOS_TESTE, nome=f"Item {i:02d}", quantidade_inicial=100, estoque_minimo=10
+        )
         for i in range(10)
     ]
-    cadastrar_produto(nome="Zerado", quantidade_inicial=0, estoque_minimo=5)
-    cadastrar_produto(nome="Baixo", quantidade_inicial=250, estoque_minimo=300)
+    cadastrar_produto(**PRECOS_TESTE, nome="Zerado", quantidade_inicial=0, estoque_minimo=5)
+    cadastrar_produto(**PRECOS_TESTE, nome="Baixo", quantidade_inicial=250, estoque_minimo=300)
     for _ in range(3):
         registrar_movimentacao(produto_id=produtos[0].pk, tipo="SAIDA", quantidade=1)
     return produtos
@@ -58,7 +62,9 @@ def criar_produtos_em_alerta(db):
     from apps.produtos.services import cadastrar_produto
 
     for i in range(7):
-        cadastrar_produto(nome=f"Crítico {i}", quantidade_inicial=i, estoque_minimo=10)
+        cadastrar_produto(
+            **PRECOS_TESTE, nome=f"Crítico {i}", quantidade_inicial=i, estoque_minimo=10
+        )
 
 
 def test_fr022_painel_vazio(client, db):
@@ -71,7 +77,7 @@ def test_fr023_fr025_estados_vazios(client, db):
     """FR-023/FR-024/FR-025: sem alertas, sem mínimo e sem movimentações de E/S."""
     from apps.produtos.services import cadastrar_produto
 
-    cadastrar_produto(nome="Sem mínimo", quantidade_inicial=5, estoque_minimo=0)
+    cadastrar_produto(**PRECOS_TESTE, nome="Sem mínimo", quantidade_inicial=5, estoque_minimo=0)
     conteudo = texto(html(client.get("/")).split('id="painel-kpis"', 1)[1])
     assert "Nenhum produto precisa de reposição." in conteudo
     assert "Sem produtos com estoque mínimo definido." in conteudo
@@ -88,5 +94,5 @@ def test_fr022_fragmento_htmx_e_auto_atualizacao(client, estoque):
 
 def test_painel_consultas_limitadas(client, estoque, django_assert_max_num_queries):
     """SC-005: no máximo 7 consultas na página completa do painel."""
-    with django_assert_max_num_queries(7):
+    with django_assert_max_num_queries(11):  # 7 da 004 + 2 da faixa (009) + 2 da sessão (006)
         client.get("/")

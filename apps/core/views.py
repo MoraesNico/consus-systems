@@ -3,6 +3,7 @@
 from collections import OrderedDict
 
 from django.contrib import messages
+from django.contrib.auth.decorators import login_not_required
 from django.core.exceptions import SuspiciousOperation
 from django.core.paginator import Paginator
 from django.http import HttpResponse, JsonResponse
@@ -63,7 +64,7 @@ SECOES_TOKENS = (
     ("bordas", "Bordas e raios", ("--border-", "--radius-")),
     ("sombras", "Sombras e foco", ("--shadow-", "--focus-")),
     ("camadas", "Camadas", ("--z-",)),
-    ("movimento", "Movimento e opacidade", ("--duration-", "--ease-", "--opacity-")),
+    ("movimento", "Movimento e opacidade", ("--duration-", "--ease-", "--motion-", "--opacity-")),
 )
 
 ICONES = (
@@ -98,10 +99,12 @@ ICONES = (
 @vary_on_headers("HX-Request", "HX-Target")
 def painel(request):
     from apps.alertas.selectors import resumo_painel  # feature 004: KPIs do Painel
+    from apps.financeiro.selectors import faixa_financeira  # feature 009: faixa financeira
 
     resumo = resumo_painel()
     contexto = {
         "resumo": resumo,
+        "financeiro": faixa_financeira() if resumo.total_produtos else None,
         "meta_alerta": f"{resumo.total_sem_estoque} sem estoque",
         "url_cadastro_produto": url_se_existir("produtos:novo"),
         "url_lista_produtos": url_se_existir("produtos:lista"),
@@ -225,6 +228,7 @@ def _design_post(request):
     raise SuspiciousOperation("Exemplo desconhecido.")
 
 
+@login_not_required
 @require_safe
 @never_cache
 def saude(request):

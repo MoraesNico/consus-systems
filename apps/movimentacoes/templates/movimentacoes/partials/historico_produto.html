@@ -7,7 +7,7 @@
     <div class="tabela-contenedor">
       <table class="tabela tabela--compacta">
         <caption class="visualmente-oculto">Últimas movimentações de {{ produto.codigo }}</caption>
-        <thead><tr><th scope="col">Data/hora</th><th scope="col">Tipo</th><th scope="col" class="num">Quantidade</th><th scope="col" class="num">Saldo</th><th scope="col">Observação</th></tr></thead>
+        <thead><tr><th scope="col">Data/hora</th><th scope="col">Tipo</th><th scope="col" class="num">Quantidade</th><th scope="col" class="num">Saldo</th><th scope="col" class="num">Valor</th><th scope="col">Observação</th></tr></thead>
         <tbody>{% for mov in movimentacoes %}{% include "movimentacoes/partials/linha_movimentacao.html" with sem_produto=True %}{% endfor %}</tbody>
       </table>
     </div>

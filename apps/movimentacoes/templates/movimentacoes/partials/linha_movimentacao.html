@@ -4,5 +4,6 @@
   <td><span class="badge badge--{{ mov.variante_selo }}">{% if mov.icone_selo %}{% icone mov.icone_selo %}{% endif %}{{ mov.get_tipo_display }}</span></td>
   <td class="num{% if mov.eh_saida %} quantidade--saida{% endif %}">{% if mov.tipo == "INICIAL" %}{{ mov.quantidade }}{% else %}{{ mov.sinal }}{{ mov.quantidade }}{% endif %}</td>
   <td class="num">{{ mov.saldo_anterior }} → {{ mov.saldo_posterior }}</td>
+  {% with t=mov.transacao_financeira %}<td class="num mono{% if t %} valor--{{ t.eh_receita|yesno:'receita,despesa' }}{% endif %}">{% if t %}{{ t.valor_assinado|moeda:"sinal" }}{% else %}—{% endif %}</td>{% endwith %}
   <td class="tabela__texto-longo" title="{{ mov.observacao }}">{{ mov.observacao|default:"—" }}</td>
 </tr>

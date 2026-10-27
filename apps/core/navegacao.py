@@ -21,6 +21,7 @@ ITENS_NAVEGACAO = (
     ItemNavegacao("Painel", "core:painel", "layout-dashboard", "core:painel"),
     ItemNavegacao("Produtos", "produtos:lista", "package", "produtos"),
     ItemNavegacao("Movimentações", "movimentacoes:lista", "arrow-left-right", "movimentacoes"),
+    ItemNavegacao("Financeiro", "financeiro:painel", "wallet", "financeiro"),
     ItemNavegacao("Alertas", "alertas:relatorio", "bell", "alertas"),
 )
 

@@ -9,7 +9,13 @@ from apps.produtos.models import Produto
 
 pytestmark = pytest.mark.django_db
 
-VALIDO = {"nome": "Caneta Azul", "quantidade_inicial": "10", "estoque_minimo": "5"}
+VALIDO = {
+    "nome": "Caneta Azul",
+    "quantidade_inicial": "10",
+    "estoque_minimo": "5",
+    "preco_custo": "1,00",
+    "preco_venda": "2,00",
+}
 
 
 def html(resposta) -> str:

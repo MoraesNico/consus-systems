@@ -7,6 +7,7 @@ from apps.movimentacoes.forms import MovimentacaoForm
 from apps.movimentacoes.services import MovimentacaoInvalidaError, registrar_movimentacao
 from apps.produtos.models import Produto
 from apps.produtos.services import cadastrar_produto
+from apps.produtos.tests import PRECOS_TESTE
 
 pytestmark = pytest.mark.django_db
 
@@ -14,7 +15,9 @@ pytestmark = pytest.mark.django_db
 @pytest.mark.parametrize("quantidade", [10, 0])
 def test_fr027_cadastro_gera_inicial(quantidade):
     """FR-027: o cadastro cria exatamente um INICIAL 0 → quantidade (inclusive 0)."""
-    produto = cadastrar_produto(nome="Parafuso", quantidade_inicial=quantidade, estoque_minimo=1)
+    produto = cadastrar_produto(
+        **PRECOS_TESTE, nome="Parafuso", quantidade_inicial=quantidade, estoque_minimo=1
+    )
     inicial = produto.movimentacoes.get()
     assert (inicial.tipo, inicial.saldo_anterior, inicial.saldo_posterior) == (
         "INICIAL",
@@ -32,13 +35,15 @@ def test_fr027_falha_no_inicial_desfaz_o_cadastro(monkeypatch):
 
     monkeypatch.setattr(servicos_mov, "registrar_movimentacao", falhar)
     with pytest.raises(RuntimeError):
-        cadastrar_produto(nome="Parafuso", quantidade_inicial=5, estoque_minimo=1)
+        cadastrar_produto(**PRECOS_TESTE, nome="Parafuso", quantidade_inicial=5, estoque_minimo=1)
     assert Produto.objects.count() == 0
 
 
 def test_fr028_inicial_so_uma_vez():
     """FR-028: INICIAL em produto com histórico é recusado."""
-    produto = cadastrar_produto(nome="Parafuso", quantidade_inicial=0, estoque_minimo=1)
+    produto = cadastrar_produto(
+        **PRECOS_TESTE, nome="Parafuso", quantidade_inicial=0, estoque_minimo=1
+    )
     with pytest.raises(
         MovimentacaoInvalidaError, match=f"Saldo inicial já registrado para {produto.codigo}."
     ):

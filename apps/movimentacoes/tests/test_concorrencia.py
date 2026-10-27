@@ -9,6 +9,7 @@ from django.db import connection
 from apps.movimentacoes.services import EstoqueInsuficienteError, registrar_movimentacao
 from apps.produtos.models import Produto
 from apps.produtos.services import cadastrar_produto
+from apps.produtos.tests import PRECOS_TESTE
 
 pytestmark = [
     pytest.mark.postgres,
@@ -40,8 +41,8 @@ def disparar_em_paralelo(funcoes):
 @pytest.mark.parametrize("rodada", range(20))
 def test_sc003_vinte_saidas_simultaneas_nunca_negativam(rodada):
     """SC-003: saldo 10 + 20 saídas simultâneas de 1 → exatamente 10 aceitas, saldo 0."""
-    produto = cadastrar_produto(nome=f"Concorrência {rodada}", quantidade_inicial=10,
-                                estoque_minimo=1)  # fmt: skip
+    produto = cadastrar_produto(**PRECOS_TESTE, nome=f"Concorrência {rodada}",
+                                quantidade_inicial=10, estoque_minimo=1)  # fmt: skip
     saida = lambda: registrar_movimentacao(produto_id=produto.pk, tipo="SAIDA", quantidade=1)  # noqa: E731
     resultados = disparar_em_paralelo([saida] * 20)
     aceitas = [r for r in resultados if not isinstance(r, Exception)]
@@ -53,7 +54,9 @@ def test_sc003_vinte_saidas_simultaneas_nunca_negativam(rodada):
 
 def test_fr008_duas_saidas_de_6_com_saldo_10():
     """FR-008: uma saída de 6 passa; a outra recebe "disponível 4, solicitado 6"."""
-    produto = cadastrar_produto(nome="Duas saídas", quantidade_inicial=10, estoque_minimo=1)
+    produto = cadastrar_produto(
+        **PRECOS_TESTE, nome="Duas saídas", quantidade_inicial=10, estoque_minimo=1
+    )
     saida = lambda: registrar_movimentacao(produto_id=produto.pk, tipo="SAIDA", quantidade=6)  # noqa: E731
     resultados = disparar_em_paralelo([saida, saida])
     erros = [r for r in resultados if isinstance(r, EstoqueInsuficienteError)]
@@ -64,7 +67,9 @@ def test_fr008_segunda_transacao_espera_a_primeira():
     """FR-008: select_for_update sem nowait — a segunda chamada aguarda o commit da primeira."""
     from django.db import transaction
 
-    produto = cadastrar_produto(nome="Espera", quantidade_inicial=10, estoque_minimo=1)
+    produto = cadastrar_produto(
+        **PRECOS_TESTE, nome="Espera", quantidade_inicial=10, estoque_minimo=1
+    )
     liberado = threading.Event()
     instantes = {}
 

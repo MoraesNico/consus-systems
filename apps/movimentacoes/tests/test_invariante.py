@@ -8,6 +8,7 @@ from apps.movimentacoes.selectors import auditar_saldos
 from apps.movimentacoes.services import MovimentacaoError, registrar_movimentacao
 from apps.produtos.models import Produto
 from apps.produtos.services import cadastrar_produto
+from apps.produtos.tests import PRECOS_TESTE
 
 pytestmark = pytest.mark.django_db
 
@@ -16,7 +17,12 @@ def test_sc004_sequencia_aleatoria_mantem_invariante():
     """SC-004: após centenas de operações (com recusas), o livro-razão fecha."""
     sorteio = random.Random(20261020)
     produtos = [
-        cadastrar_produto(nome=f"P{i}", quantidade_inicial=sorteio.randint(0, 50), estoque_minimo=5)
+        cadastrar_produto(
+            **PRECOS_TESTE,
+            nome=f"P{i}",
+            quantidade_inicial=sorteio.randint(0, 50),
+            estoque_minimo=5,
+        )
         for i in range(6)
     ]
     recusas = 0
@@ -42,7 +48,9 @@ def test_sc004_sequencia_aleatoria_mantem_invariante():
 
 def test_fr029_auditoria_aponta_divergencia_fabricada():
     """FR-029: uma alteração direta de saldo é denunciada pela auditoria."""
-    produto = cadastrar_produto(nome="Fraude", quantidade_inicial=10, estoque_minimo=1)
+    produto = cadastrar_produto(
+        **PRECOS_TESTE, nome="Fraude", quantidade_inicial=10, estoque_minimo=1
+    )
     Produto.objects.filter(pk=produto.pk).update(quantidade_atual=99)
     divergencias = auditar_saldos()
     assert len(divergencias) == 1

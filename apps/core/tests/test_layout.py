@@ -40,7 +40,7 @@ def test_fr011_estrutura_da_casca(resposta_painel):
     assert "Consus" in conteudo
     assert '<main id="conteudo"' in conteudo
     rodape = conteudo.split('class="rodape-app"', 1)[1]
-    assert "v1.0.0" in rodape
+    assert "v2.0.0" in rodape
     assert 'href="/design/"' in rodape
     assert 'href="/saude/"' in rodape
 
@@ -136,9 +136,9 @@ def test_fr023_tema_claro(client):
 
 
 def test_constituicao_ii_js_proprio_pequeno():
-    """Constituição II: JavaScript próprio com menos de 100 linhas."""
+    """Constituição 1.1.0: JavaScript próprio com menos de 200 linhas."""
     linhas = CONSUS_JS.read_text().splitlines()
-    assert len(linhas) < 100, len(linhas)
+    assert len(linhas) < 200, len(linhas)
 
 
 def test_fr045_atalhos_declarativos():

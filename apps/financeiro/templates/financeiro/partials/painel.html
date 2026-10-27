@@ -1,0 +1,69 @@
+<section id="painel-financeiro" class="painel pilha pilha--ampla" aria-labelledby="painel-financeiro-titulo" hx-get="{% url 'financeiro:painel' %}{% querystring %}" hx-trigger="estoque-alterado from:body" hx-target="this" hx-swap="outerHTML">
+  <h2 id="painel-financeiro-titulo" class="visualmente-oculto">Indicadores financeiros</h2>
+  <nav class="periodos" aria-label="Período">
+    <ul class="periodos__atalhos" role="list">
+      {% for a in atalhos %}<li><a class="periodos__atalho" href="{% url 'financeiro:painel' %}?periodo={{ a.chave }}" hx-get="{% url 'financeiro:painel' %}?periodo={{ a.chave }}" hx-target="#painel-financeiro" hx-swap="outerHTML" hx-push-url="true"{% if resumo.periodo.chave == a.chave %} aria-current="true"{% endif %}>{{ a.rotulo }}</a></li>{% endfor %}
+    </ul>
+    <form class="periodos__personalizado" method="get" action="{% url 'financeiro:painel' %}" hx-get="{% url 'financeiro:painel' %}" hx-target="#painel-financeiro" hx-swap="outerHTML" hx-push-url="true">
+      <input type="hidden" name="periodo" value="personalizado">
+      <span class="campo campo--sm"><label class="visualmente-oculto" for="periodo-de">De</label><input id="periodo-de" type="date" name="de" value="{{ de }}" required></span>
+      <span class="campo campo--sm"><label class="visualmente-oculto" for="periodo-ate">Até</label><input id="periodo-ate" type="date" name="ate" value="{{ ate }}" required></span>
+      <button class="botao botao--secundario botao--sm{% if resumo.periodo.chave == 'personalizado' %}{% endif %}" type="submit">{% icone "calendar" %}Aplicar</button>
+    </form>
+  </nav>
+  {% if erro_periodo %}<div class="aviso aviso--alerta" role="alert"><span class="aviso__icone">{% icone "triangle-alert" %}</span><div class="aviso__corpo"><p>{{ erro_periodo }} Mostrando todo o período.</p></div></div>{% endif %}
+  {% include "financeiro/partials/selo_caixa.html" %}
+
+  <div class="grade">
+    <div class="col-md-4 col-lg-3 animar-surgir" style="--ordem: 0">{% include "components/kpi.html" with rotulo="Valor total do estoque" valor=resumo.valor_estoque|moeda meta=resumo.meta_estoque icone="package" %}</div>
+    <div class="col-md-4 col-lg-3 animar-surgir" style="--ordem: 1">{% include "components/kpi.html" with rotulo="Faturamento" valor=resumo.receitas|moeda meta="soma das receitas de vendas" icone="trending-up" %}</div>
+    <div class="col-md-4 col-lg-3 animar-surgir" style="--ordem: 2">{% include "components/kpi.html" with rotulo="Lucro bruto realizado" valor=resumo.lucro_bruto|moeda meta=resumo.meta_lucro icone="circle-dollar-sign" %}</div>
+    <div class="col-md-4 col-lg-3 animar-surgir" style="--ordem: 3" id="kpi-saldo-caixa">{% if resumo.caixa_negativo %}{% include "components/kpi.html" with rotulo="Saldo do caixa" valor=resumo.saldo_caixa|moeda meta=resumo.meta_saldo destaque="perigo" %}{% else %}{% include "components/kpi.html" with rotulo="Saldo do caixa" valor=resumo.saldo_caixa|moeda meta=resumo.meta_saldo icone="wallet" %}{% endif %}</div>
+  </div>
+
+  <section class="cartao painel__secao" aria-labelledby="titulo-fluxo">
+    <div class="cartao__cabecalho">
+      <h3 id="titulo-fluxo" class="cartao__titulo">Fluxo de caixa · {{ resumo.periodo.rotulo|lower }}</h3>
+      <ul class="legenda" role="list"><li><span class="legenda__marca legenda__marca--receita" aria-hidden="true"></span>Receitas {{ resumo.receitas|moeda }}</li><li><span class="legenda__marca legenda__marca--despesa" aria-hidden="true"></span>Despesas {{ resumo.despesas|moeda }}</li></ul>
+    </div>
+    {% if resumo.serie_fluxo %}
+      {% with maximo=resumo.maior_valor_serie %}
+      <div class="fluxo" role="img" aria-label="Receitas e despesas por {{ resumo.granularidade }} no período; detalhes na tabela a seguir.">
+        {% for ponto in resumo.serie_fluxo %}
+          <div class="fluxo__grupo" title="{{ ponto.rotulo }} · receitas {{ ponto.receitas|moeda }} · despesas {{ ponto.despesas|moeda }}">
+            <div class="fluxo__barras">
+              <span class="fluxo__barra fluxo__barra--receita" style="--valor: {{ ponto.receitas|porcentagem:maximo }}"></span>
+              <span class="fluxo__barra fluxo__barra--despesa" style="--valor: {{ ponto.despesas|porcentagem:maximo }}"></span>
+            </div>
+            <span class="fluxo__rotulo mono"{% if not forloop.counter0|divisibleby:resumo.passo_rotulos %} aria-hidden="true" data-oculto{% endif %}>{{ ponto.rotulo }}</span>
+          </div>
+        {% endfor %}
+      </div>
+      {% endwith %}
+      <details class="fluxo__tabela"><summary>Ver valores em tabela</summary>
+        <div class="tabela-contenedor"><table class="tabela tabela--compacta"><caption class="visualmente-oculto">Fluxo de caixa</caption><thead><tr><th scope="col">{% if resumo.granularidade == "dia" %}Dia{% else %}Mês{% endif %}</th><th scope="col" class="num">Receitas</th><th scope="col" class="num">Despesas</th><th scope="col" class="num">Saldo</th></tr></thead>
+        <tbody>{% for ponto in resumo.serie_fluxo %}<tr><td class="mono">{{ ponto.rotulo }}</td><td class="num mono">{{ ponto.receitas|moeda }}</td><td class="num mono">{{ ponto.despesas|moeda }}</td><td class="num mono">{{ ponto.saldo|moeda }}</td></tr>{% endfor %}</tbody></table></div>
+      </details>
+    {% else %}
+      {% url 'movimentacoes:nova' as url_nova %}
+      {% include "components/estado_vazio.html" with icone="chart-column" titulo="Sem transações no período" descricao="Entradas e saídas de estoque geram despesas e receitas automaticamente." acao_rotulo="Nova movimentação" acao_url=url_nova compacto=True %}
+    {% endif %}
+  </section>
+
+  <div class="grade">
+    <section class="cartao col-md-8 col-lg-4 painel__secao" aria-labelledby="titulo-top-faturamento"><div class="cartao__cabecalho"><h3 id="titulo-top-faturamento" class="cartao__titulo">Mais faturamento</h3></div>{% include "components/lista_barras.html" with titulo="Produto" rotulo_valor="Receita" itens=resumo.top_faturamento moeda=True %}</section>
+    <section class="cartao col-md-8 col-lg-4 painel__secao" aria-labelledby="titulo-top-lucro"><div class="cartao__cabecalho"><h3 id="titulo-top-lucro" class="cartao__titulo">Mais lucro bruto</h3></div>{% include "components/lista_barras.html" with titulo="Produto" rotulo_valor="Lucro" itens=resumo.top_lucro moeda=True %}</section>
+    <section class="cartao col-md-8 col-lg-4 painel__secao" aria-labelledby="titulo-valor-estoque"><div class="cartao__cabecalho"><h3 id="titulo-valor-estoque" class="cartao__titulo">Maior valor em estoque</h3></div>{% include "components/lista_barras.html" with titulo="Produto" rotulo_valor="Valor a custo" itens=resumo.maiores_valores_estoque moeda=True %}</section>
+  </div>
+
+  <section class="cartao painel__secao" aria-labelledby="titulo-ultimas-transacoes">
+    <div class="cartao__cabecalho"><h3 id="titulo-ultimas-transacoes" class="cartao__titulo">Últimas transações</h3><a class="botao botao--fantasma botao--sm" href="{% url 'financeiro:transacoes' %}">Ver histórico{% icone "arrow-right" %}</a></div>
+    {% if resumo.ultimas_transacoes %}
+      <div class="tabela-contenedor tabela-contenedor--sem-borda"><table class="tabela tabela--compacta"><caption class="visualmente-oculto">As cinco transações mais recentes</caption>
+        <thead><tr><th scope="col">Data/hora</th><th scope="col">Produto</th><th scope="col">Tipo</th><th scope="col" class="num">Quantidade</th><th scope="col" class="num">Preço unitário</th><th scope="col" class="num">Valor total</th><th scope="col">Registrado por</th></tr></thead>
+        <tbody>{% for t in resumo.ultimas_transacoes %}{% include "financeiro/partials/linha_transacao.html" %}{% endfor %}</tbody></table></div>
+    {% else %}
+      {% include "components/estado_vazio.html" with icone="receipt" titulo="Nenhuma transação no período" descricao="" acao_rotulo="" compacto=True %}
+    {% endif %}
+  </section>
+</section>

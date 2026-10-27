@@ -21,7 +21,7 @@ def test_fr012_colunas_e_formatos(client, produto_factory):
     produto = produto_factory(nome="Parafuso", quantidade_inicial=1500, estoque_minimo=200)
     conteudo = html(client.get("/produtos/"))
     cabecalho = re.sub(r"<[^>]+>", " ", conteudo.split("<thead", 1)[1].split("</thead>", 1)[0])
-    for coluna in ("ID", "Nome", "Quantidade atual", "Estoque mínimo", "Situação"):
+    for coluna in ("ID", "Nome", "Qtd. atual", "Mínimo", "Custo", "Venda", "Margem", "Situação"):
         assert coluna in cabecalho, coluna
     assert produto.codigo in conteudo and "1.500" in conteudo
 
@@ -190,5 +190,5 @@ def test_sc003_lista_consultas_limitadas(client, produto_factory, django_assert_
     """SC-003: no máximo 4 consultas por requisição da lista, com 60 produtos."""
     for _ in range(60):
         produto_factory()
-    with django_assert_max_num_queries(4):
+    with django_assert_max_num_queries(6):  # +2 da sessão autenticada (006)
         client.get("/produtos/?q=Produto&situacao=ok&ordem=nome&pagina=2")

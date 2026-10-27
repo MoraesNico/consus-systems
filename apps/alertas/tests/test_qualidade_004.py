@@ -71,9 +71,9 @@ def test_sc005_volume_de_mil_produtos(client, django_assert_max_num_queries):
         for p in produtos
     )  # fmt: skip
     assert len(varrer().itens) == 550
-    with django_assert_max_num_queries(3):
+    with django_assert_max_num_queries(5):
         client.get("/alertas/", HTTP_HX_REQUEST="true")
-    with django_assert_max_num_queries(1):
+    with django_assert_max_num_queries(3):
         client.get("/alertas/contador/")
-    with django_assert_max_num_queries(7):
+    with django_assert_max_num_queries(11):
         client.get("/")

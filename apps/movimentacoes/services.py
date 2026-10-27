@@ -63,9 +63,19 @@ def _validar_quantidade(tipo: str, quantidade) -> None:
 
 
 def registrar_movimentacao(
-    *, produto_id: int, tipo: str, quantidade: int, observacao: str = ""
+    *,
+    produto_id: int,
+    tipo: str,
+    quantidade: int,
+    observacao: str = "",
+    usuario=None,
+    momento=None,
 ) -> Movimentacao:
-    """Registra Entrada, Saída/Venda ou Saldo inicial e atualiza o saldo atomicamente."""
+    """Registra Entrada, Saída/Venda ou Saldo inicial e atualiza o saldo atomicamente.
+
+    Na mesma transação de banco grava a transação financeira (008): despesa ou receita.
+    `momento` (009) serve só a demonstração/importação: ≤ agora e ≥ a última movimentação.
+    """
     if tipo not in TipoMovimentacao.values:
         raise MovimentacaoInvalidaError("Tipo de movimentação inválido.")
     _validar_quantidade(tipo, quantidade)
@@ -95,6 +105,17 @@ def registrar_movimentacao(
             if saldo_posterior > SALDO_MAXIMO:
                 raise SaldoMaximoExcedidoError(atual=saldo_anterior, entrada=quantidade)
 
+        agora = timezone.now()
+        if momento is not None:
+            ultima = (
+                produto.movimentacoes.order_by("-criado_em")
+                .values_list("criado_em", flat=True)
+                .first()
+            )
+            if momento > agora or (ultima is not None and momento < ultima):
+                raise MovimentacaoInvalidaError("Momento fora da ordem do livro-razão.")
+            agora = momento
+
         produto.quantidade_atual = saldo_posterior
         produto.save(update_fields=["quantidade_atual", "atualizado_em"])
         movimentacao = Movimentacao.objects.create(
@@ -104,6 +125,11 @@ def registrar_movimentacao(
             saldo_anterior=saldo_anterior,
             saldo_posterior=saldo_posterior,
             observacao=observacao,
-            criado_em=timezone.now(),
+            registrado_por=usuario if getattr(usuario, "is_authenticated", False) else None,
+            criado_em=agora,
         )
+        # Importação tardia: financeiro depende de movimentacoes (evita ciclo no carregamento).
+        from apps.financeiro.services import registrar_transacao
+
+        registrar_transacao(movimentacao=movimentacao, produto=produto)
     return movimentacao

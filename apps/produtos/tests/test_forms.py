@@ -8,7 +8,8 @@ INVALIDO = "Informe um número inteiro igual ou maior que zero."
 
 
 def dados(**kwargs) -> dict:
-    return {"nome": "Caneta", "quantidade_inicial": "1", "estoque_minimo": "1", **kwargs}
+    return {"nome": "Caneta", "quantidade_inicial": "1", "estoque_minimo": "1",
+            "preco_custo": "1,00", "preco_venda": "2,00", **kwargs}  # fmt: skip
 
 
 @pytest.mark.parametrize(("texto", "esperado"), [("0", 0), ("7", 7), (" 12 ", 12), ("007", 7)])
@@ -67,4 +68,5 @@ def test_fr006_widget_numerico_texto():
 
 def test_fr025_form_edicao_so_nome_e_estoque_minimo():
     """FR-025: a edição só expõe nome e estoque mínimo."""
-    assert list(ProdutoEdicaoForm().fields) == ["nome", "estoque_minimo"]
+    assert list(ProdutoEdicaoForm().fields) == [
+        "nome", "estoque_minimo", "preco_custo", "preco_venda"]  # fmt: skip

@@ -50,6 +50,13 @@ produtos = (
     "produtos",
 )
 movimentacoes = ([path("", pagina_simples, name="lista")], "movimentacoes")
+financeiro = (
+    [
+        path("", pagina_simples, name="painel"),
+        path("transacoes/", pagina_simples, name="transacoes"),
+    ],
+    "financeiro",
+)
 alertas = (
     [
         path("", pagina_simples, name="relatorio"),
@@ -62,7 +69,9 @@ urlpatterns = [
     path("", include("apps.core.urls")),
     path("produtos/", include(produtos)),
     path("movimentacoes/", include(movimentacoes)),
+    path("financeiro/", include(financeiro)),
     path("alertas/", include(alertas)),
+    path("contas/", include("apps.contas.urls")),
     path("teste/mensagem/<str:nivel>/", mensagem),
     path("teste/erro-500/", erro_500),
     path("teste/erro-400/", erro_400),

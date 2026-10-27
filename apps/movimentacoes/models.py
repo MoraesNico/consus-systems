@@ -51,7 +51,9 @@ class MovimentacaoQuerySet(models.QuerySet):
         return consulta
 
     def recentes(self) -> "MovimentacaoQuerySet":
-        return self.select_related("produto").order_by("-criado_em", "-id")
+        return self.select_related("produto", "transacao", "registrado_por").order_by(
+            "-criado_em", "-id"
+        )
 
     def update(self, **kwargs):
         raise MovimentacaoImutavelError
@@ -70,6 +72,14 @@ class Movimentacao(models.Model):
     saldo_anterior = models.PositiveIntegerField()
     saldo_posterior = models.PositiveIntegerField()
     observacao = models.CharField(max_length=OBSERVACAO_MAX, blank=True, default="")
+    registrado_por = models.ForeignKey(
+        "auth.User",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="movimentacoes",
+        verbose_name="registrado por",
+    )
     criado_em = models.DateTimeField(default=timezone.now, db_index=True, editable=False)
 
     objects = MovimentacaoQuerySet.as_manager()
@@ -121,6 +131,14 @@ class Movimentacao(models.Model):
 
     def delete(self, *args, **kwargs):
         raise MovimentacaoImutavelError
+
+    @property
+    def transacao_financeira(self):
+        """Transação da 008, ou None (saldo inicial 0 e movimentações anteriores à 2.0)."""
+        try:
+            return self.transacao
+        except models.ObjectDoesNotExist:
+            return None
 
     @property
     def eh_saida(self) -> bool:

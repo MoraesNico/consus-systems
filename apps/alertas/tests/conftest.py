@@ -8,6 +8,7 @@ from django.utils import timezone
 
 from apps.movimentacoes.services import registrar_movimentacao
 from apps.produtos.services import cadastrar_produto
+from apps.produtos.tests import PRECOS_TESTE
 
 AGORA = datetime.datetime(2026, 10, 20, 14, 32, tzinfo=ZoneInfo("America/Sao_Paulo"))
 
@@ -15,7 +16,9 @@ AGORA = datetime.datetime(2026, 10, 20, 14, 32, tzinfo=ZoneInfo("America/Sao_Pau
 @pytest.fixture
 def criar_produto(db):
     def criar(nome: str, quantidade: int, minimo: int):
-        return cadastrar_produto(nome=nome, quantidade_inicial=quantidade, estoque_minimo=minimo)
+        return cadastrar_produto(
+            **PRECOS_TESTE, nome=nome, quantidade_inicial=quantidade, estoque_minimo=minimo
+        )
 
     return criar
 

@@ -7,6 +7,8 @@
     <div class="col-md-4 col-lg-3">{% include "components/kpi.html" with rotulo="Movimentações · 24 h" valor=resumo.movimentacoes_24h meta="entradas + saídas" icone="arrow-left-right" href=url_movimentacoes %}</div>
   </div>
 
+  {% if financeiro %}{% include "financeiro/partials/faixa_painel.html" %}{% endif %}
+
   {% if not resumo.total_produtos %}
     {% include "components/estado_vazio.html" with icone="package" titulo="Cadastre o primeiro produto" descricao="Informe nome, quantidade inicial e estoque mínimo de segurança. O Painel passa a mostrar alertas, cobertura e movimentações." acao_rotulo="Cadastrar produto" acao_url=url_cadastro_produto acao_alvo="#dialogo" %}
   {% else %}
@@ -46,7 +48,7 @@
         <div class="tabela-contenedor tabela-contenedor--sem-borda">
           <table class="tabela tabela--compacta">
             <caption class="visualmente-oculto">As cinco movimentações mais recentes</caption>
-            <thead><tr><th scope="col">Data/hora</th><th scope="col">Produto</th><th scope="col">Tipo</th><th scope="col" class="num">Quantidade</th><th scope="col" class="num">Saldo</th><th scope="col">Observação</th></tr></thead>
+            <thead><tr><th scope="col">Data/hora</th><th scope="col">Produto</th><th scope="col">Tipo</th><th scope="col" class="num">Quantidade</th><th scope="col" class="num">Saldo</th><th scope="col" class="num">Valor</th><th scope="col">Observação</th></tr></thead>
             <tbody>{% for mov in resumo.ultimas_movimentacoes %}{% include "movimentacoes/partials/linha_movimentacao.html" %}{% endfor %}</tbody>
           </table>
         </div>

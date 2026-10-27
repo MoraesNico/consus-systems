@@ -1,5 +1,5 @@
 /*
- * Consus — tokens do design system (docs/design/design-system.md §2, versão 1.0.0).
+ * Consus — tokens do design system (docs/design/design-system.md §2, versão 2.0.0 — paleta "sóbria").
  * ÚNICA fonte de valores visuais. Componentes usam apenas os tokens semânticos;
  * as primitivas --palette-* só podem ser referenciadas dentro deste arquivo.
  */
@@ -20,21 +20,25 @@
   --palette-neutral-800: #36332D;
   --palette-neutral-900: #1A1814;
 
-  /* ---------- 2.1.1 Primitivas: acento e semânticas ---------- */
-  --palette-blue-50: #E6E9FA;
-  --palette-blue-600: #2337C6;
-  --palette-blue-700: #1B2A9E;
-  --palette-green-50: #E3F2E7;
-  --palette-green-700: #1F7A3E;
-  --palette-green-900: #14532B;
-  --palette-amber-50: #FFF3CC;
-  --palette-amber-400: #F2B300;
-  --palette-amber-700: #A87400;
-  --palette-amber-900: #6B4400;
-  --palette-red-50: #FCE8E6;
-  --palette-red-600: #C4261D;
-  --palette-red-700: #A11F17;
-  --palette-red-800: #8F1A13;
+  /* ---------- 2.1.1 Primitivas: acento e semânticas (v2 "sóbria") ----------
+   * Acento azul-tinta dessaturado (caneta-tinteiro, não neon); semânticas terrosas:
+   * musgo (sucesso/receita), ocre (atenção) e tijolo (perigo/despesa). */
+  --palette-blue-50: #E9EDF3;
+  --palette-blue-600: #2F4A78;
+  --palette-blue-700: #233960;
+  --palette-green-50: #E7EEE4;
+  --palette-green-700: #3B6A3E;
+  --palette-green-900: #24452A;
+  --palette-amber-50: #F6EEDB;
+  --palette-amber-400: #C99A3E;
+  --palette-amber-700: #8A6420;
+  --palette-amber-900: #553C0E;
+  --palette-red-50: #F5E6E2;
+  --palette-red-600: #A3402F;
+  --palette-red-700: #873325;
+  --palette-red-800: #6F2A1F;
+  --palette-slate-400: #7D8BA3;
+  --palette-sand-400: #B9A57E;
 
   /* ---------- 2.1.2 Cores semânticas ---------- */
   --color-paper: var(--palette-neutral-50);
@@ -72,6 +76,17 @@
   --color-info-subtle: var(--color-accent-subtle);
   --color-info-ink: var(--color-accent-ink);
   --color-overlay: rgb(26 24 20 / 60%);
+
+  /* ---------- 2.1.3 Financeiro e gráficos (Parte 2) ---------- */
+  --color-receita: var(--palette-green-700);
+  --color-receita-subtle: var(--palette-green-50);
+  --color-despesa: var(--palette-red-600);
+  --color-despesa-subtle: var(--palette-red-50);
+  --color-serie-1: var(--palette-blue-600);
+  --color-serie-2: var(--palette-green-700);
+  --color-serie-3: var(--palette-amber-400);
+  --color-serie-4: var(--palette-slate-400);
+  --color-serie-5: var(--palette-sand-400);
 
   /* ---------- 2.2 Tipografia ---------- */
   --font-sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -171,13 +186,18 @@
   --z-dropdown: 200;
   --z-toast: 400;
 
-  /* ---------- 2.11 Movimento (Carbon productive) ---------- */
+  /* ---------- 2.11 Movimento (v2: curto, mecânico, nunca bloqueia) ---------- */
   --duration-instant: 0ms;
-  --duration-fast: 70ms;
-  --duration-moderate: 150ms;
+  --duration-fast: 90ms;
+  --duration-moderate: 160ms;
+  --duration-slow: 240ms;
+  --duration-deliberate: 400ms;
   --ease-standard: cubic-bezier(0.2, 0, 0.38, 0.9);
   --ease-entrance: cubic-bezier(0, 0, 0.38, 0.9);
   --ease-exit: cubic-bezier(0.2, 0, 1, 0.9);
+  --ease-press: cubic-bezier(0.3, 0, 0.2, 1.4);
+  --motion-distance-sm: 0.25rem;
+  --motion-distance-md: 0.75rem;
 
   /* ---------- 2.12 Opacidade ---------- */
   --opacity-busy: 0.55;
@@ -202,6 +222,10 @@
   :root {
     --duration-fast: var(--duration-instant);
     --duration-moderate: var(--duration-instant);
+    --duration-slow: var(--duration-instant);
+    --duration-deliberate: var(--duration-instant);
+    --motion-distance-sm: 0;
+    --motion-distance-md: 0;
   }
 }
 

@@ -1,0 +1,23 @@
+<div id="resultados" class="resultados pilha pilha--compacta">
+  {% for aviso in avisos %}<div class="aviso aviso--alerta" role="alert"><span class="aviso__icone">{% icone "triangle-alert" %}</span><div class="aviso__corpo"><p>{{ aviso }}</p></div></div>{% endfor %}
+  {% if page_obj.object_list %}
+    <div class="cluster cluster--entre">
+      <p class="texto-atenuado" role="status"><span class="mono">{{ page_obj.paginator.count }}</span> transaç{{ page_obj.paginator.count|pluralize:"ão,ões" }} · receitas <span class="mono valor--receita">{{ totais.receitas|moeda }}</span> · despesas <span class="mono valor--despesa">{{ totais.despesas|moeda }}</span> · saldo <span class="mono">{{ totais.saldo|moeda }}</span></p>
+      <a class="botao botao--secundario botao--sm" href="{% url 'financeiro:transacoes' %}{% querystring formato="csv" pagina=None %}" hx-boost="false" download>{% icone "download" %}Exportar CSV</a>
+    </div>
+    <div class="tabela-contenedor">
+      <table class="tabela">
+        <caption class="visualmente-oculto">Histórico de transações financeiras</caption>
+        <thead><tr><th scope="col">Data/hora</th><th scope="col">Produto</th><th scope="col">Tipo</th><th scope="col" class="num">Quantidade</th><th scope="col" class="num">Preço unitário</th><th scope="col" class="num">Valor total</th><th scope="col">Registrado por</th></tr></thead>
+        <tbody>{% for t in page_obj.object_list %}{% include "financeiro/partials/linha_transacao.html" %}{% endfor %}</tbody>
+      </table>
+    </div>
+    {% include "components/paginacao.html" with pagina=page_obj rotulo_itens="transações" alvo="#resultados" %}
+  {% elif filtrado %}
+    {% url 'financeiro:transacoes' as url_limpar %}
+    {% include "components/estado_vazio.html" with icone="search" titulo="Nenhuma transação encontrada." descricao="Nenhum registro corresponde aos filtros escolhidos." acao_rotulo="" acao_secundaria="Limpar filtros" acao_secundaria_url=url_limpar %}
+  {% else %}
+    {% url 'movimentacoes:nova' as url_nova %}
+    {% include "components/estado_vazio.html" with icone="receipt" titulo="Nenhuma transação ainda" descricao="Cada entrada ou saída de estoque gera uma transação financeira automaticamente." acao_rotulo="Nova movimentação" acao_url=url_nova %}
+  {% endif %}
+</div>

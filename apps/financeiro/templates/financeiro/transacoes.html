@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block titulo %}Transações{% endblock %}
+{% block sobretitulo %}Financeiro{% endblock %}
+{% block titulo_pagina %}Histórico de transações{% endblock %}
+{% block acoes %}<a class="botao botao--secundario" href="{% url 'financeiro:painel' %}">{% icone "wallet" %}Painel financeiro</a>{% endblock %}
+{% block descricao %}Cada entrada é uma despesa (quantidade × custo) e cada saída é uma receita (quantidade × venda). Valores congelados no momento da movimentação.{% endblock %}
+{% block conteudo %}
+<div class="pilha">
+  <form id="filtros" class="filtros" method="get" action="{% url 'financeiro:transacoes' %}" role="search" hx-get="{% url 'financeiro:transacoes' %}" hx-target="#resultados" hx-swap="outerHTML" hx-push-url="true" hx-trigger="change, submit">
+    <div class="campo campo--sm"><label class="campo__rotulo" for="{{ filtros_form.produto.id_for_label }}">Produto</label><span class="campo__select">{{ filtros_form.produto }}{% icone "chevron-down" %}</span></div>
+    <div class="campo campo--sm"><label class="campo__rotulo" for="{{ filtros_form.tipo.id_for_label }}">Tipo</label><span class="campo__select">{{ filtros_form.tipo }}{% icone "chevron-down" %}</span></div>
+    <div class="campo campo--sm"><label class="campo__rotulo" for="{{ filtros_form.de.id_for_label }}">De</label>{{ filtros_form.de }}</div>
+    <div class="campo campo--sm"><label class="campo__rotulo" for="{{ filtros_form.ate.id_for_label }}">Até</label>{{ filtros_form.ate }}</div>
+    <div class="cluster filtros__acoes"><button class="botao botao--secundario botao--sm" type="submit">Filtrar</button><a class="botao botao--fantasma botao--sm" href="{% url 'financeiro:transacoes' %}">Limpar</a></div>
+  </form>
+  {% include "financeiro/partials/tabela_transacoes.html" %}
+</div>
+{% endblock %}

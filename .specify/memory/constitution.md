@@ -15,10 +15,16 @@
 - Movimentações são imutáveis (livro-razão *append-only*): guardam saldo anterior e
   posterior, e nunca são editadas ou apagadas pela interface.
 - Quantidades são números inteiros; quantidade de movimentação MUST ser maior que zero.
+- **Dinheiro** (Parte 2): valores monetários MUST ser `Decimal` com 2 casas, gravados em
+  centavos inteiros (`DinheiroField`); `float` é proibido. Toda Entrada e Saída gera, na
+  mesma transação de banco da movimentação, uma `Transacao` financeira imutável com os
+  preços vigentes congelados — mudar um preço nunca reescreve o passado.
 
 *Racional*: o requisito central da atividade é "o estoque não pode ficar negativo". Uma
 única camada de validação falha sob concorrência (duas saídas simultâneas); três camadas
-e um histórico imutável tornam o saldo auditável e reproduzível.
+e um histórico imutável tornam o saldo auditável e reproduzível. O mesmo vale para o
+caixa: receita, despesa e lucro só são confiáveis se nascem junto com a movimentação e
+não podem ser editados.
 
 ### II. Interface Dirigida pelo Servidor (Django + HTMX)
 
@@ -26,7 +32,8 @@ e um histórico imutável tornam o saldo auditável e reproduzível.
   respostas parciais (`partials/`), `hx-swap-oob` para atualizar regiões dependentes
   (saldo, badge de alertas, toasts) e `HX-Trigger` para eventos.
 - Sem SPA, sem framework JavaScript e sem etapa de build Node. JavaScript próprio é
-  limitado a pequenos utilitários progressivos (< 100 linhas no total).
+  limitado a pequenos utilitários progressivos (< 200 linhas no total, somando todos os
+  arquivos próprios).
 - Toda ação MUST funcionar sem HTMX (aprimoramento progressivo): formulários fazem POST
   normal com redirect; com HTMX recebem apenas o fragmento.
 - Views detectam `request.htmx` (django-htmx) para escolher template completo ou parcial.
@@ -62,8 +69,14 @@ densidade de tabelas, tokens de camada) e **bradtraversy/design-resources-for-de
   esquerda, sem centralização decorativa.
 - **Neo-brutalismo sóbrio**: bordas sólidas de 1px (2px em foco/destaque), raio 0–2px,
   sombras sólidas deslocadas sem desfoque apenas em elementos elevados/interativos,
-  paleta neutra (tinta sobre papel) com UMA cor de acento e cores semânticas
-  (sucesso, alerta, perigo). Sem gradientes, sem glassmorphism, sem emojis como ícones.
+  paleta **sóbria** (tinta sobre papel) com UMA cor de acento dessaturada e cores semânticas
+  terrosas (sucesso, alerta, perigo; receita e despesa). Sem gradientes, sem
+  glassmorphism, sem emojis como ícones.
+- **Movimento com propósito**: animações e transições confirmam ações e orientam o olhar
+  (entrada de conteúdo, diálogo, toast, linha atualizada, carregamento), usam somente os
+  tokens de duração/curva, animam apenas `transform`, `opacity`, `background-color` e
+  `box-shadow`, duram no máximo 400 ms, nunca bloqueiam a interação e são desligadas por
+  `prefers-reduced-motion`.
 - **Alta densidade**: tabelas com linhas de 32–40px, números em fonte mono tabular
   (`font-variant-numeric: tabular-nums`) alinhados à direita, rótulos curtos em caixa alta
   com tracking.
@@ -73,7 +86,9 @@ densidade de tabelas, tokens de camada) e **bradtraversy/design-resources-for-de
   quando necessários.
 - **Acessibilidade**: contraste mínimo WCAG 2.1 AA; foco visível; alerta de reposição
   SEMPRE com ícone + texto ("REPOSIÇÃO NECESSÁRIA") + cor — nunca apenas cor;
-  `aria-live` para mensagens dinâmicas.
+  `aria-live` para mensagens dinâmicas. Valores financeiros nunca dependem só da cor:
+  receita e despesa têm sinal (+/−) e rótulo; o alerta de caixa negativo segue a mesma regra
+  do alerta de reposição (ícone + texto + cor).
 - **Idioma**: interface em português do Brasil; datas `dd/mm/aaaa HH:MM`, números com
   separador de milhar `.`.
 
@@ -84,17 +99,34 @@ operador de estoque que precisa ler muitos itens rapidamente.
 
 - O sistema inteiro MUST subir com `docker compose up --build` (app + PostgreSQL), sem
   passos manuais além de copiar `.env.example`.
+- O sistema MUST também rodar só com Python 3.11+ (venv + `pip install -r requirements.txt`
+  + SQLite) por `python iniciar.py`, sem Docker, em Windows, macOS e Linux.
 - Configuração exclusivamente por variáveis de ambiente; segredos nunca versionados.
 - Sem dependências que não resolvam um requisito explícito (YAGNI). Toda dependência nova
   é justificada no `plan.md` da feature.
 - Assets de terceiros (HTMX, fontes) são servidos localmente (vendorizados), sem CDN em
   tempo de execução.
 
-*Racional*: o professor e os colegas precisam rodar o projeto em qualquer máquina.
+*Racional*: o professor e os colegas precisam rodar o projeto em qualquer máquina — com ou
+sem Docker.
+
+### VI. Acesso Autenticado e Seguro
+
+- Toda página MUST exigir login, exceto a tela de login e `/saude/` (healthcheck). Sem
+  cadastro público de usuários: contas são criadas por comando de gerenciamento.
+- Senhas usam os hashers e validadores do Django; nada de senha em texto no código, nos
+  logs ou na tela.
+- O login MUST resistir a força bruta (bloqueio temporário por tentativas), usar mensagem de
+  erro genérica, validar o redirecionamento `next` e renovar o token CSRF após entrar.
+- Toda movimentação registrada pela interface guarda o usuário que a fez.
+
+*Racional*: o sistema passa a guardar dinheiro (receitas, despesas, lucro); quem vê e
+quem altera precisa ser identificado.
 
 ## Restrições Técnicas
 
-- **Linguagem/Runtime**: Python 3.13.
+- **Linguagem/Runtime**: Python 3.11+ (imagem Docker em 3.13); código sem recursos
+  exclusivos de 3.12+.
 - **Framework**: Django 5.2 LTS + django-htmx; HTMX 2.x vendorizado em `static/vendor/`.
 - **Banco**: PostgreSQL 17 no Docker; SQLite permitido apenas para desenvolvimento local e
   testes rápidos (a suíte MUST passar nos dois).
@@ -103,7 +135,7 @@ operador de estoque que precisa ler muitos itens rapidamente.
 - **Domínio em português**: entidades e campos de domínio em português (`Produto`,
   `Movimentacao`, `estoque_minimo`); infraestrutura pode usar termos em inglês.
 - **Estrutura**: projeto `config/`, apps em `apps/` (`core`, `produtos`, `movimentacoes`,
-  `alertas`), templates por app, design system em `static/css/`.
+  `alertas`, `contas`, `financeiro`), templates por app, design system em `static/css/`.
 
 ## Fluxo de Desenvolvimento
 
@@ -126,8 +158,14 @@ operador de estoque que precisa ler muitos itens rapidamente.
 - Emendas: alteração via PR para `develop` contendo o motivo, o impacto nos templates e o
   incremento de versão semântico (MAJOR: remoção/redefinição de princípio; MINOR: novo
   princípio ou seção; PATCH: redação).
-- Revisões verificam: princípio I em toda mudança que toque saldo; princípio IV em toda
-  mudança de interface; princípio III em toda mudança de regra.
+- Revisões verificam: princípio I em toda mudança que toque saldo ou dinheiro; princípio IV
+  em toda mudança de interface; princípio III em toda mudança de regra; princípio VI em toda
+  rota nova.
 - Orientação de execução para agentes fica em `CLAUDE.md`.
 
-**Version**: 1.0.0 | **Ratified**: 2026-10-20 | **Last Amended**: 2026-10-20
+**Version**: 1.1.0 | **Ratified**: 2026-10-20 | **Last Amended**: 2026-10-27
+
+<!-- 1.1.0 (MINOR): Parte 2 da atividade e pedidos do usuário — princípio VI (acesso
+autenticado); dinheiro em centavos e transações imutáveis (I); limite de JS 200 linhas (II);
+paleta sóbria, movimento com propósito e valores financeiros acessíveis (IV); execução só
+com Python (V); Python 3.11+ nas restrições. -->

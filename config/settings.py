@@ -43,6 +43,7 @@ CSRF_TRUSTED_ORIGINS = _lista(
 )
 
 INSTALLED_APPS = [
+    "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
@@ -54,17 +55,36 @@ INSTALLED_APPS = [
     "apps.produtos",
     "apps.movimentacoes",
     "apps.alertas",
+    "apps.financeiro",
+    "apps.contas",
 ]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "django_htmx.middleware.HtmxMiddleware",
+    "apps.contas.middleware.LoginObrigatorioMiddleware",
+]
+
+# Autenticação (006): login obrigatório; "Manter conectado" usa SESSION_COOKIE_AGE (14 dias).
+LOGIN_URL = "contas:entrar"
+LOGIN_REDIRECT_URL = "core:painel"
+LOGOUT_REDIRECT_URL = "contas:entrar"
+SESSION_COOKIE_AGE = 1_209_600
+AUTH_PASSWORD_VALIDATORS = [
+    {"NAME": f"django.contrib.auth.password_validation.{nome}"}
+    for nome in (
+        "UserAttributeSimilarityValidator",
+        "MinimumLengthValidator",
+        "CommonPasswordValidator",
+        "NumericPasswordValidator",
+    )
 ]
 
 ROOT_URLCONF = "config.urls"
@@ -78,6 +98,7 @@ TEMPLATES = [
             "context_processors": [
                 "django.template.context_processors.request",
                 "django.template.context_processors.csrf",
+                "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "apps.core.context_processors.consus",
             ],
@@ -160,3 +181,4 @@ LOGGING = {
     },
     "root": {"handlers": ["console"], "level": os.environ.get("DJANGO_LOG_LEVEL", "INFO")},
 }
+CONSUS_DEMO = _bool("CONSUS_POPULAR_DEMO", False)

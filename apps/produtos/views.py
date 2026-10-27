@@ -4,6 +4,7 @@ Cada rota atende a navegação comum/boosted (página completa, 302 após POST) 
 parciais HTMX identificadas pelo alvo (`resultados` ou `dialogo`). Erros de validação: 422.
 """
 
+from decimal import Decimal
 from urllib.parse import urlparse
 
 from django.contrib import messages
@@ -16,6 +17,7 @@ from django.views.decorators.http import require_http_methods, require_safe
 from django.views.decorators.vary import vary_on_headers
 from django_htmx.http import HttpResponseClientRedirect, push_url, reswap, retarget
 
+from apps.core.dinheiro import interpretar_valor
 from apps.core.htmx import disparar_evento, disparar_toast, eh_fragmento
 
 from .forms import ProdutoEdicaoForm, ProdutoForm
@@ -34,8 +36,11 @@ CHAVE_DESTAQUE = "produtos_destaque"
 COLUNAS = (
     ("ID", "id", False),
     ("Nome", "nome", False),
-    ("Quantidade atual", "quantidade", True),
-    ("Estoque mínimo", "minimo", True),
+    ("Qtd. atual", "quantidade", True),
+    ("Mínimo", "minimo", True),
+    ("Custo", None, True),
+    ("Venda", None, True),
+    ("Margem", "margem", True),
     ("Situação", "situacao", False),
 )
 
@@ -53,7 +58,9 @@ def _anexar_erros(form, erro: ValidationError) -> None:
 def _colunas(ordem: str) -> list[dict]:
     colunas = []
     for rotulo, chave, numerica in COLUNAS:
-        if ordem == chave:
+        if chave is None:
+            aria, nova = None, None
+        elif ordem == chave:
             aria, nova = "ascending", f"-{chave}"
         elif ordem == f"-{chave}":
             aria, nova = "descending", chave
@@ -103,6 +110,30 @@ def lista(request):
     return render(request, "produtos/lista.html", contexto)
 
 
+def calcular_previa_margem(custo_texto, venda_texto) -> dict | None:
+    """Margem prevista por unidade a partir do texto digitado (None se faltar um preço)."""
+    try:
+        custo, venda = interpretar_valor(custo_texto), interpretar_valor(venda_texto)
+    except ValueError:
+        return None
+    if custo <= 0 or venda <= 0:
+        return None
+    margem = venda - custo
+    variante = "positiva" if margem > 0 else ("negativa" if margem < 0 else "zero")
+    return {
+        "margem": margem,
+        "percentual": (margem * 100 / venda).quantize(Decimal("0.1")),
+        "variante": variante,
+        "prejuizo": -margem,
+    }
+
+
+@require_safe
+def previa_margem(request):
+    previa = calcular_previa_margem(request.GET.get("preco_custo"), request.GET.get("preco_venda"))
+    return render(request, "produtos/partials/previa_margem.html", {"previa": previa})
+
+
 def _render_novo(request, form, no_dialogo: bool, status: int = 200):
     if no_dialogo:
         return render(request, "produtos/partials/dialogo_novo.html", {"form": form}, status=status)
@@ -135,7 +166,7 @@ def novo(request):
     form = ProdutoForm(request.POST)
     if form.is_valid():
         try:
-            produto = cadastrar_produto(**form.cleaned_data)
+            produto = cadastrar_produto(**form.cleaned_data, usuario=request.user)
         except ValidationError as erro:
             _anexar_erros(form, erro)
         else:
@@ -164,9 +195,10 @@ def editar(request, produto_id: int):
     except Produto.DoesNotExist:
         return _nao_encontrado(request)
     if request.method != "POST":
-        form = ProdutoEdicaoForm(
-            initial={"nome": produto.nome, "estoque_minimo": produto.estoque_minimo}
-        )
+        iniciais = {"nome": produto.nome, "estoque_minimo": produto.estoque_minimo}
+        if not produto.precos_pendentes:
+            iniciais |= {"preco_custo": produto.preco_custo, "preco_venda": produto.preco_venda}
+        form = ProdutoEdicaoForm(initial=iniciais)
         return render(request, "produtos/editar.html", {"form": form, "produto": produto})
     form = ProdutoEdicaoForm(request.POST)
     if form.is_valid():
