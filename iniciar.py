@@ -18,6 +18,8 @@ from pathlib import Path
 RAIZ = Path(__file__).resolve().parent
 MARCA_DEMO = RAIZ / ".consus-demo-criada"
 VERSAO_MINIMA = (3, 11)
+if str(RAIZ) not in sys.path:
+    sys.path.insert(0, str(RAIZ))
 
 
 def falhar(mensagem: str) -> None:
@@ -40,8 +42,21 @@ def conferir_ambiente() -> None:
         )
 
 
+def _ambiente() -> dict[str, str]:
+    """Inclui a pasta do projeto no PYTHONPATH: `config` é importável em qualquer modo do Python."""
+    ambiente = dict(os.environ)
+    caminhos = [str(RAIZ), *filter(None, ambiente.get("PYTHONPATH", "").split(os.pathsep))]
+    ambiente["PYTHONPATH"] = os.pathsep.join(dict.fromkeys(caminhos))
+    return ambiente
+
+
 def manage(*argumentos: str) -> None:
-    resultado = subprocess.run([sys.executable, "manage.py", *argumentos], cwd=RAIZ, check=False)
+    resultado = subprocess.run(
+        [sys.executable, str(RAIZ / "manage.py"), *argumentos],
+        cwd=RAIZ,
+        env=_ambiente(),
+        check=False,
+    )
     if resultado.returncode != 0:
         falhar(f"'manage.py {' '.join(argumentos)}' falhou (código {resultado.returncode}).")
 
@@ -82,8 +97,9 @@ def main() -> None:
     )
     try:
         subprocess.run(
-            [sys.executable, "manage.py", "runserver", f"{opcoes.host}:{opcoes.porta}"],
+            [sys.executable, str(RAIZ / "manage.py"), "runserver", f"{opcoes.host}:{opcoes.porta}"],
             cwd=RAIZ,
+            env=_ambiente(),
             check=False,
         )
     except KeyboardInterrupt:
