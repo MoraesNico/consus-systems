@@ -58,3 +58,15 @@ def test_fr005_readme_documenta_python_puro():
                "Usar PostgreSQL sem Docker", "Paleta de cores", "docker compose up")  # fmt: skip
     for trecho in trechos:
         assert trecho in readme, trecho
+
+
+def test_fr006_manage_funciona_fora_da_pasta_e_em_modo_caminho_seguro(tmp_path):
+    """Regressão "No module named 'config'": outra pasta + PYTHONSAFEPATH (Python 3.11+ / -P)."""
+    import os
+
+    ambiente = {**os.environ, "PYTHONSAFEPATH": "1", "DJANGO_DEBUG": "true"}
+    ambiente.pop("PYTHONPATH", None)
+    resultado = subprocess.run([sys.executable, str(RAIZ / "manage.py"), "check"], cwd=tmp_path,
+                               env=ambiente, capture_output=True, text=True)  # fmt: skip
+    assert resultado.returncode == 0, resultado.stderr
+    assert "No module named 'config'" not in resultado.stderr
